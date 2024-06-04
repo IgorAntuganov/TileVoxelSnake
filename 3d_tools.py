@@ -3,24 +3,34 @@ import time
 
 
 class SidesDrawer:
+    """
+    perspective_correctness: adjust texture with perspective effect
+    perspective_const: should be > 0, 1 is base value, maybe 0.5 is best
+    debug_background: fill background with red for debugging
+    """
     def __init__(self):
-        self.cache = {}
+        self._cache = {}
+        self._perspective_correctness = True
+        self._perspective_const = 1
+        self._debug_background = False
+
+    def set_using_perspective(self, using: bool):
+        self._perspective_correctness = using
+
+    def set_perspective_const(self, n: int | float):
+        self._perspective_const = n
+
+    def set_debug_mode(self, mode: bool):
+        self._debug_background = mode
 
     def get_hor_trapezoid(self, texture: pg.Surface,
                           top_width: int,
                           bot_width: int,
                           height: int,
-                          offset: int,
-                          fill_red: bool = False,
-                          perspective_const: float = 1) -> pg.Surface:
+                          offset: int) -> pg.Surface:
         """
-        :param texture
-        :param top_width
-        :param bot_width:
         :param height: can be negative if top below bottom on screen
         :param offset: difference by x between the upper-left and lower-left corners
-        :param fill_red: fill background with red (for debugging)
-        :param perspective_const: should be > 0, 1 is base value, maybe 0.5 is best
         """
         if offset > 0:
             im_width = max(top_width, bot_width+offset)
@@ -30,7 +40,7 @@ class SidesDrawer:
 
         image = pg.Surface((im_width, im_height), pg.SRCALPHA)
 
-        if fill_red:
+        if self._debug_background:
             image.fill((255, 0, 0))
 
         for i in range(im_height):
@@ -46,10 +56,12 @@ class SidesDrawer:
             rights_diffs = right_top - right_bottom
             str_width = int(right_top - rights_diffs * part) - im_x
 
-            z1 = (bot_width/top_width) ** perspective_const
-            part_with_perspective = part / (part + (1 - part) / z1)
-
-            pixel_string = self.get_pixel_string_fast(texture, str_width, part_with_perspective)
+            if self._perspective_correctness:
+                z1 = (bot_width/top_width) ** self._perspective_const
+                part_with_perspective = part / (part + (1 - part) / z1)
+                pixel_string = self.get_pixel_string_fast(texture, str_width, part_with_perspective)
+            else:
+                pixel_string = self.get_pixel_string_fast(texture, str_width, part)
 
             if height > 0:
                 im_y = i
@@ -60,8 +72,8 @@ class SidesDrawer:
 
     def get_pixel_string(self, texture, width, part) -> pg.Surface:
         key = width, part
-        if key in self.cache:
-            return self.cache[key]
+        if key in self._cache:
+            return self._cache[key]
 
         pstring = pg.Surface((width, 1), pg.SRCALPHA)
         texture_y = int(part * texture.get_height())
@@ -70,7 +82,7 @@ class SidesDrawer:
             texture_x = int(x_part * texture.get_width())
             pixel = texture.get_at((texture_x, texture_y))
             pstring.set_at((i, 0), pixel)
-        self.cache[key] = pstring
+        self._cache[key] = pstring
         return pstring
 
     def get_pixel_string_fast(self, texture, width, part) -> pg.Surface:
@@ -101,8 +113,8 @@ def test():
     s = SidesDrawer()
 
     grass_png = pg.image.load('grass.png')
-    test_width = 64
-    test_height = 64
+    test_width = 32
+    test_height = 32
     grass = pg.Surface((test_width, test_height))
     grass.fill((255, 255, 255))
     for i in range(test_width//16):
@@ -136,9 +148,9 @@ def test():
         if pressed[pg.K_d]:
             h += 5 if abs(h) > 20 else 1
         if pressed[pg.K_r]:
-            off += 5
+            off += 2
         if pressed[pg.K_f]:
-            off -= 5
+            off -= 2
         if pressed[pg.K_UP] and time.time() - last_pc > .2:
             pc += .1
             print(pc)
@@ -147,12 +159,18 @@ def test():
             pc -= .1
             print(pc)
             last_pc = time.time()
+        if pressed[pg.K_z]:
+            s.set_using_perspective(False)
+        if pressed[pg.K_x]:
+            s.set_using_perspective(True)
 
         scr.fill((0, 0, 0))
-        trap = s.get_hor_trapezoid(grass, top, bot, h, off, perspective_const=pc)
+        s.set_perspective_const(pc)
+        trap = s.get_hor_trapezoid(grass, top, bot, h, off)
+        trap = pg.transform.rotate(trap, 90)
 
         scr.blit(trap, (0, 0))
-        clock.tick(120)
+        clock.tick(240)
         fps = clock.get_fps()
         pg.display.set_caption('fps:' + str(fps))
         pg.display.update()
