@@ -1,5 +1,5 @@
 import pygame as pg
-import math
+import time
 
 
 class SidesDrawer:
@@ -10,13 +10,17 @@ class SidesDrawer:
                           top_width: int,
                           bot_width: int,
                           height: int,
-                          offset: int) -> pg.Surface:
+                          offset: int,
+                          fill_red: bool = False,
+                          perspective_const: float = 1) -> pg.Surface:
         """
         :param texture
         :param top_width
         :param bot_width:
         :param height: can be negative if top below bottom on screen
         :param offset: difference by x between the upper-left and lower-left corners
+        :param fill_red: fill background with red (for debugging)
+        :param perspective_const: should be > 0, 1 is base value, maybe 0.5 is best
         """
         if offset > 0:
             im_width = max(top_width, bot_width+offset)
@@ -25,7 +29,10 @@ class SidesDrawer:
         im_height = abs(height)
 
         image = pg.Surface((im_width, im_height), pg.SRCALPHA)
-        image.fill((255, 0, 0))
+
+        if fill_red:
+            image.fill((255, 0, 0))
+
         for i in range(im_height):
             part = i/im_height
             if offset > 0:
@@ -39,11 +46,7 @@ class SidesDrawer:
             rights_diffs = right_top - right_bottom
             str_width = int(right_top - rights_diffs * part) - im_x
 
-            # a0 = 1
-            # a1 = 0
-            # z0 = 1
-            z1 = bot_width/top_width
-            # part_with_perspective = (part * a0/z0 + (1-part) * a1/z1)/(part * 1/z0 + (1-part) * 1/z1)
+            z1 = (bot_width/top_width) ** perspective_const
             part_with_perspective = part / (part + (1 - part) / z1)
 
             pixel_string = self.get_pixel_string_fast(texture, str_width, part_with_perspective)
@@ -89,7 +92,7 @@ class SidesDrawer:
         crop2.blit(texture, (0, -texture_y+1))
         crop2.set_alpha(128)
         crop.blit(crop2, (0, 0))
-        resized = pg.transform.scale(crop, (width, 1))
+        resized = pg.transform.smoothscale(crop, (width, 1))
         pstring.blit(resized, (0, 0))
         return pstring
 
@@ -101,6 +104,7 @@ def test():
     test_width = 64
     test_height = 64
     grass = pg.Surface((test_width, test_height))
+    grass.fill((255, 255, 255))
     for i in range(test_width//16):
         for j in range(test_height//16):
             grass.blit(grass_png, (i*16, j*16))
@@ -110,6 +114,8 @@ def test():
     bot = test_width
     h = test_height
     off = 0
+    pc = 1
+    last_pc = time.time()
 
     while True:
         events = pg.event.get()
@@ -133,15 +139,22 @@ def test():
             off += 5
         if pressed[pg.K_f]:
             off -= 5
+        if pressed[pg.K_UP] and time.time() - last_pc > .2:
+            pc += .1
+            print(pc)
+            last_pc = time.time()
+        if pressed[pg.K_DOWN] and time.time() - last_pc > .2 and pc > 0.1:
+            pc -= .1
+            print(pc)
+            last_pc = time.time()
 
         scr.fill((0, 0, 0))
-        trap = s.get_hor_trapezoid(grass, top, bot, h, off)
+        trap = s.get_hor_trapezoid(grass, top, bot, h, off, perspective_const=pc)
 
         scr.blit(trap, (0, 0))
         clock.tick(120)
         fps = clock.get_fps()
-        pg.display.set_caption(str(fps))
-        print(len(s.cache))
+        pg.display.set_caption('fps:' + str(fps))
         pg.display.update()
 
 
