@@ -7,6 +7,7 @@ class SidesDrawer:
     perspective_correctness: adjust texture with perspective effect
     perspective_const: should be > 0, 1 is base value, maybe 0.5 is best
     debug_background: fill background with red for debugging
+    fast_anisotropic: using set_alpha() if True, else more accurate average_surface()
     """
     def __init__(self):
         self._cache = {}
@@ -14,6 +15,7 @@ class SidesDrawer:
         self._perspective_const = 1
         self._debug_background = True
         self._anisotropic_filtration = True
+        self._fast_anisotropic = True
 
     def set_using_perspective(self, using: bool):
         self._perspective_correctness = using
@@ -26,6 +28,9 @@ class SidesDrawer:
 
     def set_using_anisotropic_filtration(self, mode: bool):
         self._anisotropic_filtration = mode
+
+    def set_fast_anisotropic(self, mode: bool):
+        self._fast_anisotropic = mode
 
     def get_hor_trapezoid(self, texture: pg.Surface,
                           top_width: int,
@@ -90,21 +95,6 @@ class SidesDrawer:
             image.blit(pixel_string, (str_x, str_y))
         return image
 
-    def get_pixel_string(self, texture, width, part) -> pg.Surface:
-        key = width, part
-        if key in self._cache:
-            return self._cache[key]
-
-        pstring = pg.Surface((width, 1), pg.SRCALPHA)
-        texture_y = int(part * texture.get_height())
-        for i in range(width):
-            x_part = i / width
-            texture_x = int(x_part * texture.get_width())
-            pixel = texture.get_at((texture_x, texture_y))
-            pstring.set_at((i, 0), pixel)
-        self._cache[key] = pstring
-        return pstring
-
     @staticmethod
     def get_pixel_string_fast(texture, width, part) -> pg.Surface:
         pstring = pg.Surface((width, 1), pg.SRCALPHA)
@@ -115,11 +105,17 @@ class SidesDrawer:
         pstring.blit(resized, (0, 0))
         return pstring
 
-    @staticmethod
-    def get_pixel_string_with_anisotropic(texture, width, part1, part2) -> pg.Surface:
-        pstring = pg.Surface((width, 1), pg.SRCALPHA)
+    def get_pixel_string_with_anisotropic(self, texture, width, part1, part2) -> pg.Surface:
         texture_y_1 = part1 * texture.get_height()
         texture_y_2 = part2 * texture.get_height()
+
+        if self._fast_anisotropic:
+            pstring = pg.Surface((width, 1), pg.SRCALPHA)
+            surfaces = []  # for PyCharm
+        else:
+            pstring = None  # for PyCharm
+            surfaces = []
+
         for k in range(int(texture_y_1), int(texture_y_2)+1):
             crop = pg.Surface((texture.get_width(), 1))
             crop.blit(texture, (0, -k))
@@ -128,10 +124,15 @@ class SidesDrawer:
             else:
                 resized = pg.transform.scale(crop, (width, 1))
 
-            y_diff = abs(texture_y_1 - texture_y_2)
-            if k != int(texture_y_1):
-                resized.set_alpha(int(255/y_diff))
-            pstring.blit(resized, (0, 0))
+            if self._fast_anisotropic:
+                y_diff = abs(texture_y_1 - texture_y_2)
+                if k != int(texture_y_1):
+                    resized.set_alpha(int(255/y_diff))
+                pstring.blit(resized, (0, 0))
+            else:
+                surfaces.append(resized.copy())
+        if not self._fast_anisotropic:
+            pstring = pg.transform.average_surfaces(surfaces)
         return pstring
 
 
@@ -193,10 +194,15 @@ def test():
             s.set_using_anisotropic_filtration(False)
         if pressed[pg.K_v]:
             s.set_using_anisotropic_filtration(True)
+        if pressed[pg.K_b]:
+            s.set_fast_anisotropic(False)
+        if pressed[pg.K_n]:
+            s.set_fast_anisotropic(True)
 
         scr.fill((0, 0, 0))
         s.set_perspective_const(pc)
         off1 = off+(top-bot)//2
+        h = int(max(top, bot)*min(top/bot, bot/top))
         trap = s.get_hor_trapezoid(grass, top, bot, h, off1)
 
         x = (1600-trap.get_width())//2
