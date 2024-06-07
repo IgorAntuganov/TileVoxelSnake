@@ -4,6 +4,7 @@ import time
 
 class SidesDrawer:
     """
+    using_cache: use cache for pixel strings, may take many GBs of RAM
     perspective_correctness: adjust texture with perspective effect
     perspective_const: should be > 0, 1 is base value, maybe 0.5 is best
     debug_background: fill background with red for debugging
@@ -11,11 +12,15 @@ class SidesDrawer:
     """
     def __init__(self):
         self._cache = {}
+        self._using_cache = False
         self._perspective_correctness = True
         self._perspective_const = 1
         self._debug_background = True
         self._anisotropic_filtration = True
         self._fast_anisotropic = True
+
+    def set_using_cache(self, using: bool):
+        self._using_cache = using
 
     def set_using_perspective(self, using: bool):
         self._perspective_correctness = using
@@ -106,11 +111,17 @@ class SidesDrawer:
         return pstring
 
     def get_pixel_string_with_anisotropic(self, texture, width, part1, part2) -> pg.Surface:
+        part1 = round(part1, 10)
+        part2 = round(part2, 10)
+        key = (width, part1, part2)
+        if self._using_cache and key in self._cache:
+            return self._cache[key]
+
         texture_y_1 = part1 * texture.get_height()
         texture_y_2 = part2 * texture.get_height()
 
         if self._fast_anisotropic:
-            pstring = pg.Surface((width, 1), pg.SRCALPHA)
+            pstring = pg.Surface((texture.get_width(), 1), pg.SRCALPHA)
             surfaces = []  # for PyCharm
         else:
             pstring = None  # for PyCharm
@@ -119,11 +130,7 @@ class SidesDrawer:
         for k in range(int(texture_y_1), int(texture_y_2)+1):
             crop = pg.Surface((texture.get_width(), 1))
             crop.blit(texture, (0, -k))
-            if width < texture.get_width():
-                resized = pg.transform.smoothscale(crop, (width, 1))
-            else:
-                resized = pg.transform.scale(crop, (width, 1))
-
+            resized = crop
             if self._fast_anisotropic:
                 y_diff = abs(texture_y_1 - texture_y_2)
                 if k != int(texture_y_1):
@@ -133,7 +140,15 @@ class SidesDrawer:
                 surfaces.append(resized.copy())
         if not self._fast_anisotropic:
             pstring = pg.transform.average_surfaces(surfaces)
-        return pstring
+
+        if width < texture.get_width():
+            resized = pg.transform.smoothscale(pstring, (width, 1))
+        else:
+            resized = pg.transform.scale(pstring, (width, 1))
+
+        if self._using_cache:
+            self._cache[key] = resized
+        return resized
 
 
 def test():
@@ -142,6 +157,7 @@ def test():
     grass_png = pg.image.load('grass.png')
     test_width = 256
     test_height = 256
+    texture = pg.Surface((test_width, test_height))
     grass = pg.Surface((test_width, test_height))
     grass.fill((255, 255, 255))
     for i in range(test_width//16):
@@ -155,8 +171,14 @@ def test():
     off = 0
     pc = 1
     last_pc = time.time()
+    last_k = time.time()
+    k = 0
+    pixel_offset_in_seconds = 60
 
     while True:
+        if time.time() - last_k > 1/pixel_offset_in_seconds:
+            k += 1
+            last_k = time.time()
         events = pg.event.get()
         for event in events:
             if event.type == pg.QUIT:
@@ -203,7 +225,9 @@ def test():
         s.set_perspective_const(pc)
         off1 = off+(top-bot)//2
         h = int(max(top, bot)*min(top/bot, bot/top))
-        trap = s.get_hor_trapezoid(grass, top, bot, h, off1)
+        texture.blit(grass, (0, k % test_height))
+        texture.blit(grass, (0, (k % test_height) - test_height))
+        trap = s.get_hor_trapezoid(texture, top, bot, h, off1)
 
         x = (1600-trap.get_width())//2
         y = (900-trap.get_height())//2
