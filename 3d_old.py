@@ -396,7 +396,7 @@ class SidesSprites:
 
 
 twice_up_sides = SidesSprites()
-twice_up_sides.fill_cache()
+#twice_up_sides.fill_cache()
 
 
 def from_corners_order(start1: int, end1: int, start2: int, end2: int) -> list[tuple[int, ...]]:
@@ -437,7 +437,7 @@ while True:
     for event in events:
         if event.type == pg.QUIT:
             keys = twice_up_sides.cache.keys()
-            pickle.dump(list(keys), open('keys.pickle', 'wb'))
+            #pickle.dump(list(keys), open('keys.pickle', 'wb'))
             exit()
 
         if event.type == pg.KEYDOWN:

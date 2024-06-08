@@ -1,9 +1,22 @@
 from abc import ABC, abstractmethod
 import pygame as pg
+PATH_TO_SPRITES = 'sprites/'
+PATH_TO_BLOCKS = 'sprites/blocks/'
 
 
 class Sprite:
-    pass
+    def __init__(self, path):
+        self.image = pg.image.load(path)
+
+
+class SpritesDict:
+    def __init__(self, top: Sprite, bottom: Sprite, side1: Sprite, side2: Sprite, side3: Sprite, side4: Sprite):
+        self.top = top
+        self.bottom = bottom
+        self.side1 = side1
+        self.side2 = side2
+        self.side3 = side3
+        self.side4 = side4
 
 
 class Block(ABC):
@@ -52,17 +65,51 @@ class Air(Block):
 
 
 class FullBlock(Block):
+    debug_sprite = Sprite('debug.png')
+
+    @classmethod
+    @abstractmethod
+    def load_sprites(cls):
+        cls.sprites = SpritesDict(*[cls.debug_sprite]*6)
+
     def get_sprites(self) -> list[Sprite]:
-        pass
+        return [self.sprites.top,
+                self.sprites.bottom,
+                self.sprites.side1,
+                self.sprites.side2,
+                self.sprites.side3,
+                self.sprites.side4]
+
+
+class SingleSpriteBlock(FullBlock):
+    sprite = Sprite('debug2.png')
+
+    @classmethod
+    def load_sprites(cls):
+        cls.sprites = SpritesDict(*[cls.sprite]*6)
 
 
 class Grass(FullBlock):
+    top_sprite = Sprite('grass.png')
+    side_sprite = Sprite('grass_side.png')
+    bottom_sprite = Sprite('dirt.png')
+
+    @classmethod
+    def load_sprites(cls):
+        cls.sprites = SpritesDict(cls.top_sprite, cls.bottom_sprite, *[cls.side_sprite]*4)
+
+
+class Dirt(SingleSpriteBlock):
+    sprite = Sprite('dirt.png')
+
+
+class Stone(SingleSpriteBlock):
+    sprite = Sprite('stone.png')
+
+
+def test():
     pass
 
 
-class Dirt(FullBlock):
-    pass
-
-
-class Stone(FullBlock):
-    pass
+if __name__ == '__main__':
+    test()
