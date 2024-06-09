@@ -30,9 +30,9 @@ class World:
         blocks2 = [Air(0, 0, 5), Grass(0, 0, 4), Dirt(0, 0, 3), Dirt(0, 0, 2), Stone(0, 0, 1), Stone(0, 0, 0)]
         test_column_1 = Column(0, 0, blocks1)
         test_column_2 = Column(0, 0, blocks2)
-        for i in range(-30, 31):
-            for j in range(-30, 31):
-                if i % 2 == j % 2:
+        for i in range(-50, 51):
+            for j in range(-50, 51):
+                if i % 2 == j % 2 and not(abs(i) < 10 and abs(j) < 10):
                     column = test_column_1
                 else:
                     column = test_column_2

@@ -8,7 +8,7 @@ class SquareSprite:
         self.rect = rect
         self.texture = texture
 
-    def render(self, scr):
+    def render(self, scr: pg.Surface):
         scr.blit(self.texture, self.rect)
 
 
@@ -29,10 +29,8 @@ class Mech:
                 left = x0 + top_block.x * rect_size
                 top = y0 + top_block.y * rect_size
                 rect = pg.Rect(left, top, rect_size, rect_size)
-                sprite = top_block.get_sprites()[0]
-                # !!!
-                image = pg.transform.scale(sprite.image, (rect_size, rect_size))
-                figure = SquareSprite(rect, image)
+                sprite = top_block.get_top_sprite_resized(rect_size)
+                figure = SquareSprite(rect, sprite)
                 r.append(figure)
             self.elements.append(r)
 

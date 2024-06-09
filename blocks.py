@@ -6,7 +6,7 @@ PATH_TO_BLOCKS = 'sprites/blocks/'
 
 class BlockSprite:
     def __init__(self, path):
-        self.image = pg.image.load(PATH_TO_BLOCKS+path)
+        self.image = pg.image.load(PATH_TO_BLOCKS+path).convert()
 
 
 class BlockSpritesDict:
@@ -16,12 +16,23 @@ class BlockSpritesDict:
                  side2: BlockSprite,
                  side3: BlockSprite,
                  side4: BlockSprite):
-        self.top = top
-        self.bottom = bottom
-        self.side1 = side1
-        self.side2 = side2
-        self.side3 = side3
-        self.side4 = side4
+        self.scale_cache = {}
+        self._top = top
+        self._bottom = bottom
+        self._side1 = side1
+        self._side2 = side2
+        self._side3 = side3
+        self._side4 = side4
+
+    def get_top_resized(self, size) -> pg.Surface:
+        key = f'top{size}'
+        if key not in self.scale_cache:
+            image = pg.transform.scale(self._top.image, (size, size))
+            self.scale_cache[key] = image
+        return self.scale_cache[key]
+
+    def get_side(self, n, size) -> pg.Surface:
+        pass
 
 
 class Block(ABC):
@@ -41,7 +52,7 @@ class Block(ABC):
         self.y = y
         self.z = z
 
-    def set_bottom_size_in_pixels(self, size: list[int | float]):
+    '''def set_bottom_size_in_pixels(self, size: list[int | float]):
         self.bottom_rect.inflate_ip(size)
 
     def set_top_size_in_pixels(self, size: list[int | float]):
@@ -52,24 +63,19 @@ class Block(ABC):
 
     def set_top_topleft(self, top_left: list[int | float]):
         self.top_rect.topleft = top_left
-
+        
     def set_shade(self):
         pass
 
     def set_neighbors(self, left: bool, top: bool, right: bool, bottom: bool):
-        self.neighbors = [left, top, right, bottom]
-
-    @abstractmethod
-    def get_sprites(self) -> list[BlockSprite]:
-        pass
+        self.neighbors = [left, top, right, bottom]'''
 
     def copy_to_x_y(self, x, y):
         return type(self)(x, y, self.z)
 
 
 class Air(Block):
-    def get_sprites(self) -> list[BlockSprite]:
-        return []
+    pass
 
 
 class FullBlock(Block):
@@ -80,13 +86,12 @@ class FullBlock(Block):
     def load_sprites(cls):
         cls.sprites = BlockSpritesDict(*[cls.debug_sprite] * 6)
 
-    def get_sprites(self) -> list[BlockSprite]:
-        return [self.sprites.top,
-                self.sprites.bottom,
-                self.sprites.side1,
-                self.sprites.side2,
-                self.sprites.side3,
-                self.sprites.side4]
+    def get_top_sprite_resized(self, size: int) -> pg.Surface:
+        return self.sprites.get_top_resized(size)
+
+    def get_side_sprite_resized(self, n: int, size: int):
+        assert 0 <= n < 4
+        return self.sprites.get_side(n, size)
 
 
 class SingleSpriteBlock(FullBlock):
@@ -116,17 +121,9 @@ class Stone(SingleSpriteBlock):
 
 
 class DebugBlock(SingleSpriteBlock):
-    sprite = BlockSprite('debug.png')
-
-
-def test():
-    pass
+    sprite = BlockSprite('stone.png')
 
 
 load_list = [Grass, Dirt, Stone, DebugBlock]
 for c in load_list:
     c.load_sprites()
-
-
-if __name__ == '__main__':
-    test()

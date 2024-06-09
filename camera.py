@@ -40,7 +40,7 @@ class CameraFrame:
         self.focus = focus
         self.layers = Layers(BASE_LEVEL_SIZE)
         # !!!
-        self.focus_on_screen = (800, 450)
+        self.focus_on_screen = (768, 480)
 
     def move(self, offset: list[float, float] | tuple[float, float]):
         self.center = self.center[0]+offset[0], self.center[1]+offset[1]
@@ -52,7 +52,11 @@ class CameraFrame:
     def get_rect(self) -> pg.Rect:
         left = self.center[0] - self.width // 2
         top = self.center[1] - self.height // 2
-        return pg.Rect(left, top, self.width, self.height)
+        if left < 0:
+            left -= 1
+        if top < 0:
+            top -= 1
+        return pg.Rect(left, top, self.width+1, self.height+1)
 
     def get_layers(self) -> Layers:
         self.layers.set_focus(self.focus)
