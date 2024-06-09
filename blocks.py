@@ -115,8 +115,17 @@ class Stone(SingleSpriteBlock):
     sprite = BlockSprite('stone.png')
 
 
+class DebugBlock(SingleSpriteBlock):
+    sprite = BlockSprite('debug.png')
+
+
 def test():
     pass
+
+
+load_list = [Grass, Dirt, Stone, DebugBlock]
+for c in load_list:
+    c.load_sprites()
 
 
 if __name__ == '__main__':
