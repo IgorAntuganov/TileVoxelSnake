@@ -4,13 +4,18 @@ PATH_TO_SPRITES = 'sprites/'
 PATH_TO_BLOCKS = 'sprites/blocks/'
 
 
-class Sprite:
+class BlockSprite:
     def __init__(self, path):
-        self.image = pg.image.load(path)
+        self.image = pg.image.load(PATH_TO_BLOCKS+path)
 
 
-class SpritesDict:
-    def __init__(self, top: Sprite, bottom: Sprite, side1: Sprite, side2: Sprite, side3: Sprite, side4: Sprite):
+class BlockSpritesDict:
+    def __init__(self, top: BlockSprite,
+                 bottom: BlockSprite,
+                 side1: BlockSprite,
+                 side2: BlockSprite,
+                 side3: BlockSprite,
+                 side4: BlockSprite):
         self.top = top
         self.bottom = bottom
         self.side1 = side1
@@ -55,24 +60,27 @@ class Block(ABC):
         self.neighbors = [left, top, right, bottom]
 
     @abstractmethod
-    def get_sprites(self) -> list[Sprite]:
+    def get_sprites(self) -> list[BlockSprite]:
         pass
+
+    def copy_to_x_y(self, x, y):
+        return type(self)(x, y, self.z)
 
 
 class Air(Block):
-    def get_sprites(self) -> list[Sprite]:
+    def get_sprites(self) -> list[BlockSprite]:
         return []
 
 
 class FullBlock(Block):
-    debug_sprite = Sprite('debug.png')
+    debug_sprite = BlockSprite('debug.png')
 
     @classmethod
     @abstractmethod
     def load_sprites(cls):
-        cls.sprites = SpritesDict(*[cls.debug_sprite]*6)
+        cls.sprites = BlockSpritesDict(*[cls.debug_sprite] * 6)
 
-    def get_sprites(self) -> list[Sprite]:
+    def get_sprites(self) -> list[BlockSprite]:
         return [self.sprites.top,
                 self.sprites.bottom,
                 self.sprites.side1,
@@ -82,29 +90,29 @@ class FullBlock(Block):
 
 
 class SingleSpriteBlock(FullBlock):
-    sprite = Sprite('debug2.png')
+    sprite = BlockSprite('debug2.png')
 
     @classmethod
     def load_sprites(cls):
-        cls.sprites = SpritesDict(*[cls.sprite]*6)
+        cls.sprites = BlockSpritesDict(*[cls.sprite] * 6)
 
 
 class Grass(FullBlock):
-    top_sprite = Sprite('grass.png')
-    side_sprite = Sprite('grass_side.png')
-    bottom_sprite = Sprite('dirt.png')
+    top_sprite = BlockSprite('grass.png')
+    side_sprite = BlockSprite('grass_side.png')
+    bottom_sprite = BlockSprite('dirt.png')
 
     @classmethod
     def load_sprites(cls):
-        cls.sprites = SpritesDict(cls.top_sprite, cls.bottom_sprite, *[cls.side_sprite]*4)
+        cls.sprites = BlockSpritesDict(cls.top_sprite, cls.bottom_sprite, *[cls.side_sprite] * 4)
 
 
 class Dirt(SingleSpriteBlock):
-    sprite = Sprite('dirt.png')
+    sprite = BlockSprite('dirt.png')
 
 
 class Stone(SingleSpriteBlock):
-    sprite = Sprite('stone.png')
+    sprite = BlockSprite('stone.png')
 
 
 def test():
