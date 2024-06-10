@@ -100,8 +100,8 @@ if render_sides_every_n_frame != 1:
 else:
     sides_screen = None
 
-grass = pg.image.load('grass.png')
-dirt = pg.image.load('dirt.png')
+grass = pg.image.load('sprites/blocks/grass.png').convert()
+dirt = pg.image.load('sprites/blocks/dirt.png').convert()
 '''grass = pg.Surface((32, 32))
 grass.blit(grass1, (0, 0))
 grass.blit(grass1, (16, 0))

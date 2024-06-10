@@ -74,10 +74,6 @@ class Block(ABC):
         return type(self)(x, y, self.z)
 
 
-class Air(Block):
-    pass
-
-
 class FullBlock(Block):
     debug_sprite = BlockSprite('debug.png')
 
@@ -121,7 +117,7 @@ class Stone(SingleSpriteBlock):
 
 
 class DebugBlock(SingleSpriteBlock):
-    sprite = BlockSprite('stone.png')
+    sprite = BlockSprite('debug.png')
 
 
 load_list = [Grass, Dirt, Stone, DebugBlock]

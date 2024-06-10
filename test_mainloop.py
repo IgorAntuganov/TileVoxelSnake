@@ -11,10 +11,10 @@ clock = pg.time.Clock()
 camera = CameraFrame((0, 0), 1536//BASE_LEVEL_SIZE, 960//BASE_LEVEL_SIZE, (0, 0))
 world = World()
 world.test_fill()
-# frame = 0
+frame = 0
 
 while True:
-    # frame += 1
+    frame += 1
     events = pg.event.get()
     for event in events:
         if event.type == pg.QUIT:
@@ -40,38 +40,42 @@ while True:
         pressed_offset[0] -= .19
     if pressed[pg.K_RIGHT]:
         pressed_offset[0] += .195
+    if clock.get_fps() != 0:
+        pressed_offset = pressed_offset[0] / clock.get_fps() * 50, pressed_offset[1] / clock.get_fps() * 50
     camera.move(pressed_offset)
 
     # render
     # times = [time.time()]
     scr.fill((0, 0, 0))
-    # times.append(time.time())
+    # times.append(time.time())  # 1
     column_cords = camera.get_rect()
-    # times.append(time.time())
-    columns_to_draw = world.get_columns_in_rect(column_cords)
-    # times.append(time.time())
+    # times.append(time.time())  # 2
+    columns_to_draw = world.get_columns_in_rect_generator(column_cords)
+    # times.append(time.time())  # 3
     layers = camera.get_layers()
-    # times.append(time.time())
-    _mesh = Mech(columns_to_draw, layers)
-    # times.append(time.time())
+    # times.append(time.time())  # 4
+    _mesh = TerrainMech(columns_to_draw, layers)
+    # times.append(time.time())  # 5
     focus_in_frame = camera.get_focus_in_frame()
-    # times.append(time.time())
+    # times.append(time.time())  # 6
     ordered = _mesh.get_elements_in_order(focus_in_frame)
-    # times.append(time.time())
+    # times.append(time.time())  # 7
     for element in ordered:
-        element.render(scr)
-    # times.append(time.time())
+        rect, sprite = element
+        scr.blit(sprite, rect)
+        # element.render(scr)
+    # times.append(time.time())  # 8
     pg.display.set_caption(str(clock.get_fps()))
 
-    '''if frame % 25 == 0:
-        print(' - ' * 30)
-        print(len(ordered))
-        for i in range(1, len(times)):
-            t = round(times[i]-times[i-1], 10)
-            if t == 0:
-                print(i, t)
-            else:
-                print(i, round(1/t), t)'''
+    # if frame % 25 == 0:
+    #     print(' - ' * 30)
+    #     print(len(ordered), 'blocks on screen')
+    #     for i in range(1, len(times)):
+    #         t = round(times[i]-times[i-1], 10)
+    #         if t == 0:
+    #             print(i, t)
+    #         else:
+    #             print(i, round(1/t), t)
 
     pg.display.update()
-    clock.tick(120)
+    clock.tick(1000)
