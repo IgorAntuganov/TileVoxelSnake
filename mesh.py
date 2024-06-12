@@ -11,8 +11,12 @@ sides_drawer.set_using_cache(True)
 
 
 class TerrainMech:
-    def __init__(self, columns, layers: Layers):
-        """columns: generator -> Column"""
+    def __init__(self, layers: Layers):
+        self.layers = layers
+        self.elements = []
+
+    def create_mesh(self, columns):
+        """:param columns: generator -> Column"""
         # total_time = 0
 
         last_x = None
@@ -21,55 +25,77 @@ class TerrainMech:
         r = []
         for column in columns:
             column: Column
-            # start = time.time()
-            # total_time += time.time() - start
 
             # top sprites of blocks
             top_block = column.get_top_block()
             x, y, z = column.x, column.y, top_block.z
-            rect_size = layers.get_n_level_size(z)
-            rect = layers.get_rect(x, y, z)
+            rect_size = self.layers.get_n_level_size(z)
+            top_block_rect = self.layers.get_rect(x, y, z)
             sprite = top_block.get_top_sprite_resized(rect_size)
-            top_figure = (rect, sprite)
+            top_figure = (top_block_rect, sprite)
 
             # sides of blocks
             sides_figures: list[tuple[pg.Rect, pg.Surface]] = []
             hd = column.height_difference
+            column_bottom_rect = self.layers.get_rect(x, y, 0)
             # bottom side
             if hd['bottom'] > 0:
-                top_rect = layers.get_rect(x, y, z)
-                bottom_rect = layers.get_rect(x, y, 0)
-                if top_rect.bottom < bottom_rect.bottom:
+                if top_block_rect.bottom < column_bottom_rect.bottom:
                     for i in range(hd['bottom']):
                         side_z = z - i
-                        block_for_side = column.get_block(side_z)
-                        bottom_sprite = block_for_side.get_side_sprite('bottom')
-                        top_rect = layers.get_rect(x, y, side_z)
-                        bottom_rect = layers.get_rect(x, y, side_z-1)
-
-                        left_top = top_rect.bottomleft
-                        right_top = top_rect.bottomright
-                        left_bottom = bottom_rect.bottomleft
-                        right_bottom = bottom_rect.bottomright
-
-                        top = right_top[0] - left_top[0]
-                        bottom = right_bottom[0] - left_bottom[0]
-                        offset = left_bottom[0] - left_top[0]
-                        height = left_bottom[1] - left_top[1]
-                        trapezoid_sprite = sides_drawer.get_hor_trapezoid(bottom_sprite, top, bottom,  height, offset)
-
-                        rect_left = min(left_top[0], left_bottom[0])
-                        rect = pg.Rect((rect_left, left_top[1]), trapezoid_sprite.get_rect().size)
-                        figure = (rect, trapezoid_sprite)
+                        figure = self.create_bottom_sprite(column, side_z)
+                        sides_figures.append(figure)
+            # top side
+            if hd['top'] > 0:
+                if top_block_rect.top > column_bottom_rect.top:
+                    for i in range(hd['top']):
+                        side_z = z - i
+                        figure = self.create_top_sprite(column, side_z)
                         sides_figures.append(figure)
 
+            # switching to a new line
             if last_x is not None and last_x != top_block.x:
                 self.elements.append(r)
                 r = []
             last_x = top_block.x
             r.append([top_figure, *sides_figures])
         self.elements.append(r)
-        # print('total', int(1/total_time) if total_time != 0 else None, total_time)
+
+    def create_bottom_sprite(self, column, z) -> tuple[pg.Rect, pg.Surface]:
+        x, y = column.x, column.y
+        block_for_side = column.get_block(z)
+        sprite = block_for_side.get_side_sprite('bottom')
+        top_rect = self.layers.get_rect(x, y, z)
+        bottom_rect = self.layers.get_rect(x, y, z - 1)
+
+        top = top_rect.right - top_rect.left
+        bottom = bottom_rect.right - bottom_rect.left
+        offset = bottom_rect.left - top_rect.left
+        height = bottom_rect.bottom - top_rect.bottom
+        trapezoid_sprite = sides_drawer.get_hor_trapezoid(sprite, top, bottom, height, offset)
+
+        rect_left = min(top_rect.left, bottom_rect.left)
+        rect = pg.Rect((rect_left, top_rect.bottom), trapezoid_sprite.get_rect().size)
+        figure = (rect, trapezoid_sprite)
+        return figure
+
+    def create_top_sprite(self, column, z) -> tuple[pg.Rect, pg.Surface]:
+        x, y = column.x, column.y
+        block_for_side = column.get_block(z)
+        sprite = block_for_side.get_side_sprite('top')
+        top_rect = self.layers.get_rect(x, y, z)
+        bottom_rect = self.layers.get_rect(x, y, z - 1)
+
+        top = top_rect.right - top_rect.left
+        bottom = bottom_rect.right - bottom_rect.left
+        offset = bottom_rect.left - top_rect.left
+        height = bottom_rect.top - top_rect.top
+        trapezoid_sprite = sides_drawer.get_hor_trapezoid(sprite, top, bottom, height, offset)
+
+        rect_left = min(bottom_rect.left, top_rect.left)
+        rect = pg.Rect((rect_left, bottom_rect.top), trapezoid_sprite.get_rect().size)
+        figure = (rect, trapezoid_sprite)
+        return figure
 
     def get_elements_in_order(self, focus_in_frame: tuple[int, int]) -> list[list[tuple[pg.Rect, pg.Surface]]]:
         ordered: list[list[tuple[pg.Rect, pg.Surface]]] = []

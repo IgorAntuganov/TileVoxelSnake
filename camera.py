@@ -49,6 +49,7 @@ class CameraFrame:
         self.layers = Layers(BASE_LEVEL_SIZE)
         # !!!
         self.focus_on_screen = (768, 480)
+        self.screen_rect = pg.Rect(0, 0, 1536, 960)
 
     def move(self, offset: list[float, float] | tuple[float, float]):
         self.center = self.center[0]+offset[0], self.center[1]+offset[1]
@@ -72,6 +73,10 @@ class CameraFrame:
         self.layers.set_focus(self.focus)
         self.layers.set_focus_on_screen(self.focus_on_screen)
         return self.layers
+
+    def update_layers(self):
+        self.layers.set_focus(self.focus)
+        self.layers.set_focus_on_screen(self.focus_on_screen)
 
     def get_focus_in_frame(self) -> tuple[int, int]:
         focus = int(self.focus[0]), int(self.focus[1])

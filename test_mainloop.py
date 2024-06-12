@@ -9,8 +9,10 @@ from mesh import *
 
 clock = pg.time.Clock()
 camera = CameraFrame((0, 0), 1536//BASE_LEVEL_SIZE, 960//BASE_LEVEL_SIZE, (0, 0))
+layers = camera.get_layers()
 world = World()
 world.test_fill()
+terr_mesh = TerrainMech(layers)
 frame = 0
 
 while True:
@@ -52,18 +54,27 @@ while True:
     # times.append(time.time())  # 2
     columns_to_draw = world.get_columns_in_rect_generator(column_cords)
     # times.append(time.time())  # 3
-    layers = camera.get_layers()
+    camera.update_layers()
     # times.append(time.time())  # 4
-    _mesh = TerrainMech(columns_to_draw, layers)
+    terr_mesh.create_mesh(columns_to_draw)
     # times.append(time.time())  # 5
     focus_in_frame = camera.get_focus_in_frame()
     # times.append(time.time())  # 6
-    ordered = _mesh.get_elements_in_order(focus_in_frame)
+    ordered = terr_mesh.get_elements_in_order(focus_in_frame)
     # times.append(time.time())  # 7
-    for column in ordered:
-        for element in column:
+    mouse_rect = None
+    for column_figures in ordered:
+        for element in column_figures:
             rect, sprite = element
-            scr.blit(sprite, rect)
+            if camera.screen_rect.colliderect(rect):
+                scr.blit(sprite, rect)
+        rect = column_figures[0][0]
+        if rect.collidepoint(pg.mouse.get_pos()):
+            mouse_rect = rect.copy()
+
+    if mouse_rect is not None:
+        pg.draw.rect(scr, (255-(60-mouse_rect.width)*10, 0, 0), mouse_rect)
+
     # times.append(time.time())  # 8
     pg.display.set_caption(str(clock.get_fps()))
 
