@@ -46,7 +46,7 @@ class World:
         self.not_found_column: Column = Column(0, 0, [DebugBlock(0, 0, 0)])
 
     def test_fill(self):
-        blocks1 = [Dirt(0, 0, 2), Dirt(0, 0, 1), Stone(0, 0, 0)]
+        blocks1 = [Stone(0, 0, 2), Dirt(0, 0, 1), Stone(0, 0, 0)]
         blocks2 = [Grass(0, 0, 3),  Dirt(0, 0, 2), Stone(0, 0, 1), Stone(0, 0, 0)]
         test_column_1 = Column(0, 0, blocks1)
         test_column_2 = Column(0, 0, blocks2)

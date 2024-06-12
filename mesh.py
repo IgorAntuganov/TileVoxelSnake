@@ -5,7 +5,7 @@ from world import Column
 from trapezoid import SidesDrawer
 sides_drawer = SidesDrawer()
 sides_drawer.set_debug_mode(False)
-sides_drawer.set_fast_anisotropic(False)
+sides_drawer.set_fast_anisotropic(True)
 sides_drawer.set_using_perspective(True)
 sides_drawer.set_using_cache(True)
 
@@ -17,12 +17,12 @@ class TerrainMech:
 
     def create_mesh(self, columns):
         """:param columns: generator -> Column"""
-        # total_time = 0
 
-        last_x = None
         # two-dim list of figures list, figure: tuple[pg.Rect, pg.Surface]
         self.elements: list[list[list[tuple[pg.Rect, pg.Surface]]]] = []
+
         r = []
+        last_x = None
         for column in columns:
             column: Column
 
@@ -51,6 +51,22 @@ class TerrainMech:
                     for i in range(hd['top']):
                         side_z = z - i
                         figure = self.create_top_sprite(column, side_z)
+                        sides_figures.append(figure)
+
+            # right side
+            if hd['right'] > 0:
+                if top_block_rect.right < column_bottom_rect.right:
+                    for i in range(hd['right']):
+                        side_z = z - i
+                        figure = self.create_right_sprite(column, side_z)
+                        sides_figures.append(figure)
+
+            # left side
+            if hd['left'] > 0:
+                if top_block_rect.left > column_bottom_rect.left:
+                    for i in range(hd['left']):
+                        side_z = z - i
+                        figure = self.create_left_sprite(column, side_z)
                         sides_figures.append(figure)
 
             # switching to a new line
@@ -94,6 +110,42 @@ class TerrainMech:
 
         rect_left = min(bottom_rect.left, top_rect.left)
         rect = pg.Rect((rect_left, bottom_rect.top), trapezoid_sprite.get_rect().size)
+        figure = (rect, trapezoid_sprite)
+        return figure
+
+    def create_right_sprite(self, column, z) -> tuple[pg.Rect, pg.Surface]:
+        x, y = column.x, column.y
+        block_for_side = column.get_block(z)
+        sprite = block_for_side.get_side_sprite('right')
+        top_rect = self.layers.get_rect(x, y, z)
+        bottom_rect = self.layers.get_rect(x, y, z - 1)
+
+        left = top_rect.bottom - top_rect.top
+        right = bottom_rect.bottom - bottom_rect.top
+        width = bottom_rect.right - top_rect.right
+        offset = bottom_rect.top - top_rect.top
+        trapezoid_sprite = sides_drawer.get_vert_trapezoid(sprite, left, right, width, offset)
+
+        rect_top = min(bottom_rect.top, top_rect.top)
+        rect = pg.Rect((top_rect.right, rect_top), trapezoid_sprite.get_rect().size)
+        figure = (rect, trapezoid_sprite)
+        return figure
+
+    def create_left_sprite(self, column, z) -> tuple[pg.Rect, pg.Surface]:
+        x, y = column.x, column.y
+        block_for_side = column.get_block(z)
+        sprite = block_for_side.get_side_sprite('left')
+        top_rect = self.layers.get_rect(x, y, z)
+        bottom_rect = self.layers.get_rect(x, y, z - 1)
+
+        left = top_rect.bottom - top_rect.top
+        right = bottom_rect.bottom - bottom_rect.top
+        width = bottom_rect.left - top_rect.left
+        offset = bottom_rect.top - top_rect.top
+        trapezoid_sprite = sides_drawer.get_vert_trapezoid(sprite, left, right, width, offset)
+
+        rect_top = min(bottom_rect.top, top_rect.top)
+        rect = pg.Rect((bottom_rect.left, rect_top), trapezoid_sprite.get_rect().size)
         figure = (rect, trapezoid_sprite)
         return figure
 

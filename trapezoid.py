@@ -113,7 +113,7 @@ class SidesDrawer:
     def get_pixel_string_with_anisotropic(self, texture: pg.Surface, width, part1, part2) -> pg.Surface:
         part1 = round(part1, 10)
         part2 = round(part2, 10)
-        key = (texture.__hash__(), width, part1, part2)
+        key = (True, texture.__hash__(), width, part1, part2)
         if self._using_cache and key in self._cache:
             return self._cache[key]
 
@@ -151,13 +151,129 @@ class SidesDrawer:
             print('in cache:', len(self._cache))
         return resized
 
+    def get_vert_trapezoid(self, texture: pg.Surface,
+                           left_height: int,
+                           right_height: int,
+                           width: int,
+                           offset: int) -> pg.Surface:
+        """
+        :param texture: source texture
+        :param left_height: height where will be left side of texture
+        :param right_height: height where will be right side of texture
+        :param width: can be negative if left side righter on screen than right side
+        :param offset: difference by y between the upper-left and upper-right corners
+        """
+        if offset > 0:
+            im_height = max(left_height, right_height + offset)
+        else:
+            im_height = max(left_height - offset, right_height)
+        im_width = abs(width)
+        image = pg.Surface((im_width, im_height), pg.SRCALPHA)
+
+        if self._debug_background:
+            image.fill((255, 0, 0))
+
+        for i in range(im_width):
+            if self._anisotropic_filtration:
+                i1 = i - .5
+                part = i1 / im_width
+                next_part = (i1 + 1) / im_width
+            else:
+                part = i / im_width
+                next_part = -1
+
+            # calculating str_x, str_y and col_height
+            if offset > 0:
+                str_y = int(offset * part)
+                bottom_left = left_height
+                bottom_right = offset + right_height
+            else:
+                str_y = int(abs(offset) * (1 - part))
+                bottom_left = left_height + abs(offset)
+                bottom_right = right_height
+            bottom_diffs = bottom_left - bottom_right
+            col_height = int(bottom_left - bottom_diffs * part) - str_y
+            if col_height < 1:
+                continue
+
+            if width > 0:
+                str_x = i
+            else:
+                str_x = im_width - i - 1
+
+            if self._perspective_correctness:
+                z1 = (right_height / left_height) ** self._perspective_const
+                part = part / (part + (1 - part) / z1)
+                next_part = next_part / (next_part + (1 - next_part) / z1)
+
+            # getting column of pixels
+            if self._anisotropic_filtration:
+                pixel_column = self.get_pixel_column_with_anisotropic(texture, col_height, part, next_part)
+            else:
+                pixel_column = self.get_pixel_column_fast(texture, col_height, part)
+
+            image.blit(pixel_column, (str_x, str_y))
+
+        return image
+
+    @staticmethod
+    def get_pixel_column_fast(texture, height, part) -> pg.Surface:
+        pstring = pg.Surface((1, height), pg.SRCALPHA)
+        texture_x = int(part * texture.get_width())
+        crop = pg.Surface((1, texture.get_height()))
+        crop.blit(texture, (-texture_x, 0))
+        resized = pg.transform.scale(crop, (1, height))
+        pstring.blit(resized, (0, 0))
+        return pstring
+
+    def get_pixel_column_with_anisotropic(self, texture: pg.Surface, height, part1, part2) -> pg.Surface:
+        part1 = round(part1, 10)
+        part2 = round(part2, 10)
+        key = (False, texture.__hash__(), height, part1, part2)
+        if self._using_cache and key in self._cache:
+            return self._cache[key]
+
+        texture_x_1 = part1 * texture.get_width()
+        texture_x_2 = part2 * texture.get_width()
+
+        if self._fast_anisotropic:
+            pstring = pg.Surface((1, texture.get_height()), pg.SRCALPHA)
+            surfaces = []  # for PyCharm
+        else:
+            pstring = None  # for PyCharm
+            surfaces = []
+
+        for k in range(int(texture_x_1), int(texture_x_2)+1):
+            crop = pg.Surface((1, texture.get_height()))
+            crop.blit(texture, (-k, 0))
+            resized = crop
+            if self._fast_anisotropic:
+                x_diff = abs(texture_x_1 - texture_x_2)
+                if k != int(texture_x_1):
+                    resized.set_alpha(int(255/x_diff))
+                pstring.blit(resized, (0, 0))
+            else:
+                surfaces.append(resized.copy())
+        if not self._fast_anisotropic:
+            pstring = pg.transform.average_surfaces(surfaces)
+
+        if height < texture.get_height():
+            resized = pg.transform.smoothscale(pstring, (1, height))
+        else:
+            resized = pg.transform.scale(pstring, (1, height))
+
+        if self._using_cache:
+            self._cache[key] = resized
+            print('in cache:', len(self._cache))
+        return resized
+
 
 def test():
     s = SidesDrawer()
 
     grass_png = pg.image.load('sprites/blocks/grass_side.png')
-    test_width = 256
-    test_height = 256
+    test_width = 16
+    test_height = 16
     texture = pg.Surface((test_width, test_height))
     grass = pg.Surface((test_width, test_height))
     grass.fill((255, 255, 255))
@@ -228,7 +344,7 @@ def test():
         h = int(max(top, bot)*min(top/bot, bot/top))
         texture.blit(grass, (0, k % test_height))
         texture.blit(grass, (0, (k % test_height) - test_height))
-        trap = s.get_hor_trapezoid(texture, top, bot, h, off1)
+        trap = s.get_vert_trapezoid(grass, top, bot, h, off1)
 
         x = (1600-trap.get_width())//2
         y = (900-trap.get_height())//2

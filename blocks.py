@@ -5,26 +5,28 @@ PATH_TO_BLOCKS = 'sprites/blocks/'
 
 SIDES = ['left', 'top', 'right', 'bottom']
 
+
 class BlockSprite:
-    def __init__(self, path):
+    def __init__(self, path, angle=0):
         self.image = pg.image.load(PATH_TO_BLOCKS+path).convert()
+        self.image = pg.transform.rotate(self.image, angle)
 
 
 class BlockSpritesDict:
-    def __init__(self, top: BlockSprite,
-                 bottom: BlockSprite,
-                 side1: BlockSprite,
-                 side2: BlockSprite,
-                 side3: BlockSprite,
-                 side4: BlockSprite):
+    def __init__(self, top: str,
+                 bottom: str,
+                 side1: str,
+                 side2: str,
+                 side3: str,
+                 side4: str):
         self.scale_cache = {}
-        self._top = top
-        self._bottom = bottom
-        self._side1 = side1
-        self._side2 = side2
-        self._side3 = side3
-        self._side4 = side4
-        self._sides = [side1, side2, side3, side4]
+        self._top = BlockSprite(top)
+        self._bottom = BlockSprite(bottom)
+        self._side1 = BlockSprite(side1, 90)
+        self._side2 = BlockSprite(side2)
+        self._side3 = BlockSprite(side3, 90)
+        self._side4 = BlockSprite(side4)
+        self._sides = [self._side1, self._side2, self._side3, self._side4]
 
     def get_top_resized(self, size) -> pg.Surface:
         key = f'top{size}'
@@ -77,7 +79,7 @@ class Block(ABC):
 
 
 class FullBlock(Block):
-    debug_sprite = BlockSprite('debug.png')
+    debug_sprite = 'debug.png'
 
     @classmethod
     @abstractmethod
@@ -97,7 +99,7 @@ class FullBlock(Block):
 
 
 class SingleSpriteBlock(FullBlock):
-    sprite = BlockSprite('debug2.png')
+    sprite = 'debug2.png'
 
     @classmethod
     def load_sprites(cls):
@@ -105,9 +107,9 @@ class SingleSpriteBlock(FullBlock):
 
 
 class Grass(FullBlock):
-    top_sprite = BlockSprite('grass.png')
-    side_sprite = BlockSprite('grass_side.png')
-    bottom_sprite = BlockSprite('dirt.png')
+    top_sprite = 'grass.png'
+    side_sprite = 'grass_side.png'
+    bottom_sprite = 'dirt.png'
 
     @classmethod
     def load_sprites(cls):
@@ -115,15 +117,15 @@ class Grass(FullBlock):
 
 
 class Dirt(SingleSpriteBlock):
-    sprite = BlockSprite('dirt.png')
+    sprite = 'dirt.png'
 
 
 class Stone(SingleSpriteBlock):
-    sprite = BlockSprite('stone.png')
+    sprite = 'stone.png'
 
 
 class DebugBlock(SingleSpriteBlock):
-    sprite = BlockSprite('debug.png')
+    sprite = 'debug.png'
 
 
 load_list = [Grass, Dirt, Stone, DebugBlock]
