@@ -110,10 +110,10 @@ class SidesDrawer:
         pstring.blit(resized, (0, 0))
         return pstring
 
-    def get_pixel_string_with_anisotropic(self, texture, width, part1, part2) -> pg.Surface:
+    def get_pixel_string_with_anisotropic(self, texture: pg.Surface, width, part1, part2) -> pg.Surface:
         part1 = round(part1, 10)
         part2 = round(part2, 10)
-        key = (width, part1, part2)
+        key = (texture.__hash__(), width, part1, part2)
         if self._using_cache and key in self._cache:
             return self._cache[key]
 
@@ -148,13 +148,14 @@ class SidesDrawer:
 
         if self._using_cache:
             self._cache[key] = resized
+            print('in cache:', len(self._cache))
         return resized
 
 
 def test():
     s = SidesDrawer()
 
-    grass_png = pg.image.load('grass.png')
+    grass_png = pg.image.load('sprites/blocks/grass_side.png')
     test_width = 256
     test_height = 256
     texture = pg.Surface((test_width, test_height))

@@ -60,10 +60,10 @@ while True:
     # times.append(time.time())  # 6
     ordered = _mesh.get_elements_in_order(focus_in_frame)
     # times.append(time.time())  # 7
-    for element in ordered:
-        rect, sprite = element
-        scr.blit(sprite, rect)
-        # element.render(scr)
+    for column in ordered:
+        for element in column:
+            rect, sprite = element
+            scr.blit(sprite, rect)
     # times.append(time.time())  # 8
     pg.display.set_caption(str(clock.get_fps()))
 

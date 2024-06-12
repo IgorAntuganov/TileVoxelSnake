@@ -19,8 +19,8 @@ class Layers:
 
     def get_n_level_size(self, n: int) -> int:
         """:return size of blocks with z=n in pixels of screen"""
-        difference = n/125
-        difference = max(self.base_level_size*difference, n//2)
+        difference = n * 3
+        #difference = max(self.base_level_size*difference, n//2)
         return int(self.base_level_size + difference)
 
     def get_n_level_x0_y0(self, n: int) -> tuple[int, int]:
@@ -29,6 +29,14 @@ class Layers:
         offset_x = (-self.focus[0]) * size + self.focus_on_screen[0]
         offset_y = (-self.focus[1]) * size + self.focus_on_screen[1]
         return offset_x, offset_y
+
+    def get_rect(self, x, y, z) -> pg.Rect:
+        rect_size = self.get_n_level_size(z)
+        x0, y0 = self.get_n_level_x0_y0(z)
+        left = x0 + x * rect_size
+        top = y0 + y * rect_size
+        rect = pg.Rect(left, top, rect_size, rect_size)
+        return rect
 
 
 class CameraFrame:

@@ -3,6 +3,7 @@ import pygame as pg
 PATH_TO_SPRITES = 'sprites/'
 PATH_TO_BLOCKS = 'sprites/blocks/'
 
+SIDES = ['left', 'top', 'right', 'bottom']
 
 class BlockSprite:
     def __init__(self, path):
@@ -23,6 +24,7 @@ class BlockSpritesDict:
         self._side2 = side2
         self._side3 = side3
         self._side4 = side4
+        self._sides = [side1, side2, side3, side4]
 
     def get_top_resized(self, size) -> pg.Surface:
         key = f'top{size}'
@@ -31,7 +33,10 @@ class BlockSpritesDict:
             self.scale_cache[key] = image
         return self.scale_cache[key]
 
-    def get_side(self, n, size) -> pg.Surface:
+    def get_side(self, n) -> pg.Surface:
+        return self._sides[n].image
+
+    def get_side_resized(self, n, size) -> pg.Surface:
         pass
 
 
@@ -40,9 +45,6 @@ class Block(ABC):
         self.x = x
         self.y = y
         self.z = z
-        self.top_rect = pg.Rect((1, 1, 1, 1))
-        self.bottom_rect = pg.Rect((1, 1, 1, 1))
-        self.neighbors = []
 
     def get_xyz(self):
         return self.x, self.y, self.z
@@ -87,7 +89,11 @@ class FullBlock(Block):
 
     def get_side_sprite_resized(self, n: int, size: int):
         assert 0 <= n < 4
-        return self.sprites.get_side(n, size)
+        return self.sprites.get_side_resized(n, size)
+
+    def get_side_sprite(self, side: str):
+        assert side in SIDES
+        return self.sprites.get_side(SIDES.index(side))
 
 
 class SingleSpriteBlock(FullBlock):
