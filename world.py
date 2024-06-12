@@ -57,6 +57,8 @@ class World:
                 else:
                     column = test_column_2
                 self.columns[(i, j)] = column.copy_to_x_y(i, j)
+        self.columns[(20, 20)] = Column(20, 20, [Stone(20, 20, 7-x) for x in range(8)])
+        self.columns[(30, 20)] = Column(30, 20, [Grass(30, 20, 7-x) for x in range(8)])
         self.set_columns_h_diff_in_rect(pg.Rect(-40, -160, 200, 240))
 
     def get_column(self, x, y) -> Column:

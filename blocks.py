@@ -35,11 +35,11 @@ class BlockSpritesDict:
             self.scale_cache[key] = image
         return self.scale_cache[key]
 
+    def get_top_resized_shaded(self, size, neighbors) -> pg.Surface:
+        pass
+
     def get_side(self, n) -> pg.Surface:
         return self._sides[n].image
-
-    def get_side_resized(self, n, size) -> pg.Surface:
-        pass
 
 
 class Block(ABC):
@@ -56,24 +56,6 @@ class Block(ABC):
         self.y = y
         self.z = z
 
-    '''def set_bottom_size_in_pixels(self, size: list[int | float]):
-        self.bottom_rect.inflate_ip(size)
-
-    def set_top_size_in_pixels(self, size: list[int | float]):
-        self.top_rect.inflate_ip(size)
-
-    def set_bottom_topleft(self, top_left: list[int | float]):
-        self.bottom_rect.topleft = top_left
-
-    def set_top_topleft(self, top_left: list[int | float]):
-        self.top_rect.topleft = top_left
-        
-    def set_shade(self):
-        pass
-
-    def set_neighbors(self, left: bool, top: bool, right: bool, bottom: bool):
-        self.neighbors = [left, top, right, bottom]'''
-
     def copy_to_x_y(self, x, y):
         return type(self)(x, y, self.z)
 
@@ -88,10 +70,6 @@ class FullBlock(Block):
 
     def get_top_sprite_resized(self, size: int) -> pg.Surface:
         return self.sprites.get_top_resized(size)
-
-    def get_side_sprite_resized(self, n: int, size: int):
-        assert 0 <= n < 4
-        return self.sprites.get_side_resized(n, size)
 
     def get_side_sprite(self, side: str):
         assert side in SIDES

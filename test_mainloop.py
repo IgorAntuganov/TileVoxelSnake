@@ -43,7 +43,7 @@ while True:
     if pressed[pg.K_RIGHT]:
         pressed_offset[0] += .195
     if clock.get_fps() != 0:
-        pressed_offset = pressed_offset[0] / clock.get_fps() * 50, pressed_offset[1] / clock.get_fps() * 50
+        pressed_offset = pressed_offset[0] / clock.get_fps() * 60, pressed_offset[1] / clock.get_fps() * 60
     camera.move(pressed_offset)
 
     # render

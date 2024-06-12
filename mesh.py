@@ -88,10 +88,10 @@ class TerrainMech:
         bottom = bottom_rect.right - bottom_rect.left
         offset = bottom_rect.left - top_rect.left
         height = bottom_rect.bottom - top_rect.bottom
-        trapezoid_sprite = sides_drawer.get_hor_trapezoid(sprite, top, bottom, height, offset)
+        trapezoid_sprite = sides_drawer.get_hor_trapezoid(sprite, top+3, bottom+3, height, offset)
 
         rect_left = min(top_rect.left, bottom_rect.left)
-        rect = pg.Rect((rect_left, top_rect.bottom), trapezoid_sprite.get_rect().size)
+        rect = pg.Rect((rect_left-1, top_rect.bottom), trapezoid_sprite.get_rect().size)
         figure = (rect, trapezoid_sprite)
         return figure
 
@@ -106,7 +106,7 @@ class TerrainMech:
         bottom = bottom_rect.right - bottom_rect.left
         offset = bottom_rect.left - top_rect.left
         height = bottom_rect.top - top_rect.top
-        trapezoid_sprite = sides_drawer.get_hor_trapezoid(sprite, top, bottom, height, offset)
+        trapezoid_sprite = sides_drawer.get_hor_trapezoid(sprite, top+1, bottom+1, height, offset)
 
         rect_left = min(bottom_rect.left, top_rect.left)
         rect = pg.Rect((rect_left, bottom_rect.top), trapezoid_sprite.get_rect().size)
@@ -124,10 +124,10 @@ class TerrainMech:
         right = bottom_rect.bottom - bottom_rect.top
         width = bottom_rect.right - top_rect.right
         offset = bottom_rect.top - top_rect.top
-        trapezoid_sprite = sides_drawer.get_vert_trapezoid(sprite, left, right, width, offset)
+        trapezoid_sprite = sides_drawer.get_vert_trapezoid(sprite, left+3, right+3, width, offset)
 
         rect_top = min(bottom_rect.top, top_rect.top)
-        rect = pg.Rect((top_rect.right, rect_top), trapezoid_sprite.get_rect().size)
+        rect = pg.Rect((top_rect.right, rect_top-1), trapezoid_sprite.get_rect().size)
         figure = (rect, trapezoid_sprite)
         return figure
 
@@ -142,10 +142,10 @@ class TerrainMech:
         right = bottom_rect.bottom - bottom_rect.top
         width = bottom_rect.left - top_rect.left
         offset = bottom_rect.top - top_rect.top
-        trapezoid_sprite = sides_drawer.get_vert_trapezoid(sprite, left, right, width, offset)
+        trapezoid_sprite = sides_drawer.get_vert_trapezoid(sprite, left+3, right+3, width, offset)
 
         rect_top = min(bottom_rect.top, top_rect.top)
-        rect = pg.Rect((bottom_rect.left, rect_top), trapezoid_sprite.get_rect().size)
+        rect = pg.Rect((bottom_rect.left, rect_top-1), trapezoid_sprite.get_rect().size)
         figure = (rect, trapezoid_sprite)
         return figure
 
