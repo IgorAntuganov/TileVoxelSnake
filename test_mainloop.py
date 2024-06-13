@@ -68,9 +68,9 @@ while True:
             rect, sprite = element
             if camera.screen_rect.colliderect(rect):
                 scr.blit(sprite, rect)
-        rect = column_figures[0][0]
-        if rect.collidepoint(pg.mouse.get_pos()):
-            mouse_rect = rect.copy()
+
+            if rect.collidepoint(pg.mouse.get_pos()):
+                mouse_rect = rect.copy()
 
     if mouse_rect is not None:
         pg.draw.rect(scr, ((255-(60-mouse_rect.width)*10)%255, 0, 0), mouse_rect)

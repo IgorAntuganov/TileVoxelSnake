@@ -4,10 +4,11 @@ PATH_TO_SPRITES = 'sprites/'
 PATH_TO_BLOCKS = 'sprites/blocks/'
 
 SIDES = ['left', 'top', 'right', 'bottom']
+DIAGONALS = ['top_left', 'top_right', 'bottom_left', 'bottom_right']
 
 
 class ShadowSprites:
-    def __init__(self, shade_radius=0.4, shade_power=0.2):
+    def __init__(self, shade_radius=0.6, shade_power=0.3):
         """:param shade_radius: between 0 and 1, which part will be covered with shade
         :param shade_power: between 0 and 1, shadow power at the darkest point (1 - full black)
         """
@@ -16,7 +17,7 @@ class ShadowSprites:
         self.shade_power = shade_power
 
     def get_shade(self, side: str, size: int) -> pg.Surface:
-        key = (size, side)
+        key = (size, side, 'nearby')
         if key not in self.cache:
             shade = pg.Surface((size, size), pg.SRCALPHA)
             shade.fill((0, 0, 0, 0))
@@ -29,6 +30,27 @@ class ShadowSprites:
                 shade.blit(shade_string, (0, i))
 
             angle = (1-SIDES.index(side))*90
+            shade = pg.transform.rotate(shade, angle)
+            self.cache[key] = shade
+        return self.cache[key]
+
+    def get_diagonal_shade(self, side: str, size: int) -> pg.Surface:
+        key = (size, side, 'diagonal')
+        if key not in self.cache:
+            shade = pg.Surface((size, size), pg.SRCALPHA)
+            shade.fill((0, 0, 0, 0))
+            start_power = 255 * self.shade_power
+            radius = int(size * self.shade_radius)
+            for i in range(radius):
+                for j in range(radius):
+                    part = ((i/radius)**2 + (j/radius)**2)**.5
+                    part = min(1.0, part)
+                    power = int(start_power * (1 - part))
+                    shade_string = pg.Surface((1, 1), pg.SRCALPHA)
+                    shade_string.fill((0, 0, 0, power))
+                    shade.blit(shade_string, (i, j))
+
+            angle = (-DIAGONALS.index(side)) * 90
             shade = pg.transform.rotate(shade, angle)
             self.cache[key] = shade
         return self.cache[key]
@@ -66,13 +88,19 @@ class BlockSpritesDict:
             self.scale_cache[key] = image
         return self.scale_cache[key]
 
-    def get_top_resized_shaded(self, size: int, neighbors: tuple[bool, bool, bool, bool]) -> pg.Surface:
+    def get_top_resized_shaded(self, size: int,
+                               neighbors: tuple[bool, bool, bool, bool, bool, bool, bool, bool]) -> pg.Surface:
         key = (*neighbors, size)
         if key not in self.scale_shaded_cache:
             image = pg.transform.scale(self._top.image, (size, size))
-            for is_shaded, side_name in zip(neighbors, SIDES):
+            for i in range(4):
+                is_shaded = neighbors[i]
                 if is_shaded:
-                    shade = self.shade_maker.get_shade(side_name, size)
+                    shade = self.shade_maker.get_shade(SIDES[i], size)
+                    image.blit(shade, (0, 0))
+                next_is_shaded = neighbors[(i+1) % 4]
+                if not (is_shaded or next_is_shaded) and neighbors[i+4]:
+                    shade = self.shade_maker.get_diagonal_shade(DIAGONALS[i], size)
                     image.blit(shade, (0, 0))
             self.scale_shaded_cache[key] = image
         return self.scale_shaded_cache[key]
@@ -110,7 +138,8 @@ class FullBlock(Block):
     def get_top_sprite_resized(self, size: int) -> pg.Surface:
         return self.sprites.get_top_resized(size)
 
-    def get_top_sprite_resized_shaded(self, size: int, neighbors: tuple[bool, bool, bool, bool]) -> pg.Surface:
+    def get_top_sprite_resized_shaded(self, size: int,
+                                      neighbors: tuple[bool, bool, bool, bool, bool, bool, bool, bool]) -> pg.Surface:
         return self.sprites.get_top_resized_shaded(size, neighbors)
 
     def get_side_sprite(self, side: str):

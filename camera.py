@@ -1,5 +1,5 @@
 import pygame as pg
-BASE_LEVEL_SIZE = 64
+BASE_LEVEL_SIZE = 48
 
 
 class Layers:
