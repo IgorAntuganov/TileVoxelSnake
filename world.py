@@ -2,11 +2,14 @@ from blocks import *
 
 
 class Column:
-    def __init__(self, x, y, blocks: list[FullBlock]):
-        """:param blocks: blocks from top to bottom"""
+    def __init__(self, x, y, blocks: list[type]):
+        """:param blocks: blocks from top to bottom as types (ex: [Grass, Dirt, Dirt, Stone])"""
         self.x = x
         self.y = y
-        self.blocks = blocks
+        self.blocks: list[Block | FullBlock | SingleSpriteBlock] = []
+        for i in range(len(blocks)):
+            block = blocks[i](x, y, len(blocks)-i-1)
+            self.blocks.append(block)
         self.height = len(blocks)
         self.height_difference: dict[str: int] = {
             'left': 0,
@@ -65,12 +68,12 @@ class World:
     def __init__(self):
         # self.regions: dict[(int, int): list[list[Column]]] = {}
         self.columns = {}
-        self.not_found_column: Column = Column(0, 0, [DebugBlock(0, 0, 0)])
+        self.not_found_column: Column = Column(0, 0, [DebugBlock])
         self.not_found_column.set_height_difference(*[self.not_found_column]*8)
 
     def test_fill(self):
-        blocks1 = [Stone(0, 0, 2), Dirt(0, 0, 1), Stone(0, 0, 0)]
-        blocks2 = [Grass(0, 0, 3),  Dirt(0, 0, 2), Stone(0, 0, 1), Stone(0, 0, 0)]
+        blocks1 = [Stone, Dirt, Stone]
+        blocks2 = [Grass,  Dirt, Stone, Stone]
         test_column_1 = Column(0, 0, blocks1)
         test_column_2 = Column(0, 0, blocks2)
         for i in range(-30, 151):
@@ -83,8 +86,8 @@ class World:
         for i in range(6, 9):
             for j in range(6, 9):
                 self.columns[(i, j)] = test_column_2.copy_to_x_y(i, j)
-        self.columns[(20, 20)] = Column(20, 20, [Stone(20, 20, 7-x) for x in range(8)])
-        self.columns[(30, 20)] = Column(30, 20, [Grass(30, 20, 7-x) for x in range(8)])
+        self.columns[(20, 20)] = Column(20, 20, [Stone for _ in range(8)])
+        self.columns[(30, 20)] = Column(30, 20, [Grass for _ in range(8)])
         self.set_columns_h_diff_in_rect(pg.Rect(-50, -160, 200, 240))
 
     def get_column(self, x, y) -> Column:

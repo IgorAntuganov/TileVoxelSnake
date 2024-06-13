@@ -126,6 +126,10 @@ class Block(ABC):
     def copy_to_x_y(self, x, y):
         return type(self)(x, y, self.z)
 
+    # For creating blocks in Column
+    def __call__(self, *args, **kwargs):
+        return type(self)(*args, **kwargs)
+
 
 class FullBlock(Block):
     debug_sprite = 'debug.png'
