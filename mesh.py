@@ -29,14 +29,15 @@ class TerrainMech:
             # top sprites of blocks
             top_block = column.get_top_block()
             x, y, z = column.x, column.y, top_block.z
+            hd = column.height_difference
             rect_size = self.layers.get_n_level_size(z)
             top_block_rect = self.layers.get_rect(x, y, z)
-            sprite = top_block.get_top_sprite_resized(rect_size)
+            top_block_neighbors = (hd['left'] < 0, hd['top'] < 0, hd['right'] < 0, hd['bottom'] < 0)
+            sprite = top_block.get_top_sprite_resized_shaded(rect_size, top_block_neighbors)
             top_figure = (top_block_rect, sprite)
 
             # sides of blocks
             sides_figures: list[tuple[pg.Rect, pg.Surface]] = []
-            hd = column.height_difference
             column_bottom_rect = self.layers.get_rect(x, y, 0)
             # bottom side
             if hd['bottom'] > 0:

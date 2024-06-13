@@ -73,7 +73,7 @@ while True:
             mouse_rect = rect.copy()
 
     if mouse_rect is not None:
-        pg.draw.rect(scr, (255-(60-mouse_rect.width)*10, 0, 0), mouse_rect)
+        pg.draw.rect(scr, ((255-(60-mouse_rect.width)*10)%255, 0, 0), mouse_rect)
 
     # times.append(time.time())  # 8
     pg.display.set_caption(str(clock.get_fps()))

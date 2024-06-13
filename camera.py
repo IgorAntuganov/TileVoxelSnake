@@ -1,5 +1,5 @@
 import pygame as pg
-BASE_LEVEL_SIZE = 48
+BASE_LEVEL_SIZE = 64
 
 
 class Layers:
@@ -19,7 +19,7 @@ class Layers:
 
     def get_n_level_size(self, n: int) -> int:
         """:return size of blocks with z=n in pixels of screen"""
-        difference = n * 3
+        difference = n * 4
         #difference = max(self.base_level_size*difference, n//2)
         return int(self.base_level_size + difference)
 
