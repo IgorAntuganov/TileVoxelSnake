@@ -1,4 +1,5 @@
 from blocks import *
+from render_order import RenderOrder
 
 
 class Column:
@@ -70,6 +71,7 @@ class World:
         self.columns = {}
         self.not_found_column: Column = Column(0, 0, [DebugBlock])
         self.not_found_column.set_height_difference(*[self.not_found_column]*8)
+        self.render_order = RenderOrder()
 
     def test_fill(self):
         blocks1 = [Stone, Dirt, Stone]
@@ -133,9 +135,8 @@ class World:
                     self.columns[(i, j)] = column
 
     def get_columns_in_rect_generator(self, rect: pg.Rect):
-        for i in range(rect.left, rect.right):
-            for j in range(rect.top, rect.bottom):
-                if (i, j) in self.columns:
-                    yield self.columns[(i, j)]
-                else:
-                    yield self.not_found_column.copy_to_x_y(i, j, True)
+        for i, j in self.render_order.get_order(rect):
+            if (i, j) in self.columns:
+                yield self.columns[(i, j)]
+            else:
+                yield self.not_found_column.copy_to_x_y(i, j, True)

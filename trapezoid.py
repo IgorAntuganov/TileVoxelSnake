@@ -13,6 +13,7 @@ class SidesDrawer:
     def __init__(self):
         self._cache = {}
         self._using_cache = False
+        self._print_cache_size = True
         self._perspective_correctness = True
         self._perspective_const = 1
         self._debug_background = True
@@ -21,6 +22,9 @@ class SidesDrawer:
 
     def set_using_cache(self, using: bool):
         self._using_cache = using
+
+    def set_print_cache_size(self, using: bool):
+        self._print_cache_size = using
 
     def set_using_perspective(self, using: bool):
         self._perspective_correctness = using
@@ -116,7 +120,7 @@ class SidesDrawer:
         part1 = max(0, part1)  # Fixing black strings with a small trapezoid height
         key = (True, texture.__hash__(), width, part1, part2)
         if self._using_cache and key in self._cache:
-            return self._cache[key]
+            return self._cache[key].convert()
 
         texture_y_1 = part1 * texture.get_height()
         texture_y_2 = part2 * texture.get_height()
@@ -147,8 +151,9 @@ class SidesDrawer:
             resized = pg.transform.scale(pstring, (width, 1))
 
         if self._using_cache:
-            self._cache[key] = resized
-            print('in cache:', len(self._cache))
+            self._cache[key] = resized.convert()
+            if self._print_cache_size:
+                print('in cache:', len(self._cache))
         return resized
 
     def get_vert_trapezoid(self, texture: pg.Surface,
@@ -232,7 +237,7 @@ class SidesDrawer:
         part1 = max(0, part1)  # Fixing black columns with a small trapezoid width
         key = (False, texture.__hash__(), height, part1, part2)
         if self._using_cache and key in self._cache:
-            return self._cache[key]
+            return self._cache[key].convert()
 
         texture_x_1 = part1 * texture.get_width()
         texture_x_2 = part2 * texture.get_width()
@@ -263,8 +268,9 @@ class SidesDrawer:
             resized = pg.transform.scale(pstring, (1, height))
 
         if self._using_cache:
-            self._cache[key] = resized
-            print('in cache:', len(self._cache))
+            self._cache[key] = resized.convert()
+            if self._print_cache_size:
+                print('in cache:', len(self._cache))
         return resized
 
 

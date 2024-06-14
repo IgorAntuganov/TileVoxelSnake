@@ -57,10 +57,8 @@ while True:
     camera.update_layers()
     # times.append(time.time())  # 4
     terr_mesh.create_mesh(columns_to_draw)
-    # times.append(time.time())  # 5
-    focus_in_frame = camera.get_focus_in_frame()
     # times.append(time.time())  # 6
-    ordered = terr_mesh.get_elements_in_order(focus_in_frame)
+    ordered = terr_mesh.get_elements_in_order()
     # times.append(time.time())  # 7
     mouse_rect = None
     for column_figures in ordered:

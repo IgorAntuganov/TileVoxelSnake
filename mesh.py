@@ -19,11 +19,9 @@ class TerrainMech:
     def create_mesh(self, columns):
         """:param columns: generator -> Column"""
 
-        # two-dim list of figures list, figure: tuple[pg.Rect, pg.Surface]
-        self.elements: list[list[list[tuple[pg.Rect, pg.Surface]]]] = []
+        # list of figures list, figure: tuple[pg.Rect, pg.Surface]
+        self.elements: list[list[tuple[pg.Rect, pg.Surface]]] = []
 
-        r = []
-        last_x = None
         for column in columns:
             column: Column
 
@@ -75,13 +73,7 @@ class TerrainMech:
                         figure = self.create_left_sprite(column, side_z, shaded)
                         sides_figures.append(figure)
 
-            # switching to a new line
-            if last_x is not None and last_x != top_block.x:
-                self.elements.append(r)
-                r = []
-            last_x = top_block.x
-            r.append([top_figure, *sides_figures])
-        self.elements.append(r)
+            self.elements.append([top_figure, *sides_figures])
 
     def create_bottom_sprite(self, column, z, shaded) -> tuple[pg.Rect, pg.Surface]:
         x, y = column.x, column.y
@@ -167,47 +159,5 @@ class TerrainMech:
         figure = (rect, trapezoid_sprite)
         return figure
 
-    def get_elements_in_order(self, focus_in_frame: tuple[int, int]) -> list[list[tuple[pg.Rect, pg.Surface]]]:
-        ordered: list[list[tuple[pg.Rect, pg.Surface]]] = []
-        width = len(self.elements[0])
-        height = len(self.elements)
-        i, j = focus_in_frame
-        ordered.append(self.elements[i][j])
-        r = 0
-        # Adding rhombuses sides
-        while len(ordered) != width * height:
-            r += 1
-            # from top to right ------------
-            x, y = i, j + r
-            top_right = []
-            for n in range(r):
-                i1, j1 = x + n, y - n
-                if 0 <= i1 < len(self.elements) and 0 <= j1 < len(self.elements[0]):
-                    top_right.append(self.elements[i1][j1])
-            ordered += top_right
-            # from left to top ------------
-            x, y = i - r, j
-            left_top = []
-            for n in range(r):
-                i1, j1 = x + n, y + n
-                if 0 <= i1 < len(self.elements) and 0 <= j1 < len(self.elements[0]):
-                    left_top.append(self.elements[i1][j1])
-            ordered += left_top
-            # from bottom to left ------------
-            x, y = i, j - r
-            bottom_left = []
-            for n in range(r):
-                i1, j1 = x - n, y + n
-                if 0 <= i1 < len(self.elements) and 0 <= j1 < len(self.elements[0]):
-                    bottom_left.append(self.elements[i1][j1])
-            ordered += bottom_left
-            # from right to bottom ------------
-            x, y = i + r, j
-            right_bottom = []
-            for n in range(r):
-                i1, j1 = x - n, y - n
-                if 0 <= i1 < len(self.elements) and 0 <= j1 < len(self.elements[0]):
-                    right_bottom.append(self.elements[i1][j1])
-            ordered += right_bottom
-
-        return ordered[::-1]
+    def get_elements_in_order(self) -> list[list[tuple[pg.Rect, pg.Surface]]]:
+        return self.elements
