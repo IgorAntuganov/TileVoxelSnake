@@ -1,20 +1,20 @@
 from abc import ABC, abstractmethod
 import pygame as pg
-PATH_TO_SPRITES = 'sprites/'
-PATH_TO_BLOCKS = 'sprites/blocks/'
+
+from constants import PATH_TO_BLOCKS, SHADOW_RADIUS, SHADOW_STRENGTH
 
 SIDES = ['left', 'top', 'right', 'bottom']
 DIAGONALS = ['top_left', 'top_right', 'bottom_left', 'bottom_right']
 
 
 class ShadowSprites:
-    def __init__(self, shade_radius=0.6, shade_power=0.25):
+    def __init__(self, shade_radius=SHADOW_RADIUS, shade_strength=SHADOW_STRENGTH):
         """:param shade_radius: between 0 and 1, which part will be covered with shade
-        :param shade_power: between 0 and 1, shadow power at the darkest point (1 - full black)
+        :param shade_strength: between 0 and 1, shadow power at the darkest point (1 - full black)
         """
         self.cache = {}
         self.shade_radius = shade_radius
-        self.shade_power = shade_power
+        self.shade_power = shade_strength
 
     def get_shade(self, side: str, size: int) -> pg.Surface:
         key = (size, side, 'nearby')
@@ -157,6 +157,8 @@ class SingleSpriteBlock(FullBlock):
     @classmethod
     def load_sprites(cls):
         cls.sprites = BlockSpritesDict(*[cls.sprite] * 6)
+
+# BLOCKS: -----------------------------------
 
 
 class Grass(FullBlock):
