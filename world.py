@@ -88,6 +88,7 @@ class World:
                 self.columns[(i, j)] = test_column_2.copy_to_x_y(i, j)
         self.columns[(20, 20)] = Column(20, 20, [Stone for _ in range(8)])
         self.columns[(30, 20)] = Column(30, 20, [Grass for _ in range(8)])
+        self.columns[(40, 20)] = Column(40, 20, [Grass, Grass, Stone, Stone, Stone, Stone, Stone])
         self.set_columns_h_diff_in_rect(pg.Rect(-50, -160, 200, 240))
 
     def get_column(self, x, y) -> Column:

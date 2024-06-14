@@ -45,14 +45,16 @@ class TerrainMech:
                 if top_block_rect.bottom < column_bottom_rect.bottom:
                     for i in range(hd['bottom']):
                         side_z = z - i
-                        figure = self.create_bottom_sprite(column, side_z)
+                        shaded = i == hd['bottom'] - 1
+                        figure = self.create_bottom_sprite(column, side_z, shaded)
                         sides_figures.append(figure)
             # top side
             if hd['top'] > 0:
                 if top_block_rect.top > column_bottom_rect.top:
                     for i in range(hd['top']):
                         side_z = z - i
-                        figure = self.create_top_sprite(column, side_z)
+                        shaded = i == hd['top'] - 1
+                        figure = self.create_top_sprite(column, side_z, shaded)
                         sides_figures.append(figure)
 
             # right side
@@ -60,7 +62,8 @@ class TerrainMech:
                 if top_block_rect.right < column_bottom_rect.right:
                     for i in range(hd['right']):
                         side_z = z - i
-                        figure = self.create_right_sprite(column, side_z)
+                        shaded = i == hd['right'] - 1
+                        figure = self.create_right_sprite(column, side_z, shaded)
                         sides_figures.append(figure)
 
             # left side
@@ -68,7 +71,8 @@ class TerrainMech:
                 if top_block_rect.left > column_bottom_rect.left:
                     for i in range(hd['left']):
                         side_z = z - i
-                        figure = self.create_left_sprite(column, side_z)
+                        shaded = i == hd['left'] - 1
+                        figure = self.create_left_sprite(column, side_z, shaded)
                         sides_figures.append(figure)
 
             # switching to a new line
@@ -79,10 +83,13 @@ class TerrainMech:
             r.append([top_figure, *sides_figures])
         self.elements.append(r)
 
-    def create_bottom_sprite(self, column, z) -> tuple[pg.Rect, pg.Surface]:
+    def create_bottom_sprite(self, column, z, shaded) -> tuple[pg.Rect, pg.Surface]:
         x, y = column.x, column.y
         block_for_side = column.get_block(z)
-        sprite = block_for_side.get_side_sprite('bottom')
+        if not shaded:
+            sprite = block_for_side.get_side_sprite('bottom')
+        else:
+            sprite = block_for_side.get_side_sprite_shaded('bottom')
         top_rect = self.layers.get_rect(x, y, z)
         bottom_rect = self.layers.get_rect(x, y, z - 1)
 
@@ -97,10 +104,13 @@ class TerrainMech:
         figure = (rect, trapezoid_sprite)
         return figure
 
-    def create_top_sprite(self, column, z) -> tuple[pg.Rect, pg.Surface]:
+    def create_top_sprite(self, column, z, shaded) -> tuple[pg.Rect, pg.Surface]:
         x, y = column.x, column.y
         block_for_side = column.get_block(z)
-        sprite = block_for_side.get_side_sprite('top')
+        if not shaded:
+            sprite = block_for_side.get_side_sprite('top')
+        else:
+            sprite = block_for_side.get_side_sprite_shaded('top')
         top_rect = self.layers.get_rect(x, y, z)
         bottom_rect = self.layers.get_rect(x, y, z - 1)
 
@@ -115,10 +125,13 @@ class TerrainMech:
         figure = (rect, trapezoid_sprite)
         return figure
 
-    def create_right_sprite(self, column, z) -> tuple[pg.Rect, pg.Surface]:
+    def create_right_sprite(self, column, z, shaded) -> tuple[pg.Rect, pg.Surface]:
         x, y = column.x, column.y
         block_for_side = column.get_block(z)
-        sprite = block_for_side.get_side_sprite('right')
+        if not shaded:
+            sprite = block_for_side.get_side_sprite('right')
+        else:
+            sprite = block_for_side.get_side_sprite_shaded('right')
         top_rect = self.layers.get_rect(x, y, z)
         bottom_rect = self.layers.get_rect(x, y, z - 1)
 
@@ -133,10 +146,13 @@ class TerrainMech:
         figure = (rect, trapezoid_sprite)
         return figure
 
-    def create_left_sprite(self, column, z) -> tuple[pg.Rect, pg.Surface]:
+    def create_left_sprite(self, column, z, shaded) -> tuple[pg.Rect, pg.Surface]:
         x, y = column.x, column.y
         block_for_side = column.get_block(z)
-        sprite = block_for_side.get_side_sprite('left')
+        if not shaded:
+            sprite = block_for_side.get_side_sprite('left')
+        else:
+            sprite = block_for_side.get_side_sprite_shaded('left')
         top_rect = self.layers.get_rect(x, y, z)
         bottom_rect = self.layers.get_rect(x, y, z - 1)
 
