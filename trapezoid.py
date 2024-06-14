@@ -66,7 +66,7 @@ class SidesDrawer:
                 next_part = (i1+1)/im_height
             else:
                 part = i/im_height
-                next_part = -1
+                next_part = 0
 
             # calculating str_x, str_y and str_width
             if offset > 0:
@@ -113,6 +113,7 @@ class SidesDrawer:
     def get_pixel_string_with_anisotropic(self, texture: pg.Surface, width, part1, part2) -> pg.Surface:
         part1 = round(part1, 10)
         part2 = round(part2, 10)
+        part1 = max(0, part1)  # Fixing black strings with a small trapezoid height
         key = (True, texture.__hash__(), width, part1, part2)
         if self._using_cache and key in self._cache:
             return self._cache[key]
@@ -130,14 +131,13 @@ class SidesDrawer:
         for k in range(int(texture_y_1), int(texture_y_2)+1):
             crop = pg.Surface((texture.get_width(), 1))
             crop.blit(texture, (0, -k))
-            resized = crop
             if self._fast_anisotropic:
                 y_diff = abs(texture_y_1 - texture_y_2)
                 if k != int(texture_y_1):
-                    resized.set_alpha(int(255/y_diff))
-                pstring.blit(resized, (0, 0))
+                    crop.set_alpha(int(255/y_diff))
+                pstring.blit(crop, (0, 0))
             else:
-                surfaces.append(resized.copy())
+                surfaces.append(crop)
         if not self._fast_anisotropic:
             pstring = pg.transform.average_surfaces(surfaces)
 
@@ -229,6 +229,7 @@ class SidesDrawer:
     def get_pixel_column_with_anisotropic(self, texture: pg.Surface, height, part1, part2) -> pg.Surface:
         part1 = round(part1, 10)
         part2 = round(part2, 10)
+        part1 = max(0, part1)  # Fixing black columns with a small trapezoid width
         key = (False, texture.__hash__(), height, part1, part2)
         if self._using_cache and key in self._cache:
             return self._cache[key]
@@ -243,17 +244,16 @@ class SidesDrawer:
             pstring = None  # for PyCharm
             surfaces = []
 
-        for k in range(int(texture_x_1), int(texture_x_2)+1):
+        for k in range(int(texture_x_1), int(texture_x_2+1)):
             crop = pg.Surface((1, texture.get_height()))
             crop.blit(texture, (-k, 0))
-            resized = crop
             if self._fast_anisotropic:
                 x_diff = abs(texture_x_1 - texture_x_2)
                 if k != int(texture_x_1):
-                    resized.set_alpha(int(255/x_diff))
-                pstring.blit(resized, (0, 0))
+                    crop.set_alpha(int(255/x_diff))
+                pstring.blit(crop, (0, 0))
             else:
-                surfaces.append(resized.copy())
+                surfaces.append(crop)
         if not self._fast_anisotropic:
             pstring = pg.transform.average_surfaces(surfaces)
 

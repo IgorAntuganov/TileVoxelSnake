@@ -8,7 +8,7 @@ DIAGONALS = ['top_left', 'top_right', 'bottom_left', 'bottom_right']
 
 
 class ShadowSprites:
-    def __init__(self, shade_radius=0.6, shade_power=0.3):
+    def __init__(self, shade_radius=0.6, shade_power=0.25):
         """:param shade_radius: between 0 and 1, which part will be covered with shade
         :param shade_power: between 0 and 1, shadow power at the darkest point (1 - full black)
         """

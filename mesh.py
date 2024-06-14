@@ -5,7 +5,8 @@ from world import Column
 from trapezoid import SidesDrawer
 sides_drawer = SidesDrawer()
 sides_drawer.set_debug_mode(False)
-sides_drawer.set_fast_anisotropic(True)
+sides_drawer.set_using_anisotropic_filtration(True)
+sides_drawer.set_fast_anisotropic(False)
 sides_drawer.set_using_perspective(True)
 sides_drawer.set_using_cache(True)
 
