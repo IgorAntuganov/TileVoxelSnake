@@ -1,5 +1,22 @@
+import math
 import pygame as pg
-from constants import SHADOW_STRENGTH, SHADOW_RADIUS, SIDES_NAMES, DIAGONALS_NAMES, PATH_TO_BLOCKS
+from constants import *
+
+
+def recolor(sprite: pg.Surface, coefficient: float) -> pg.Surface:
+    for i in range(sprite.get_width()):
+        for j in range(sprite.get_height()):
+            pixel = sprite.get_at((i, j))
+            pixel = [int(color_value*coefficient) for color_value in pixel]
+            pixel = [min(255, color_value) for color_value in pixel]
+            sprite.set_at((i, j), pixel)
+    return sprite
+
+
+def height_recolor(sprite: pg.Surface, z: int) -> pg.Surface:
+    c = math.atan(z/(MAX_HEIGHT/2)) * 2 / math.pi
+    c = 1 + c * HEIGHT_RECOLOR_STRENGTH
+    return recolor(sprite, c)
 
 
 class ShadowSprites:
@@ -84,18 +101,20 @@ class BlockSpritesDict:
         self._sides = [self._side1, self._side2, self._side3, self._side4]
         self.side_sprite_sizes = self._side1.image.get_width()
 
-    def get_top_resized(self, size: int) -> pg.Surface:
+    '''def get_top_resized(self, size: int) -> pg.Surface:
         key = f'top{size}'
         if key not in self.scale_cache:
             image = pg.transform.scale(self._top.image, (size, size))
             self.scale_cache[key] = image
-        return self.scale_cache[key]
+        return self.scale_cache[key]'''
 
     def get_top_resized_shaded(self, size: int,
-                               neighbors: tuple[bool, bool, bool, bool, bool, bool, bool, bool]) -> pg.Surface:
-        key = (*neighbors, size)
+                               neighbors: tuple[bool, bool, bool, bool, bool, bool, bool, bool],
+                               z: int) -> pg.Surface:
+        key = (*neighbors, size, z)
         if key not in self.scale_shaded_cache:
             image = pg.transform.scale(self._top.image, (size, size))
+            image = height_recolor(image, z)
             for i in range(4):
                 is_shaded = neighbors[i]
                 if is_shaded:

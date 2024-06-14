@@ -1,9 +1,12 @@
 # Settings
 
-BASE_LEVEL_SIZE = 48
+BASE_LEVEL_SIZE = 48  # size in pixels of top side of block at z = 0
 
-SHADOW_RADIUS = 0.5
-SHADOW_STRENGTH = 0.2
+SHADOW_RADIUS = 0.5  # 0 <= x <= 1
+SHADOW_STRENGTH = 0.2  # 0 <= x <= 1
+
+MAX_HEIGHT = 10
+HEIGHT_RECOLOR_STRENGTH = 0.3
 
 # Constants
 

@@ -34,7 +34,7 @@ class TerrainMech:
             rect_size = self.layers.get_n_level_size(z)
             top_block_rect = self.layers.get_rect(x, y, z)
             top_block_neighbors = column.get_top_block_neighbors()
-            sprite = top_block.get_top_sprite_resized_shaded(rect_size, top_block_neighbors)
+            sprite = top_block.get_top_sprite_resized_shaded(rect_size, top_block_neighbors, z)
             top_figure = (top_block_rect, sprite)
 
             # sides of blocks
