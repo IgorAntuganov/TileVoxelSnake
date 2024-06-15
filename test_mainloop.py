@@ -99,7 +99,10 @@ while True:
     if block_to_add is not None:
         world.add_block(block_to_add)
     if mouse_rect is not None:
-        pg.draw.rect(scr, ((255-(60-mouse_rect.width)*10) % 255, 0, 0), mouse_rect)
+        sprite = pg.Surface(mouse_rect.size)
+        sprite.fill((200, 200, 200))
+        sprite.set_alpha(120)
+        scr.blit(sprite, mouse_rect.topleft)
 
     # times.append(time.time())  # 8
     pg.display.set_caption(str(clock.get_fps()))
