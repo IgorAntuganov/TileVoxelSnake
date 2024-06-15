@@ -18,6 +18,8 @@ frame = 0
 while True:
     frame += 1
     events = pg.event.get()
+    mouse_left_click = False
+    mouse_right_click = False
     for event in events:
         if event.type == pg.QUIT:
             exit()
@@ -32,6 +34,20 @@ while True:
             if event.key == pg.K_d:
                 offset[0] += .3
             camera.move(offset)
+        if event.type == pg.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                mouse_left_click = True
+            if event.button == 3:
+                mouse_right_click = True
+        if event.type == pg.KEYDOWN:
+            if event.key == pg.K_1:
+                world.DEFAULT_ADDED_BLOCK = Grass
+            if event.key == pg.K_2:
+                world.DEFAULT_ADDED_BLOCK = Dirt
+            if event.key == pg.K_3:
+                world.DEFAULT_ADDED_BLOCK = Stone
+            if event.key == pg.K_4:
+                world.DEFAULT_ADDED_BLOCK = DebugBlock
     pressed_offset = [0, 0]
     pressed = pg.key.get_pressed()
     if pressed[pg.K_UP]:
@@ -61,17 +77,29 @@ while True:
     ordered = terr_mesh.get_elements_in_order()
     # times.append(time.time())  # 7
     mouse_rect = None
+    block_to_add = None
+    block_to_delete = None
+
     for column_figures in ordered:
-        for element in column_figures:
-            rect, sprite = element
+        for figure in column_figures:
+            rect, sprite = figure.rect, figure.sprite
             if camera.screen_rect.colliderect(rect):
                 scr.blit(sprite, rect)
 
             if rect.collidepoint(pg.mouse.get_pos()):
                 mouse_rect = rect.copy()
+                if mouse_left_click:
+                    block_to_delete = figure.origin_block
 
+                elif mouse_right_click:
+                    block_to_add = figure.directed_block
+
+    if block_to_delete is not None:
+        world.remove_block(block_to_delete)
+    if block_to_add is not None:
+        world.add_block(block_to_add)
     if mouse_rect is not None:
-        pg.draw.rect(scr, ((255-(60-mouse_rect.width)*10)%255, 0, 0), mouse_rect)
+        pg.draw.rect(scr, ((255-(60-mouse_rect.width)*10) % 255, 0, 0), mouse_rect)
 
     # times.append(time.time())  # 8
     pg.display.set_caption(str(clock.get_fps()))

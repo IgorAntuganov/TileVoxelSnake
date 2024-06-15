@@ -1,5 +1,5 @@
 import pygame as pg
-from constants import BASE_LEVEL_SIZE
+from constants import BASE_LEVEL_SIZE, LAYERS_OFFSET
 
 
 class Layers:
@@ -19,8 +19,7 @@ class Layers:
 
     def get_n_level_size(self, n: int) -> int:
         """:return size of blocks with z=n in pixels of screen"""
-        difference = n * 3
-        #difference = max(self.base_level_size*difference, n//2)
+        difference = n * LAYERS_OFFSET
         return int(self.base_level_size + difference)
 
     def get_n_level_x0_y0(self, n: int) -> tuple[int, int]:

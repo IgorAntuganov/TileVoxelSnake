@@ -23,6 +23,13 @@ class Column:
             'bottom_right': 0
         }
         self.height_difference_are_set = False
+        self._figures: list[tuple[pg.Rect, pg.Surface, tuple[int, int, int]]] = []
+
+    def set_figures(self, figures: list[tuple[pg.Rect, pg.Surface, tuple[int, int, int]]]):
+        self._figures = figures
+
+    def get_figures(self) -> list[tuple[pg.Rect, pg.Surface, tuple[int, int, int]]]:
+        return self._figures
 
     def copy_to_x_y(self, x, y, height_difference_are_set=False):
         new_blocks = [block.copy_to_x_y(x, y) for block in self.blocks]
@@ -31,7 +38,9 @@ class Column:
         return new_column
 
     def get_top_block(self) -> FullBlock:
-        return self.blocks[0]
+        if self.height > 0:
+            return self.blocks[0]
+        return DebugBlock(self.x, self.y, 0)
 
     def get_block(self, z) -> FullBlock:
         return self.blocks[-z-1]
@@ -64,6 +73,17 @@ class Column:
                 self.height_difference['bottom_right'] < 0,
                 self.height_difference['bottom_left'] < 0)
 
+    def remove_top_block(self):
+        self.blocks = self.blocks[1:]
+        self.height -= 1
+        self.height_difference_are_set = False
+
+    def add_block_on_top(self, block_type: type):
+        block = block_type(self.x, self.y, self.height)
+        self.blocks.insert(0, block)
+        self.height += 1
+        self.height_difference_are_set = False
+
 
 class World:
     def __init__(self):
@@ -72,6 +92,7 @@ class World:
         self.not_found_column: Column = Column(0, 0, [DebugBlock])
         self.not_found_column.set_height_difference(*[self.not_found_column]*8)
         self.render_order = RenderOrder()
+        self.DEFAULT_ADDED_BLOCK: type = Stone
 
     def test_fill(self):
         blocks1 = [Stone, Dirt, Stone]
@@ -140,3 +161,19 @@ class World:
                 yield self.columns[(i, j)]
             else:
                 yield self.not_found_column.copy_to_x_y(i, j, True)
+
+    def add_block(self, block: tuple[int, int, int], _type: None | type = None):
+        x, y, z = block
+        if _type is None:
+            _type = self.DEFAULT_ADDED_BLOCK
+        column = self.get_column(x, y)
+        column.add_block_on_top(_type)
+        rect = pg.Rect(x - 1, y - 1, 3, 3)
+        self.set_columns_h_diff_in_rect(rect)
+
+    def remove_block(self, block: tuple[int, int, int]):
+        x, y, z = block
+        column = self.get_column(x, y)
+        column.remove_top_block()
+        rect = pg.Rect(x-1, y-1, 3, 3)
+        self.set_columns_h_diff_in_rect(rect)
