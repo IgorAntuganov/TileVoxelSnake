@@ -5,19 +5,24 @@ from interpolations import *
 
 
 class ValueNoise:
-    def __init__(self, sizes: tuple[int, int], octaves: None | int = None):
+    def __init__(self, sizes: tuple[int, int], octaves: None | int | list[int] = None):
         self.sizes = sizes
         self.width, self.height = sizes
+        self.octaves: list[int]
         if octaves is not None:
-            self.octaves = octaves
+            if type(octaves) == int:
+                self.octaves = list(range(octaves))
+            else:
+                self.octaves = octaves
         else:
-            self.octaves = int(math.log(max(sizes), 2))
+            octaves = int(math.log(max(sizes), 2))
+            self.octaves = list(range(octaves))
         self.values: list[list[list[float]]] = []
         self.points: list[list[float]] = [[0] * self.width for _ in range(self.height)]
         self.texture: None | pg.Surface = None
 
     def set_values(self):
-        for k in range(self.octaves):
+        for k in self.octaves:
             region = []
             f = 2 ** (k+1)
             for x in range(f + 1):
@@ -32,12 +37,12 @@ class ValueNoise:
         return self.values
 
     def set_points(self, print_progress=False):
-        for k in range(self.octaves):
+        for k in self.octaves:
             region: list[list[float]] = self.values[k]
             k1 = 2 ** k
             for i in range(self.width):
                 if print_progress:
-                    print(f'{k+1}/{self.octaves}, {i+1}/{self.width}')
+                    print(f'{k+1}/{len(self.octaves)}, {i+1}/{self.width}')
                 for j in range(self.height):
                     if self.width // k1 and self.height // k1 != 0:
                         x = i // (self.width // k1)
@@ -68,9 +73,9 @@ class ValueNoise:
             texture = pg.Surface((self.width, self.height))
             for i in range(self.width):
                 for j in range(self.height):
-                    value = self.points[j][i] / self.octaves
+                    value = self.points[j][i] / max(self.octaves)
                     value = (value + 1) / 2
-                    color = int(value * 255 * 2 ** (self.octaves / 2))
+                    color = int(value * 255 * 2 ** (max(self.octaves) / 2))
                     color = color % 510
                     if color > 255:
                         color = 509 - color
