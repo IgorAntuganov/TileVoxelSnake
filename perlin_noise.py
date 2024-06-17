@@ -4,7 +4,23 @@ import time
 from interpolations import *
 
 
-class ValueNoise:
+class Vector:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def scalar(self, vect) -> float:
+        vect: Vector
+        return self.x * vect.x + self.y * vect.y
+
+    @classmethod
+    def random_vector(cls):
+        x = random.random() * 2 - 1
+        y = random.random() * 2 - 1
+        return Vector(x, y)
+
+
+class PerlinNoise:
     def __init__(self, sizes: tuple[int, int], octaves: None | int = None):
         self.sizes = sizes
         self.width, self.height = sizes
@@ -12,8 +28,9 @@ class ValueNoise:
             self.octaves = octaves
         else:
             self.octaves = int(math.log(max(sizes), 2))
-        self.values: list[list[list[float]]] = []
+        self.values: list[list[list[Vector]]] = []
         self.points: list[list[float]] = [[0] * self.width for _ in range(self.height)]
+        self.points_are_set = False
         self.texture: None | pg.Surface = None
 
     def set_values(self):
@@ -23,17 +40,17 @@ class ValueNoise:
             for x in range(f + 1):
                 row = []
                 for y in range(f + 1):
-                    value = 2 * random.random() ** .5 - 1
+                    value = Vector.random_vector()
                     row.append(value)
                 region.append(row)
             self.values.append(region)
 
-    def get_values(self) -> list[list[list[float]]]:
+    def get_values(self) -> list[list[list[Vector]]]:
         return self.values
 
     def set_points(self, print_progress=False):
-        for k in range(self.octaves):
-            region: list[list[float]] = self.values[k]
+        for k in range(1, self.octaves):
+            region: list[list[Vector]] = self.values[k]
             k1 = 2 ** k
             for i in range(self.width):
                 if print_progress:
@@ -46,24 +63,41 @@ class ValueNoise:
                         continue
                     x -= k1 // 2
                     y -= k1 // 2
-                    top_left = region[x][y]
-                    top_right = region[x + 1][y]
-                    bottom_left = region[x][y + 1]
-                    bottom_right = region[x + 1][y + 1]
+
+                    # corner vectors
+                    top_left_corner = region[x][y]
+                    top_right_corner = region[x + 1][y]
+                    bottom_left_corner = region[x][y + 1]
+                    bottom_right_corner = region[x + 1][y + 1]
 
                     xf = i % (self.width // k1) / (self.width // k1)
                     yf = j % (self.height // k1) / (self.height // k1)
 
-                    top = interpolate_cos(top_left, top_right, xf)
-                    bottom = interpolate_cos(bottom_left, bottom_right, xf)
-                    value = interpolate_cos(top, bottom, yf)
+                    # offset vectors
+                    top_left_offset = Vector(xf, yf)
+                    top_right_offset = Vector(xf-1, yf)
+                    bottom_left_offset = Vector(xf, yf-1)
+                    bottom_right_offset = Vector(xf-1, yf-1)
+
+                    top_left = top_left_corner.scalar(top_left_offset)
+                    top_right = top_right_corner.scalar(top_right_offset)
+                    bottom_left = bottom_left_corner.scalar(bottom_left_offset)
+                    bottom_right = bottom_right_corner.scalar(bottom_right_offset)
+
+                    top = interpolate_sigmoid(top_left, top_right, xf)
+                    bottom = interpolate_sigmoid(bottom_left, bottom_right, xf)
+                    value = interpolate_sigmoid(top, bottom, yf)
+                    # value = sum([top_left, top_right, bottom_left, bottom_right]) / 4
                     value = value / k1
                     self.points[j][i] += value
+        self.points_are_set = True
 
     def get_points(self) -> list[list[float]]:
+        assert self.points_are_set
         return self.points
 
     def get_texture(self) -> pg.Surface:
+        assert self.points_are_set
         if self.texture is None:
             texture = pg.Surface((self.width, self.height))
             for i in range(self.width):
@@ -86,8 +120,8 @@ class ValueNoise:
 
 def test():
     file_name = f'{int(time.time())}'
-    width1, height1 = 512, 512
-    noise = ValueNoise((width1, height1), octaves=2)
+    width1, height1 = 2048, 2048
+    noise = PerlinNoise((width1, height1))
     noise.set_values()
     noise.set_points(print_progress=True)
     texture = noise.get_texture()

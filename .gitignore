@@ -166,3 +166,4 @@ cython_debug/
 keys.pickle
 /textures
 /textures/
+/perlin_test_images/
