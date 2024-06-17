@@ -108,7 +108,16 @@ class PerlinNoise:
                     color = color % 510
                     if color > 255:
                         color = 509 - color
+
                     texture.set_at((i, j), [color] * 3)
+
+                    # if color % 3 == 0:
+                    #     texture.set_at((i, j), [color, 0, 0])
+                    # elif color % 3 == 1:
+                    #     texture.set_at((i, j), [0, color, 0])
+                    # else:
+                    #     texture.set_at((i, j), [0, 0, color])
+
             self.texture = texture
         return self.texture
 
@@ -120,12 +129,12 @@ class PerlinNoise:
 
 def test():
     file_name = f'{int(time.time())}'
-    width1, height1 = 2048, 2048
+    width1, height1 = 512, 512
     noise = PerlinNoise((width1, height1))
     noise.set_values()
     noise.set_points(print_progress=True)
     texture = noise.get_texture()
-    pg.image.save(texture, f'perlin_test_images/{file_name}.png')
+    pg.image.save(texture, f'perlin_test_images/perlin{file_name}.png')
     scr = pg.display.set_mode((width1, height1))
     scr.blit(texture, (0, 0))
     pg.display.update()
