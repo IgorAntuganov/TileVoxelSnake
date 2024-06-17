@@ -1,40 +1,14 @@
-import pygame as pg
 import random
+
+import pygame as pg
 import time
 from interpolations import *
+from abc_noise import Noise
 
 
-class ValueNoise:
-    def __init__(self, sizes: tuple[int, int], octaves: None | int | list[int] = None):
-        self.sizes = sizes
-        self.width, self.height = sizes
-        self.octaves: list[int]
-        if octaves is not None:
-            if type(octaves) == int:
-                self.octaves = list(range(octaves))
-            else:
-                self.octaves = octaves
-        else:
-            octaves = int(math.log(max(sizes), 2))
-            self.octaves = list(range(octaves))
-        self.values: list[list[list[float]]] = []
-        self.points: list[list[float]] = [[0] * self.width for _ in range(self.height)]
-        self.texture: None | pg.Surface = None
-
-    def set_values(self):
-        for k in self.octaves:
-            region = []
-            f = 2 ** (k+1)
-            for x in range(f + 1):
-                row = []
-                for y in range(f + 1):
-                    value = 2 * random.random() ** .5 - 1
-                    row.append(value)
-                region.append(row)
-            self.values.append(region)
-
-    def get_values(self) -> list[list[list[float]]]:
-        return self.values
+class ValueNoise(Noise):
+    def random_value(self, k, x, y):
+        return random.random() * 2 - 1
 
     def set_points(self, print_progress=False):
         for k in self.octaves:
@@ -49,8 +23,7 @@ class ValueNoise:
                         y = j // (self.height // k1)
                     else:
                         continue
-                    x -= k1 // 2
-                    y -= k1 // 2
+
                     top_left = region[x][y]
                     top_right = region[x + 1][y]
                     bottom_left = region[x][y + 1]
@@ -64,44 +37,13 @@ class ValueNoise:
                     value = interpolate_sigmoid(top, bottom, yf)
                     value = value / k1
                     self.points[j][i] += value
-
-    def get_points(self) -> list[list[float]]:
-        return self.points
-
-    def get_texture(self) -> pg.Surface:
-        if self.texture is None:
-            texture = pg.Surface((self.width, self.height))
-            for i in range(self.width):
-                for j in range(self.height):
-                    value = self.points[j][i] / max(self.octaves)
-                    value = (value + 1) / 2
-                    color = int(value * 255 * 2 ** (max(self.octaves) / 2))
-                    color = color % 510
-                    if color > 255:
-                        color = 509 - color
-
-                    texture.set_at((i, j), [color] * 3)
-
-                    # if color % 3 == 0:
-                    #     texture.set_at((i, j), [color, 0, 0])
-                    # elif color % 3 == 1:
-                    #     texture.set_at((i, j), [0, color, 0])
-                    # else:
-                    #     texture.set_at((i, j), [0, 0, color])
-
-            self.texture = texture
-        return self.texture
-
-    def work(self) -> pg.Surface:
-        self.set_values()
-        self.set_points()
-        return self.get_texture()
+        self.points_are_set = True
 
 
 def test():
     file_name = f'{int(time.time())}'
-    width1, height1 = 512, 512
-    noise = ValueNoise((width1, height1))
+    width1, height1 = 256, 256
+    noise = ValueNoise((width1, height1), list(range(4, 8)))
     noise.set_values()
     noise.set_points(print_progress=True)
     texture = noise.get_texture()
