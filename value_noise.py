@@ -35,7 +35,7 @@ class ValueNoise(Noise):
                     top = interpolate_sigmoid(top_left, top_right, xf)
                     bottom = interpolate_sigmoid(bottom_left, bottom_right, xf)
                     value = interpolate_sigmoid(top, bottom, yf)
-                    value = value / k1
+                    value = value / k1 / 2
                     self.points[j][i] += value
         self.points_are_set = True
 

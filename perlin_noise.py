@@ -27,7 +27,7 @@ class PerlinNoise(Noise):
         return Vector.random_vector()
 
     def set_points(self, print_progress=False):
-        for m, k in enumerate(self.octaves):
+        for k in self.octaves:
             region: list[list[Vector]] = self.values[k]
             k1 = 2 ** k
             for i in range(self.width):

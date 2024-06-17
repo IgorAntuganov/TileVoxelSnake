@@ -5,6 +5,7 @@ import pygame as pg
 
 class Noise(ABC):
     def __init__(self, sizes: tuple[int, int], octaves: None | int | list[int] = None):
+        """:param sizes: must be 2**n !!!"""
         self.sizes = sizes
         self.width, self.height = sizes
         self.octaves: list[int]
@@ -30,7 +31,7 @@ class Noise(ABC):
             self.values.append([])
         for k in self.octaves:
             region = []
-            f = 2 ** (k+1)
+            f = 2 ** k
             for x in range(f + 1):
                 row = []
                 for y in range(f + 1):
@@ -44,13 +45,13 @@ class Noise(ABC):
 
     def set_top_neighbor(self, top_neighbor_values: list[list[list[float]]]):
         for self_region, neighbor_region in zip(self.values, top_neighbor_values):
-            pass
+            for i in range(len(self_region)):
+                self_region[0][i] = neighbor_region[-1][i]
 
     def set_left_neighbor(self, left_neighbor_values):
-        '''for self_region, neighbor_region in zip(self.values, left_neighbor_values):
+        for self_region, neighbor_region in zip(self.values, left_neighbor_values):
             for self_row, neighbor_row in zip(self_region, neighbor_region):
-                self_row[0] = neighbor_row[0]'''
-        pass
+                self_row[0] = neighbor_row[-1]
 
     @abstractmethod
     def set_points(self, print_progress=False):

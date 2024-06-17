@@ -2,12 +2,17 @@ import pygame as pg
 from value_noise import ValueNoise
 from perlin_noise import PerlinNoise
 from abc_noise import Noise
-# from diamond_square import DiamondSquare
 import time
 
 
 class NoiseGrid:
     def __init__(self, noise_type: type, tile_size: int, octaves: int | list[int] | None):
+        """
+        :param noise_type: ValueNoise or PerlinNoise
+        :param tile_size: literally
+        :param octaves: octaves in noise
+        """
+        assert noise_type in [PerlinNoise, ValueNoise]
         self.noise_type = noise_type
         self.tile_size = tile_size
         self.octaves = octaves
@@ -19,13 +24,11 @@ class NoiseGrid:
 
         if (i, j-1) in self.grid:
             top_tile = self.grid[(i, j-1)]
-            print('set top for', i, j)
-            new_tile.set_top_neighbor(top_tile.get_values())
+            new_tile.set_left_neighbor(top_tile.get_values())
 
         if (i-1, j) in self.grid:
             left_tile = self.grid[(i-1, j)]
-            print('set left for', i, j)
-            new_tile.set_left_neighbor(left_tile.get_values())
+            new_tile.set_top_neighbor(left_tile.get_values())
 
         # bottom tile
         # right tile
@@ -39,11 +42,12 @@ class NoiseGrid:
             self.add_tile(i, j)
         return self.grid[(i, j)]
 
-    def get_texture(self, rect: pg.Rect) -> pg.Surface:
+    def get_texture(self, rect: pg.Rect, print_progress=False) -> pg.Surface:
         texture = pg.Surface((rect.width * self.tile_size, rect.height * self.tile_size))
         for i in range(rect.left, rect.right):
             for j in range(rect.top, rect.bottom):
-                print(i, j)
+                if print_progress:
+                    print(i, j)
                 tex_i = (i - rect.left) * self.tile_size
                 tex_j = (j - rect.top) * self.tile_size
                 tile = self.get_tile(i, j)
@@ -54,10 +58,10 @@ class NoiseGrid:
 
 def test():
     file_name = f'{int(time.time())}'
-    size = 128
-    noise = NoiseGrid(PerlinNoise, size, 1)
-    rect = pg.Rect(0, 0, 2, 2)
-    texture = noise.get_texture(rect)
+    size = 256
+    noise = NoiseGrid(PerlinNoise, size, list(range(7)))
+    rect = pg.Rect(0, 0, 16, 16)
+    texture = noise.get_texture(rect, True)
     pg.image.save(texture, f'perlin_test_images/grid{file_name}.png')
     scr = pg.display.set_mode(texture.get_size())
     scr.blit(texture, (0, 0))
