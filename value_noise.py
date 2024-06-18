@@ -3,14 +3,14 @@ import random
 import pygame as pg
 import time
 from interpolations import *
-from abc_noise import Noise
+from abc_noise import NoiseTile
 
 
-class ValueNoise(Noise):
+class ValueNoise(NoiseTile):
     def random_value(self, k, x, y):
         return random.random() * 2 - 1
 
-    def set_points(self, print_progress=False):
+    def _calculate_points(self, print_progress=False):
         for k in self.octaves:
             region: list[list[float]] = self.values[k]
             k1 = 2 ** k
@@ -37,15 +37,14 @@ class ValueNoise(Noise):
                     value = interpolate_sigmoid(top, bottom, yf)
                     value = value / k1 / 2
                     self.points[j][i] += value
-        self.points_are_set = True
 
 
 def test():
     file_name = f'{int(time.time())}'
     width1, height1 = 256, 256
     noise = ValueNoise((width1, height1), list(range(4, 8)))
-    noise.set_values()
-    noise.set_points(print_progress=True)
+    noise.calculate_values()
+    noise.calculate_points(print_progress=True)
     texture = noise.get_texture()
     pg.image.save(texture, f'perlin_test_images/value{file_name}.png')
     scr = pg.display.set_mode((width1, height1))

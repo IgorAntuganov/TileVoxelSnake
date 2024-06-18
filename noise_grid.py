@@ -20,7 +20,7 @@ class NoiseGrid:
 
     def add_tile(self, i, j):
         new_tile = self.noise_type((self.tile_size, self.tile_size), self.octaves)
-        new_tile.set_values()
+        new_tile.calculate_values()
 
         if (i, j-1) in self.grid:
             left_tile = self.grid[(i, j-1)]
@@ -42,7 +42,7 @@ class NoiseGrid:
             bottom_right_tile = self.grid[(i+1, j+1)]
             new_tile.set_bottom_right_neighbor(bottom_right_tile.get_values())
 
-        new_tile.set_points()
+        new_tile.calculate_points()
 
         self.grid[(i, j)] = new_tile
 
@@ -60,15 +60,15 @@ class NoiseGrid:
                 tex_i = (i - rect.left) * self.tile_size
                 tex_j = (j - rect.top) * self.tile_size
                 tile = self.get_tile(i, j)
-                tile_texture = tile.get_texture()
+                tile_texture = tile.work()
                 texture.blit(tile_texture, (tex_i, tex_j))
         return texture
 
 
 def test():
     file_name = f'{int(time.time())}'
-    size = 256
-    noise = NoiseGrid(PerlinNoise, size, list(range(8)))
+    size = 32
+    noise = NoiseGrid(PerlinNoise, size, list(range(5)))
     # rect = pg.Rect(7, 7, 1, 1)
     # print('first texture')
     # _ = noise.get_texture(rect, True)

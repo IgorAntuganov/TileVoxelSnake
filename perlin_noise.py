@@ -2,7 +2,7 @@ import pygame as pg
 import time
 import random
 from interpolations import *
-from abc_noise import Noise
+from abc_noise import NoiseTile
 
 
 class Vector:
@@ -22,11 +22,11 @@ class Vector:
         return Vector(x, y)
 
 
-class PerlinNoise(Noise):
+class PerlinNoise(NoiseTile):
     def random_value(self, k, x, y):
         return Vector.random_vector()
 
-    def set_points(self, print_progress=False):
+    def _calculate_points(self, print_progress=False):
         for k in self.octaves:
             region: list[list[Vector]] = self.values[k]
             k1 = 2 ** k
@@ -69,7 +69,6 @@ class PerlinNoise(Noise):
 
                     value = value / (2 ** k)
                     self.points[j][i] += value
-        self.points_are_set = True
 
     def get_points(self) -> list[list[float]]:
         assert self.points_are_set
@@ -80,8 +79,8 @@ def test():
     file_name = f'{int(time.time())}'
     width1, height1 = 512, 512
     noise = PerlinNoise((width1, height1), list(range(2, 9)))
-    noise.set_values()
-    noise.set_points(print_progress=True)
+    noise.calculate_values()
+    noise.calculate_points(print_progress=True)
     texture = noise.get_texture()
     pg.image.save(texture, f'perlin_test_images/perlin{file_name}.png')
     scr = pg.display.set_mode((width1, height1))
