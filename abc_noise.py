@@ -48,10 +48,24 @@ class Noise(ABC):
             for i in range(len(self_region)):
                 self_region[0][i] = neighbor_region[-1][i]
 
+    def set_bottom_neighbor(self, top_neighbor_values: list[list[list[float]]]):
+        for self_region, neighbor_region in zip(self.values, top_neighbor_values):
+            for i in range(len(self_region)):
+                self_region[-1][i] = neighbor_region[0][i]
+
     def set_left_neighbor(self, left_neighbor_values):
         for self_region, neighbor_region in zip(self.values, left_neighbor_values):
             for self_row, neighbor_row in zip(self_region, neighbor_region):
                 self_row[0] = neighbor_row[-1]
+
+    def set_right_neighbor(self, right_neighbor_values):
+        for self_region, neighbor_region in zip(self.values, right_neighbor_values):
+            for self_row, neighbor_row in zip(self_region, neighbor_region):
+                self_row[-1] = neighbor_row[0]
+
+    def set_bottom_right_neighbor(self, bottom_right_neighbor_values):
+        for self_region, neighbor_region in zip(self.values, bottom_right_neighbor_values):
+            self_region[-1][-1] = neighbor_region[0][0]
 
     @abstractmethod
     def set_points(self, print_progress=False):

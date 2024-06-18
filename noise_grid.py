@@ -23,15 +23,24 @@ class NoiseGrid:
         new_tile.set_values()
 
         if (i, j-1) in self.grid:
-            top_tile = self.grid[(i, j-1)]
-            new_tile.set_left_neighbor(top_tile.get_values())
+            left_tile = self.grid[(i, j-1)]
+            new_tile.set_left_neighbor(left_tile.get_values())
+
+        if (i, j+1) in self.grid:
+            right_tile = self.grid[(i, j+1)]
+            new_tile.set_right_neighbor(right_tile.get_values())
 
         if (i-1, j) in self.grid:
-            left_tile = self.grid[(i-1, j)]
-            new_tile.set_top_neighbor(left_tile.get_values())
+            top_tile = self.grid[(i-1, j)]
+            new_tile.set_top_neighbor(top_tile.get_values())
 
-        # bottom tile
-        # right tile
+        if (i+1, j) in self.grid:
+            bottom_tile = self.grid[(i+1, j)]
+            new_tile.set_bottom_neighbor(bottom_tile.get_values())
+
+        if (i+1, j+1) in self.grid:
+            bottom_right_tile = self.grid[(i+1, j+1)]
+            new_tile.set_bottom_right_neighbor(bottom_right_tile.get_values())
 
         new_tile.set_points()
 
@@ -59,8 +68,16 @@ class NoiseGrid:
 def test():
     file_name = f'{int(time.time())}'
     size = 256
-    noise = NoiseGrid(PerlinNoise, size, list(range(7)))
-    rect = pg.Rect(0, 0, 16, 16)
+    noise = NoiseGrid(PerlinNoise, size, list(range(8)))
+    # rect = pg.Rect(7, 7, 1, 1)
+    # print('first texture')
+    # _ = noise.get_texture(rect, True)
+    noise.get_tile(7, 7)
+    rect = pg.Rect(9, 10, 2, 3)
+    print('first texture')
+    _ = noise.get_texture(rect, True)
+    rect = pg.Rect(6, 6, 7, 7)
+    print('second texture')
     texture = noise.get_texture(rect, True)
     pg.image.save(texture, f'perlin_test_images/grid{file_name}.png')
     scr = pg.display.set_mode(texture.get_size())
