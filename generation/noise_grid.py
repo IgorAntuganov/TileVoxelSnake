@@ -1,7 +1,7 @@
 import time
 import os
 import pygame as pg
-from generation.value_noise import ValueNoise
+from generation._NU_value_noise import ValueNoise
 from generation.perlin_noise import PerlinNoise
 from generation.abc_noise import Noise, DataNoiseTile
 from generation.constants import PATH_TO_NOISE

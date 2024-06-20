@@ -51,64 +51,57 @@ class TerrainMech:
 
             # sides of blocks
             column_bottom_rect = self.layers.get_rect(x, y, 0)
-            # bottom side
-            if hd['bottom'] > 0:
-                if top_block_rect.bottom < column_bottom_rect.bottom:
-                    for i in range(hd['bottom']):
-                        side_z = z - i
-                        shaded = i == hd['bottom'] - 1
-                        result = self.create_bottom_sprite(column, side_z, shaded)
-                        if result is not None:
-                            rect, sprite = result
-                            figure = Figure(rect, sprite, (x, y, side_z), (x, y+1, side_z))
-                            figures.append(figure)
-            # top side
-            if hd['top'] > 0:
-                if top_block_rect.top > column_bottom_rect.top:
-                    for i in range(hd['top']):
-                        side_z = z - i
-                        shaded = i == hd['top'] - 1
-                        result = self.create_top_sprite(column, side_z, shaded)
-                        if result is not None:
-                            rect, sprite = result
-                            figure = Figure(rect, sprite, (x, y, side_z), (x, y - 1, side_z))
-                            figures.append(figure)
 
-            # right side
-            if hd['right'] > 0:
-                if top_block_rect.right < column_bottom_rect.right:
-                    for i in range(hd['right']):
-                        side_z = z - i
-                        shaded = i == hd['right'] - 1
-                        result = self.create_right_sprite(column, side_z, shaded)
-                        if result is not None:
-                            rect, sprite = result
-                            figure = Figure(rect, sprite, (x, y, side_z), (x + 1, y, side_z))
-                            figures.append(figure)
+            for i in range(max(hd.values())):
+                side_z = z - i
+                block = column.get_block(side_z)
+                top_rect = self.layers.get_rect(x, y, side_z)
+                bottom_rect = self.layers.get_rect(x, y, side_z - 1)
+                # bottom side
+                if top_block_rect.bottom < column_bottom_rect.bottom and i < hd['bottom']:
+                    if i == hd['bottom'] - 1:
+                        sprite = block.get_side_sprite_shaded('bottom')
+                    else:
+                        sprite = block.get_side_sprite('bottom')
 
-            # left side
-            if hd['left'] > 0:
-                if top_block_rect.left > column_bottom_rect.left:
-                    for i in range(hd['left']):
-                        side_z = z - i
-                        shaded = i == hd['left'] - 1
-                        result = self.create_left_sprite(column, side_z, shaded)
-                        if result is not None:
-                            rect, sprite = result
-                            figure = Figure(rect, sprite, (x, y, side_z), (x - 1, y, side_z))
-                            figures.append(figure)
+                    figure = self.create_bottom_figure(x, y, side_z, sprite, top_rect, bottom_rect)
+                    if figure is not None:
+                        figures.append(figure)
+
+                # top side
+                if top_block_rect.top > column_bottom_rect.top and i < hd['top']:
+                    if i == hd['top'] - 1:
+                        sprite = block.get_side_sprite_shaded('top')
+                    else:
+                        sprite = block.get_side_sprite('top')
+
+                    figure = self.create_top_figure(x, y, side_z, sprite, top_rect, bottom_rect)
+                    if figure is not None:
+                        figures.append(figure)
+
+                # right side
+                if top_block_rect.right < column_bottom_rect.right and i < hd['right']:
+                    if i == hd['right'] - 1:
+                        sprite = block.get_side_sprite_shaded('right')
+                    else:
+                        sprite = block.get_side_sprite('right')
+                    figure = self.create_right_figure(x, y, side_z, sprite, top_rect, bottom_rect)
+                    if figure is not None:
+                        figures.append(figure)
+
+                # left side
+                if top_block_rect.left > column_bottom_rect.left and i < hd['left']:
+                    if i == hd['left'] - 1:
+                        sprite = column.get_block(side_z).get_side_sprite_shaded('left')
+                    else:
+                        sprite = column.get_block(side_z).get_side_sprite('left')
+                    figure = self.create_left_figure(x, y, side_z, sprite, top_rect, bottom_rect)
+                    if figure is not None:
+                        figures.append(figure)
+
             self.elements.append(figures)
 
-    def create_bottom_sprite(self, column, z, shaded) -> tuple[pg.Rect, pg.Surface] | None:
-        x, y = column.x, column.y
-        block_for_side = column.get_block(z)
-        if not shaded:
-            sprite = block_for_side.get_side_sprite('bottom')
-        else:
-            sprite = block_for_side.get_side_sprite_shaded('bottom')
-        top_rect = self.layers.get_rect(x, y, z)
-        bottom_rect = self.layers.get_rect(x, y, z - 1)
-
+    def create_bottom_figure(self, x, y, z, sprite, top_rect, bottom_rect) -> Figure | None:
         top = top_rect.right - top_rect.left
         bottom = bottom_rect.right - bottom_rect.left
         offset = bottom_rect.left - top_rect.left
@@ -120,19 +113,9 @@ class TerrainMech:
 
         if rect.colliderect(self.scr_rect):
             trapezoid_sprite = sides_drawer.get_hor_trapezoid(sprite, top+3, bottom+3, height, offset)
-            figure = (rect, trapezoid_sprite)
-            return figure
+            return Figure(rect, trapezoid_sprite, (x, y, z), (x, y + 1, z))
 
-    def create_top_sprite(self, column, z, shaded) -> tuple[pg.Rect, pg.Surface] | None:
-        x, y = column.x, column.y
-        block_for_side = column.get_block(z)
-        if not shaded:
-            sprite = block_for_side.get_side_sprite('top')
-        else:
-            sprite = block_for_side.get_side_sprite_shaded('top')
-        top_rect = self.layers.get_rect(x, y, z)
-        bottom_rect = self.layers.get_rect(x, y, z - 1)
-
+    def create_top_figure(self, x, y, z, sprite, top_rect, bottom_rect) -> Figure | None:
         top = top_rect.right - top_rect.left
         bottom = bottom_rect.right - bottom_rect.left
         offset = bottom_rect.left - top_rect.left
@@ -144,19 +127,9 @@ class TerrainMech:
 
         if rect.colliderect(self.scr_rect):
             trapezoid_sprite = sides_drawer.get_hor_trapezoid(sprite, top+1, bottom+1, height, offset)
-            figure = (rect, trapezoid_sprite)
-            return figure
+            return Figure(rect, trapezoid_sprite, (x, y, z), (x, y - 1, z))
 
-    def create_right_sprite(self, column, z, shaded) -> tuple[pg.Rect, pg.Surface] | None:
-        x, y = column.x, column.y
-        block_for_side = column.get_block(z)
-        if not shaded:
-            sprite = block_for_side.get_side_sprite('right')
-        else:
-            sprite = block_for_side.get_side_sprite_shaded('right')
-        top_rect = self.layers.get_rect(x, y, z)
-        bottom_rect = self.layers.get_rect(x, y, z - 1)
-
+    def create_right_figure(self, x, y, z, sprite, top_rect, bottom_rect) -> Figure | None:
         left = top_rect.bottom - top_rect.top
         right = bottom_rect.bottom - bottom_rect.top
         width = bottom_rect.right - top_rect.right
@@ -168,19 +141,9 @@ class TerrainMech:
 
         if rect.colliderect(self.scr_rect):
             trapezoid_sprite = sides_drawer.get_vert_trapezoid(sprite, left+3, right+3, width, offset)
-            figure = (rect, trapezoid_sprite)
-            return figure
+            return Figure(rect, trapezoid_sprite, (x, y, z), (x + 1, y, z))
 
-    def create_left_sprite(self, column, z, shaded) -> tuple[pg.Rect, pg.Surface] | None:
-        x, y = column.x, column.y
-        block_for_side = column.get_block(z)
-        if not shaded:
-            sprite = block_for_side.get_side_sprite('left')
-        else:
-            sprite = block_for_side.get_side_sprite_shaded('left')
-        top_rect = self.layers.get_rect(x, y, z)
-        bottom_rect = self.layers.get_rect(x, y, z - 1)
-
+    def create_left_figure(self, x, y, z, sprite, top_rect, bottom_rect) -> Figure | None:
         left = top_rect.bottom - top_rect.top
         right = bottom_rect.bottom - bottom_rect.top
         width = bottom_rect.left - top_rect.left
@@ -192,8 +155,7 @@ class TerrainMech:
 
         if rect.colliderect(self.scr_rect):
             trapezoid_sprite = sides_drawer.get_vert_trapezoid(sprite, left+3, right+3, width, offset)
-            figure = (rect, trapezoid_sprite)
-            return figure
+            return Figure(rect, trapezoid_sprite, (x, y, z), (x - 1, y, z))
 
     def get_elements_in_order(self) -> list[list[Figure]]:
         return self.elements

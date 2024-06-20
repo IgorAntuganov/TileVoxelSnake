@@ -36,7 +36,7 @@ class Noise(ABC):
         pass
 
     def calculate_values(self):
-        for _ in range(min(self.octaves)):
+        for _ in range(max(self.octaves)+1):
             self.values.append([])
         for k in self.octaves:
             region = []
@@ -47,7 +47,7 @@ class Noise(ABC):
                     value = self.random_value(k, x, y)
                     row.append(value)
                 region.append(row)
-            self.values.append(region)
+            self.values[k] = region
         self.values_are_set = True
 
     def get_values(self) -> list[list[list[float]]]:

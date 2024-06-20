@@ -34,12 +34,6 @@ class PerlinNoise(DataNoiseTile):
                 if print_progress:
                     print(f'{k+1}/{len(self.octaves)}, {i+1}/{self.width}')
                 for j in range(self.height):
-                    if self.width // k1 and self.height // k1 != 0:
-                        x = i // (self.width // k1)
-                        y = j // (self.height // k1)
-                    else:
-                        continue
-
                     x = i // (self.width // k1)
                     y = j // (self.height // k1)
 
@@ -49,15 +43,16 @@ class PerlinNoise(DataNoiseTile):
                     bottom_left_corner = region[x][y + 1]
                     bottom_right_corner = region[x + 1][y + 1]
 
+                    # offset vectors
                     xf = i % (self.width // k1) / (self.width // k1)
                     yf = j % (self.height // k1) / (self.height // k1)
 
-                    # offset vectors
                     top_left_offset = Vector(xf, yf)
                     top_right_offset = Vector(xf-1, yf)
                     bottom_left_offset = Vector(xf, yf-1)
                     bottom_right_offset = Vector(xf-1, yf-1)
 
+                    # scalars
                     top_left = top_left_corner.scalar(top_left_offset)
                     top_right = top_right_corner.scalar(top_right_offset)
                     bottom_left = bottom_left_corner.scalar(bottom_left_offset)
