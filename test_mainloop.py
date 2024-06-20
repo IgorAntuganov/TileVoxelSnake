@@ -11,7 +11,6 @@ clock = pg.time.Clock()
 camera = CameraFrame((0, 0), 1536//BASE_LEVEL_SIZE, 960//BASE_LEVEL_SIZE, (0, 0))
 layers = camera.get_layers()
 world = World()
-world.test_fill()
 terr_mesh = TerrainMech(layers)
 frame = 0
 

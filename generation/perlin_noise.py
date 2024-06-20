@@ -1,8 +1,8 @@
 import pygame as pg
 import time
 import random
-from interpolations import *
-from abc_noise import DataNoiseTile
+from generation.interpolations import *
+from generation.abc_noise import DataNoiseTile
 
 
 class Vector:

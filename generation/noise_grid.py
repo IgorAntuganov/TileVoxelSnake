@@ -1,15 +1,15 @@
 import time
 import os
 import pygame as pg
-from value_noise import ValueNoise
-from perlin_noise import PerlinNoise
-from abc_noise import Noise, DataNoiseTile
+from generation.value_noise import ValueNoise
+from generation.perlin_noise import PerlinNoise
+from generation.abc_noise import Noise, DataNoiseTile
 from generation.constants import PATH_TO_NOISE
 
 
 class NoiseGrid:
-    def __init__(self, world_seed,
-                 unic_name,
+    def __init__(self, world_seed: int,
+                 unic_name: str,
                  noise_type: type,
                  tile_size: int,
                  octaves: int | list[int] | None):
@@ -88,9 +88,26 @@ class NoiseGrid:
                 tex_i = (i - rect.left) * self.tile_size
                 tex_j = (j - rect.top) * self.tile_size
                 tile = self.get_tile(i, j)
-                tile_texture = tile.work()
+                tile_texture = tile.work(get_texture=True)
                 texture.blit(tile_texture, (tex_i, tex_j))
         return texture
+
+    def set_noise_at_rect(self, rect: pg.Rect, print_progress=False):
+        for i in range(rect.left, rect.right):
+            for j in range(rect.top, rect.bottom):
+                if print_progress:
+                    print(i, j)
+                tile = self.get_tile(i, j)
+                tile.work()
+
+    def get_noise_point(self, i, j) -> float:
+        tile_i = i // self.tile_size
+        tile_j = j // self.tile_size
+        tile = self.get_tile(tile_i, tile_j)
+        x = i % self.tile_size
+        y = j % self.tile_size
+        point = tile.get_normalized_points()[y][x]
+        return point
 
 
 def test():

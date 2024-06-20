@@ -104,16 +104,13 @@ class Noise(ABC):
             self.texture = texture
         return self.texture
 
-    def work(self, get_texture=True) -> pg.Surface | None:
+    def work(self, get_texture=False) -> pg.Surface | None:
         if not self.values_are_set:
             self.calculate_values()
-            print('calculating values')
         if not self.points_are_set:
             self.calculate_points()
-            print('calculating points')
         if not self.normalized_points_are_set:
             self.calculate_normalized_points()
-            print('calculating norm points')
         if get_texture:
             return self.get_texture()
 

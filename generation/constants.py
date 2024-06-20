@@ -1,1 +1,6 @@
-PATH_TO_NOISE = 'noise_saves/'
+PATH_TO_NOISE = 'generation/noise_saves/'
+
+MAX_HEIGHT = 20
+HEIGHT_TILE_SIZE = 32
+HEIGHT_OCTAVES = [0, 1, 2]
+START_HEIGHT_AREA = (-2, -2, 4, 4)

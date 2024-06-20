@@ -2,8 +2,8 @@ import random
 
 import pygame as pg
 import time
-from interpolations import *
-from abc_noise import DataNoiseTile
+from generation.interpolations import *
+from generation.abc_noise import DataNoiseTile
 
 
 class ValueNoise(DataNoiseTile):
