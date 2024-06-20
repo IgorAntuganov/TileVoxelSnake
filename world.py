@@ -154,12 +154,12 @@ class World:
                     self.columns[(i, j)] = column
 
     def test_fill_with_height_map(self):
-        for i in range(-100, 101):
-            for j in range(-100, 101):
+        for i in range(-200, 201):
+            for j in range(-200, 201):
                 height = self.height_map.get_height(i, j)
                 new_column = Column.from_height(i, j, height)
                 self.columns[(i, j)] = new_column
-        self.set_columns_h_diff_in_rect(pg.Rect(-101, -101, 202, 202))
+        self.set_columns_h_diff_in_rect(pg.Rect(-201, -201, 402, 402))
 
     def test_fill(self):
         blocks1 = [Stone, Dirt, Stone]

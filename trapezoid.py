@@ -41,6 +41,15 @@ class SidesDrawer:
     def set_fast_anisotropic(self, mode: bool):
         self._fast_anisotropic = mode
 
+    @staticmethod
+    def get_hor_trapezoid_sizes(top_width, bot_width, height, offset):
+        if offset > 0:
+            im_width = max(top_width, bot_width+offset)
+        else:
+            im_width = max(top_width-offset, bot_width)
+        im_height = abs(height)
+        return im_width, im_height
+
     def get_hor_trapezoid(self, texture: pg.Surface,
                           top_width: int,
                           bot_width: int,
@@ -53,11 +62,7 @@ class SidesDrawer:
         :param height: can be negative if top below bottom on screen
         :param offset: difference by x between the upper-left and lower-left corners
         """
-        if offset > 0:
-            im_width = max(top_width, bot_width+offset)
-        else:
-            im_width = max(top_width-offset, bot_width)
-        im_height = abs(height)
+        im_width, im_height = self.get_hor_trapezoid_sizes(top_width, bot_width, height, offset)
         image = pg.Surface((im_width, im_height), pg.SRCALPHA)
 
         if self._debug_background:
@@ -156,6 +161,15 @@ class SidesDrawer:
                 print('in cache:', len(self._cache))
         return resized
 
+    @staticmethod
+    def get_vert_trapezoid_sizes(left_height, right_height, width, offset):
+        if offset > 0:
+            im_height = max(left_height, right_height + offset)
+        else:
+            im_height = max(left_height - offset, right_height)
+        im_width = abs(width)
+        return im_width, im_height
+
     def get_vert_trapezoid(self, texture: pg.Surface,
                            left_height: int,
                            right_height: int,
@@ -168,11 +182,7 @@ class SidesDrawer:
         :param width: can be negative if left side righter on screen than right side
         :param offset: difference by y between the upper-left and upper-right corners
         """
-        if offset > 0:
-            im_height = max(left_height, right_height + offset)
-        else:
-            im_height = max(left_height - offset, right_height)
-        im_width = abs(width)
+        im_width, im_height = self.get_vert_trapezoid_sizes(left_height, right_height, width, offset)
         image = pg.Surface((im_width, im_height), pg.SRCALPHA)
 
         if self._debug_background:

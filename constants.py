@@ -1,7 +1,8 @@
 # Settings
 
-BASE_LEVEL_SIZE = 32  # size in pixels of top side of block at z = 0
-LAYERS_OFFSET = 3  # only int > 0, difference in pixel between layers top side sprites sizes
+BASE_LEVEL_SIZE = 48  # size in pixels of top side of block at z = 0
+LAYERS_OFFSET = 2  # only int > 0, difference in pixel between layers top side sprites sizes
+# OPTIMAL VALUES: (32, 1) (48, 2) (64, 3), best: (32, 1)
 
 SHADOW_RADIUS = 0.5  # 0 <= x <= 1
 SHADOW_STRENGTH = 0.2  # 0 <= x <= 1
