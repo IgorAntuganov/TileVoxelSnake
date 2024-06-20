@@ -15,5 +15,8 @@ HEIGHT_RECOLOR_STRENGTH = 0.3
 PATH_TO_SPRITES = 'sprites/'
 PATH_TO_BLOCKS = 'sprites/blocks/'
 
+PATH_TO_CACHE = 'trapezoids_cache'
+CACHE_KEYS_FILENAME = 'keys.pickle'
+
 SIDES_NAMES = ['left', 'top', 'right', 'bottom']
 DIAGONALS_NAMES = ['top_left', 'top_right', 'bottom_left', 'bottom_right']

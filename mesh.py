@@ -3,12 +3,6 @@ import pygame as pg
 from camera import Layers
 from world import Column
 from trapezoid import SidesDrawer
-sides_drawer = SidesDrawer()
-sides_drawer.set_debug_mode(False)
-sides_drawer.set_using_anisotropic_filtration(True)
-sides_drawer.set_fast_anisotropic(False)
-sides_drawer.set_using_perspective(True)
-sides_drawer.set_using_cache(True)
 
 
 class Figure:
@@ -23,7 +17,8 @@ class Figure:
 
 
 class TerrainMech:
-    def __init__(self, layers: Layers, scr_sizes):
+    def __init__(self, sides_drawer: SidesDrawer, layers: Layers, scr_sizes):
+        self.sides_drawer = sides_drawer
         self.layers = layers
         self.elements: list[list[Figure]] = []
         self.scr_rect = pg.Rect(0, 0, *scr_sizes)
@@ -61,10 +56,12 @@ class TerrainMech:
                 if top_block_rect.bottom < column_bottom_rect.bottom and i < hd['bottom']:
                     if i == hd['bottom'] - 1:
                         sprite = block.get_side_sprite_shaded('bottom')
+                        sprite_name = f"{block.__class__.__name__}_bottom_shaded"
                     else:
                         sprite = block.get_side_sprite('bottom')
+                        sprite_name = f"{block.__class__.__name__}_bottom"
 
-                    figure = self.create_bottom_figure(x, y, side_z, sprite, top_rect, bottom_rect)
+                    figure = self.create_bottom_figure(x, y, side_z, sprite, sprite_name, top_rect, bottom_rect)
                     if figure is not None:
                         figures.append(figure)
 
@@ -72,10 +69,12 @@ class TerrainMech:
                 if top_block_rect.top > column_bottom_rect.top and i < hd['top']:
                     if i == hd['top'] - 1:
                         sprite = block.get_side_sprite_shaded('top')
+                        sprite_name = f"{block.__class__.__name__}_top_shaded"
                     else:
                         sprite = block.get_side_sprite('top')
+                        sprite_name = f"{block.__class__.__name__}_top"
 
-                    figure = self.create_top_figure(x, y, side_z, sprite, top_rect, bottom_rect)
+                    figure = self.create_top_figure(x, y, side_z, sprite, sprite_name, top_rect, bottom_rect)
                     if figure is not None:
                         figures.append(figure)
 
@@ -83,9 +82,11 @@ class TerrainMech:
                 if top_block_rect.right < column_bottom_rect.right and i < hd['right']:
                     if i == hd['right'] - 1:
                         sprite = block.get_side_sprite_shaded('right')
+                        sprite_name = f"{block.__class__.__name__}_right_shaded"
                     else:
                         sprite = block.get_side_sprite('right')
-                    figure = self.create_right_figure(x, y, side_z, sprite, top_rect, bottom_rect)
+                        sprite_name = f"{block.__class__.__name__}_right"
+                    figure = self.create_right_figure(x, y, side_z, sprite, sprite_name, top_rect, bottom_rect)
                     if figure is not None:
                         figures.append(figure)
 
@@ -93,69 +94,71 @@ class TerrainMech:
                 if top_block_rect.left > column_bottom_rect.left and i < hd['left']:
                     if i == hd['left'] - 1:
                         sprite = column.get_block(side_z).get_side_sprite_shaded('left')
+                        sprite_name = f"{block.__class__.__name__}_left_shaded"
                     else:
                         sprite = column.get_block(side_z).get_side_sprite('left')
-                    figure = self.create_left_figure(x, y, side_z, sprite, top_rect, bottom_rect)
+                        sprite_name = f"{block.__class__.__name__}_left"
+                    figure = self.create_left_figure(x, y, side_z, sprite, sprite_name, top_rect, bottom_rect)
                     if figure is not None:
                         figures.append(figure)
 
             self.elements.append(figures)
 
-    def create_bottom_figure(self, x, y, z, sprite, top_rect, bottom_rect) -> Figure | None:
+    def create_bottom_figure(self, x, y, z, sprite: pg.Surface, sprite_name, top_rect, bottom_rect) -> Figure | None:
         top = top_rect.right - top_rect.left
         bottom = bottom_rect.right - bottom_rect.left
         offset = bottom_rect.left - top_rect.left
         height = bottom_rect.bottom - top_rect.bottom
 
-        sizes = sides_drawer.get_hor_trapezoid_sizes(top+3, bottom+3, height, offset)
+        sizes = self.sides_drawer.get_hor_trapezoid_sizes(top+3, bottom+3, height, offset)
         rect_left = min(top_rect.left, bottom_rect.left)
         rect = pg.Rect((rect_left - 1, top_rect.bottom), sizes)
 
         if rect.colliderect(self.scr_rect):
-            trapezoid_sprite = sides_drawer.get_hor_trapezoid(sprite, top+3, bottom+3, height, offset)
+            trapezoid_sprite = self.sides_drawer.get_hor_trapezoid(sprite, sprite_name, top+3, bottom+3, height, offset)
             return Figure(rect, trapezoid_sprite, (x, y, z), (x, y + 1, z))
 
-    def create_top_figure(self, x, y, z, sprite, top_rect, bottom_rect) -> Figure | None:
+    def create_top_figure(self, x, y, z, sprite: pg.Surface, sprite_name, top_rect, bottom_rect) -> Figure | None:
         top = top_rect.right - top_rect.left
         bottom = bottom_rect.right - bottom_rect.left
         offset = bottom_rect.left - top_rect.left
         height = bottom_rect.top - top_rect.top
 
         rect_left = min(bottom_rect.left, top_rect.left)
-        sizes = sides_drawer.get_hor_trapezoid_sizes(top+1, bottom+1, height, offset)
+        sizes = self.sides_drawer.get_hor_trapezoid_sizes(top+1, bottom+1, height, offset)
         rect = pg.Rect((rect_left, bottom_rect.top), sizes)
 
         if rect.colliderect(self.scr_rect):
-            trapezoid_sprite = sides_drawer.get_hor_trapezoid(sprite, top+1, bottom+1, height, offset)
+            trapezoid_sprite = self.sides_drawer.get_hor_trapezoid(sprite, sprite_name, top+1, bottom+1, height, offset)
             return Figure(rect, trapezoid_sprite, (x, y, z), (x, y - 1, z))
 
-    def create_right_figure(self, x, y, z, sprite, top_rect, bottom_rect) -> Figure | None:
+    def create_right_figure(self, x, y, z, sprite: pg.Surface, sprite_name, top_rect, bottom_rect) -> Figure | None:
         left = top_rect.bottom - top_rect.top
         right = bottom_rect.bottom - bottom_rect.top
         width = bottom_rect.right - top_rect.right
         offset = bottom_rect.top - top_rect.top
 
         rect_top = min(bottom_rect.top, top_rect.top)
-        sizes = sides_drawer.get_vert_trapezoid_sizes(left+3, right+3, width, offset)
+        sizes = self.sides_drawer.get_vert_trapezoid_sizes(left+3, right+3, width, offset)
         rect = pg.Rect((top_rect.right, rect_top - 1), sizes)
 
         if rect.colliderect(self.scr_rect):
-            trapezoid_sprite = sides_drawer.get_vert_trapezoid(sprite, left+3, right+3, width, offset)
+            trapezoid_sprite = self.sides_drawer.get_vert_trapezoid(sprite, sprite_name, left+3, right+3, width, offset)
             return Figure(rect, trapezoid_sprite, (x, y, z), (x + 1, y, z))
 
-    def create_left_figure(self, x, y, z, sprite, top_rect, bottom_rect) -> Figure | None:
+    def create_left_figure(self, x, y, z, sprite: pg.Surface, sprite_name, top_rect, bottom_rect) -> Figure | None:
         left = top_rect.bottom - top_rect.top
         right = bottom_rect.bottom - bottom_rect.top
         width = bottom_rect.left - top_rect.left
         offset = bottom_rect.top - top_rect.top
 
         rect_top = min(bottom_rect.top, top_rect.top)
-        sizes = sides_drawer.get_vert_trapezoid_sizes(left+3, right+3, width, offset)
+        sizes = self.sides_drawer.get_vert_trapezoid_sizes(left+3, right+3, width, offset)
         rect = pg.Rect((bottom_rect.left, rect_top - 1), sizes)
 
         if rect.colliderect(self.scr_rect):
-            trapezoid_sprite = sides_drawer.get_vert_trapezoid(sprite, left+3, right+3, width, offset)
+            trapezoid_sprite = self.sides_drawer.get_vert_trapezoid(sprite, sprite_name, left+3, right+3, width, offset)
             return Figure(rect, trapezoid_sprite, (x, y, z), (x - 1, y, z))
 
-    def get_elements_in_order(self) -> list[list[Figure]]:
+    def get_elements(self) -> list[list[Figure]]:
         return self.elements

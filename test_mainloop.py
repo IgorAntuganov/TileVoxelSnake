@@ -6,12 +6,17 @@ scr = pg.display.set_mode((1536, 960))
 from world import *
 from camera import *
 from mesh import *
+from trapezoid import SidesDrawer
+
+sides_drawer = SidesDrawer()
+sides_drawer.set_print_cache_size(True)
+sides_drawer.create_cache()
 
 clock = pg.time.Clock()
 camera = CameraFrame((0, 0), 1536//BASE_LEVEL_SIZE, 960//BASE_LEVEL_SIZE, (0, 0))
 layers = camera.get_layers()
 world = World()
-terr_mesh = TerrainMech(layers, (1536, 960))
+terr_mesh = TerrainMech(sides_drawer, layers, (1536, 960))
 frame = 0
 
 while True:
@@ -21,6 +26,7 @@ while True:
     mouse_right_click = False
     for event in events:
         if event.type == pg.QUIT:
+            sides_drawer.save_cache()
             exit()
         if event.type == pg.KEYDOWN:
             offset = [0, 0]
@@ -73,7 +79,7 @@ while True:
     # times.append(time.time())  # 4
     terr_mesh.create_mesh(columns_to_draw)
     # times.append(time.time())  # 6
-    ordered = terr_mesh.get_elements_in_order()
+    ordered = terr_mesh.get_elements()
     # times.append(time.time())  # 7
     mouse_rect = None
     block_to_add = None
