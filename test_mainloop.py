@@ -1,25 +1,28 @@
-# import time
+import time
 import pygame as pg
 pg.init()
 scr = pg.display.set_mode((1536, 960))
+pg.display.set_caption('Voxels')
 
 from world import *
 from camera import *
 from mesh import *
 from trapezoid import SidesDrawer
-from generation.constants import HEIGHT_TILE_SIZE
+from constants import TRAPEZOIDS_CACHE_INFO, SET_FPS_CAPTION, PRINT_FPS
 
 sides_drawer = SidesDrawer()
-sides_drawer.set_print_cache_size(True)
+sides_drawer.set_print_cache_size(TRAPEZOIDS_CACHE_INFO)
 sides_drawer.create_cache()
 
 clock = pg.time.Clock()
 camera = CameraFrame((0, 0), 1536//BASE_LEVEL_SIZE, 960//BASE_LEVEL_SIZE, (0, 0))
 layers = camera.get_layers()
-load_distance = int((HEIGHT_TILE_SIZE + max(camera.get_rect().size)))
+load_distance = int(max(camera.get_rect().size)/2) + WORLD_CHUNK_SIZE
 world = World(load_distance)
 terr_mesh = TerrainMech(sides_drawer, layers, (1536, 960))
+
 frame = 0
+last_frame_end = time.time()
 
 while True:
     frame += 1
@@ -70,7 +73,7 @@ while True:
     camera.move(pressed_offset)
 
     world.load_regions_partly()
-    if frame % 120 == 0:
+    if frame % 25 == 0:
         world.check_regions_distance(*camera.get_rect().center)
 
     # render
@@ -116,8 +119,13 @@ while True:
         scr.blit(sprite, mouse_rect.topleft)
 
     # times.append(time.time())  # 8
-    pg.display.set_caption(str(camera.get_rect().center) + ' ' + str(clock.get_fps()))
-
+    frame_time = round(time.time() - last_frame_end, 5)
+    fps = str(round(clock.get_fps(), 2))
+    if SET_FPS_CAPTION:
+        pg.display.set_caption(str(camera.get_rect().center) + ' fps: ' + fps + ' ft: ' + str(frame_time))
+    if PRINT_FPS:
+        print(str(camera.get_rect().center) + ' fps: ' + fps + ' ft: ' + str(frame_time))
+    last_frame_end = time.time()
     # if frame % 25 == 0:
     #     print(' - ' * 30)
     #     print(len(ordered), 'blocks on screen')

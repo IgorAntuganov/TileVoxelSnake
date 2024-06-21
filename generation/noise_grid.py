@@ -1,6 +1,7 @@
 import time
 import os
 import pygame as pg
+from constants import HEIGHT_GENERATING_INFO
 from generation._NU_value_noise import ValueNoise
 from generation.perlin_noise import PerlinNoise
 from generation.abc_noise import Noise, DataNoiseTile
@@ -37,7 +38,7 @@ class NoiseGrid:
                 without_pickle = file.split('.')[0]
                 i, j = without_pickle.split('_')[-2:]
                 i, j = int(i), int(j)
-                self.add_tile(i, j)
+                self.load_and_finish_calculating_tile(i, j)
 
     def merge_tile_with_neighbors(self, tile, tile_i, tile_j):
         if (tile_i, tile_j - 1) in self.grid:
@@ -60,13 +61,15 @@ class NoiseGrid:
             bottom_right_tile = self.grid[(tile_i + 1, tile_j + 1)]
             tile.set_bottom_right_neighbor(bottom_right_tile.get_values())
 
-    def add_tile(self, i, j):
+    def load_and_finish_calculating_tile(self, i, j):
         new_tile = self.noise_type(self.world_seed,
                                    self.unic_name,
                                    i, j,
                                    (self.tile_size, self.tile_size),
                                    self.octaves)
         if not new_tile.loaded:
+            if HEIGHT_GENERATING_INFO:
+                print('generating noise tile', i, j)
             new_tile.calculate_values()
             self.merge_tile_with_neighbors(new_tile, i, j)
             new_tile.calculate_points()
@@ -74,9 +77,9 @@ class NoiseGrid:
             new_tile.save_to_file()
         self.grid[(i, j)] = new_tile
 
-    def get_tile(self, i, j) -> Noise:
+    def get_or_create_tile(self, i, j) -> Noise:
         if (i, j) not in self.grid:
-            self.add_tile(i, j)
+            self.load_and_finish_calculating_tile(i, j)
         return self.grid[(i, j)]
 
     def get_texture(self, rect: pg.Rect, print_progress=False) -> pg.Surface:
@@ -87,7 +90,7 @@ class NoiseGrid:
                     print(i, j)
                 tex_i = (i - rect.left) * self.tile_size
                 tex_j = (j - rect.top) * self.tile_size
-                tile = self.get_tile(i, j)
+                tile = self.get_or_create_tile(i, j)
                 tile_texture = tile.work(get_texture=True)
                 texture.blit(tile_texture, (tex_i, tex_j))
         return texture
@@ -97,13 +100,13 @@ class NoiseGrid:
             for j in range(rect.top, rect.bottom):
                 if print_progress:
                     print(i, j)
-                tile = self.get_tile(i, j)
+                tile = self.get_or_create_tile(i, j)
                 tile.work()
 
     def get_noise_point(self, i, j) -> float:
         tile_i = i // self.tile_size
         tile_j = j // self.tile_size
-        tile = self.get_tile(tile_i, tile_j)
+        tile = self.get_or_create_tile(tile_i, tile_j)
         x = i % self.tile_size
         y = j % self.tile_size
         point = tile.get_normalized_points()[y][x]

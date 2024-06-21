@@ -1,9 +1,10 @@
 from blocks import *
 from render_order import RenderOrder
 from generation.height_map import HeightMap
-from generation.constants import HEIGHT_TILE_SIZE, LOADING_PART_SIZE
-LOADING_PARTS_COUNT = HEIGHT_TILE_SIZE // LOADING_PART_SIZE
-LOADING_PARTS_TOTAL_COUNT = (HEIGHT_TILE_SIZE // LOADING_PART_SIZE) ** 2
+from constants import HEIGHT_GENERATING_INFO
+from generation.constants import CHUNK_LOADING_PART_SIZE, WORLD_CHUNK_SIZE
+LOADING_PARTS_COUNT = WORLD_CHUNK_SIZE // CHUNK_LOADING_PART_SIZE
+LOADING_PARTS_TOTAL_COUNT = (WORLD_CHUNK_SIZE // CHUNK_LOADING_PART_SIZE) ** 2
 
 
 class Column:
@@ -112,23 +113,24 @@ class Region:
         self.size = size
         self.columns: list[list[None | Column]] = [[None] * size for _ in range(size)]
 
-        self.part_size = self.size // LOADING_PART_SIZE
-        assert self.part_size * LOADING_PART_SIZE == self.size
+        self.part_size = self.size // CHUNK_LOADING_PART_SIZE
+        assert self.part_size * CHUNK_LOADING_PART_SIZE == self.size
         self.filled_parts = 0
         self.full_filled = False
 
     @staticmethod
-    def check_distance(x, y, frame_x, frame_y, r) -> bool:
-        distance = ((frame_x-x) ** 2 + (frame_y-y) ** 2) ** .5
+    def check_distance(center_x, center_y, frame_x, frame_y, r) -> bool:
+        # distance = ((frame_x-x) ** 2 + (frame_y-y) ** 2) ** .5
+        distance = max(abs(frame_x - center_x), abs(frame_y - center_y))
         return distance < r
 
     def get_next_part_rect(self) -> pg.Rect:
         i = self.filled_parts // LOADING_PARTS_COUNT
         j = self.filled_parts % LOADING_PARTS_COUNT
-        x = self.x + i * LOADING_PART_SIZE
-        y = self.y + j * LOADING_PART_SIZE
+        x = self.x + i * CHUNK_LOADING_PART_SIZE
+        y = self.y + j * CHUNK_LOADING_PART_SIZE
         self.filled_parts += 1
-        return pg.Rect(x, y, LOADING_PART_SIZE, LOADING_PART_SIZE)
+        return pg.Rect(x, y, CHUNK_LOADING_PART_SIZE, CHUNK_LOADING_PART_SIZE)
 
     def check_if_fully_filled(self) -> bool:
         return self.filled_parts == LOADING_PARTS_TOTAL_COUNT
@@ -157,7 +159,11 @@ class Region:
 class World:
     def __init__(self, load_distance: int, seed: int = 0):
         self.regions: dict[tuple[int, int]: Region] = {}
+
         self.loading_regions: list[Region] = []
+        self.loading_regions_ind = 0
+        self.next_loading_regions: list[Region] = []
+
         self.height_map = HeightMap(seed)
         self.load_distance = load_distance
         self.test_fill_with_regions()
@@ -167,31 +173,37 @@ class World:
         self.render_order = RenderOrder()
 
     def add_region(self, x2, y2):
-        region = Region(x2*HEIGHT_TILE_SIZE, y2*HEIGHT_TILE_SIZE, HEIGHT_TILE_SIZE)
+        region = Region(x2 * WORLD_CHUNK_SIZE, y2 * WORLD_CHUNK_SIZE, WORLD_CHUNK_SIZE)
         self.regions[(x2, y2)] = region
         self.loading_regions.append(region)
 
     def load_regions_partly(self):
-        new_loading_regions = []
-        for region in self.loading_regions:
-            rect = region.get_next_part_rect()
+        if len(self.loading_regions) != 0:
+            if self.loading_regions_ind >= len(self.loading_regions):
+                self.loading_regions_ind = 0
+                self.loading_regions = self.next_loading_regions
+                self.next_loading_regions = []
+
+        if len(self.loading_regions) != 0:  # (after swap)
+            loading_region = self.loading_regions[self.loading_regions_ind]
+            rect = loading_region.get_next_part_rect()
             self.set_columns_in_rect(rect)
-            if not region.check_if_fully_filled():
-                new_loading_regions.append(region)
-        self.loading_regions = new_loading_regions
+            if not loading_region.check_if_fully_filled():
+                self.next_loading_regions.append(loading_region)
+            self.loading_regions_ind += 1
 
     def get_region(self, x, y) -> Region:
-        x2 = x // HEIGHT_TILE_SIZE
-        y2 = y // HEIGHT_TILE_SIZE
+        x2 = x // WORLD_CHUNK_SIZE
+        y2 = y // WORLD_CHUNK_SIZE
         return self.regions[(x2, y2)]
 
-    def check_region(self, x, y):
-        x2 = x // HEIGHT_TILE_SIZE
-        y2 = y // HEIGHT_TILE_SIZE
+    def check_is_region(self, x, y):
+        x2 = x // WORLD_CHUNK_SIZE
+        y2 = y // WORLD_CHUNK_SIZE
         return (x2, y2) in self.regions
 
     def get_column(self, x, y) -> Column:
-        if self.check_region(x, y):
+        if self.check_is_region(x, y):
             region = self.get_region(x, y)
             column = region.get_column(x, y)
             return column
@@ -250,29 +262,33 @@ class World:
         for key in list(self.regions.keys()):
             r: Region = self.regions[key]
             if not r.check_region_distance(frame_x, frame_y, self.load_distance * 1.5):
-                # print('deleting too far region', key)
+                if HEIGHT_GENERATING_INFO:
+                    print('deleting too far region', key)
                 self.regions.pop(key)
         # adding nearby regions
-        left = (frame_x - self.load_distance) // HEIGHT_TILE_SIZE
-        right = (frame_x + self.load_distance) // HEIGHT_TILE_SIZE
-        top = (frame_y - self.load_distance) // HEIGHT_TILE_SIZE
-        bottom = (frame_y + self.load_distance) // HEIGHT_TILE_SIZE
+        left = (frame_x - self.load_distance) // WORLD_CHUNK_SIZE
+        right = (frame_x + self.load_distance) // WORLD_CHUNK_SIZE
+        top = (frame_y - self.load_distance) // WORLD_CHUNK_SIZE
+        bottom = (frame_y + self.load_distance) // WORLD_CHUNK_SIZE
         for i in range(left, right+1):
             for j in range(top, bottom+1):
-                x = i * HEIGHT_TILE_SIZE
-                y = j * HEIGHT_TILE_SIZE
-                if (i, j) not in self.regions and Region.check_distance(frame_x, frame_y, x, y, self.load_distance):
-                    # print('add nearby region', i, j, x, y)
-                    pg.display.set_caption(f'Adding {i} {j} region...')
+                center_x = i * WORLD_CHUNK_SIZE + WORLD_CHUNK_SIZE // 2
+                center_y = j * WORLD_CHUNK_SIZE + WORLD_CHUNK_SIZE // 2
+                if (i, j) not in self.regions and \
+                        Region.check_distance(frame_x, frame_y, center_x, center_y, self.load_distance):
+                    if HEIGHT_GENERATING_INFO:
+                        print('add nearby region', i, j, center_x, center_y)
                     self.add_region(i, j)
-        # print('regions after checking: ')
-        # for key in sorted(list(self.regions.keys())):
-        #     print(key)
+        if HEIGHT_GENERATING_INFO:
+            print('regions after checking: ')
+            for key in sorted(list(self.regions.keys())):
+                print(key, end=' ')
+            print()
 
     def test_fill_with_regions(self):
         self.check_regions_distance(0, 0)
 
-    def test_fill_with_height_map(self):
+    '''def test_fill_with_height_map(self):
         left, right = -200, 201
         top, bottom = -200, 201
         for i in range(left, right):
@@ -300,7 +316,7 @@ class World:
         for i in range(6, 9):
             for j in range(6, 9):
                 self.set_column(i, j, test_column_2.copy_to_x_y(i, j))
-        '''self.columns[(20, 20)] = Column(20, 20, [Stone for _ in range(8)])
+        self.columns[(20, 20)] = Column(20, 20, [Stone for _ in range(8)])
         self.columns[(30, 20)] = Column(30, 20, [Grass for _ in range(8)])
         self.columns[(40, 20)] = Column(40, 20, [Grass, Grass, Stone, Stone, Stone, Stone, Stone])
         self.columns[(23, 35)] = Column(23, 35, [Grass, Grass, Grass, Grass, Grass, Grass, Grass, Grass])
@@ -321,5 +337,5 @@ class World:
         self.columns[(21, 39)] = Column(21, 39, [Grass])
         self.columns[(19, 40)] = Column(19, 40, [Grass])
         self.columns[(20, 40)] = Column(20, 40, [Grass])
-        self.columns[(21, 40)] = Column(21, 40, [Grass])'''
-        self.set_columns_h_diff_in_rect(pg.Rect(-50, -160, 200, 240))
+        self.columns[(21, 40)] = Column(21, 40, [Grass])
+        self.set_columns_h_diff_in_rect(pg.Rect(-50, -160, 200, 240))'''
