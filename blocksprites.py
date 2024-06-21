@@ -102,13 +102,6 @@ class BlockSpritesDict:
         self._sides = [self._side1, self._side2, self._side3, self._side4]
         self.side_sprite_sizes = self._side1.image.get_width()
 
-    '''def get_top_resized(self, size: int) -> pg.Surface:
-        key = f'top{size}'
-        if key not in self.scale_cache:
-            image = pg.transform.scale(self._top.image, (size, size))
-            self.scale_cache[key] = image
-        return self.scale_cache[key]'''
-
     def get_top_resized_shaded(self, size: int,
                                neighbors: tuple[bool, bool, bool, bool, bool, bool, bool, bool],
                                z: int) -> pg.Surface:

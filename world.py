@@ -1,6 +1,6 @@
 from blocks import *
 from render_order import RenderOrder
-from generation.height_map import HeightMap
+from generation.height_map import HeightMap, HEIGHT_TILE_SIZE
 
 
 class Column:
@@ -96,30 +96,96 @@ class Column:
         self.height_difference_are_set = False
 
 
+NOT_FOUND_COLUMN = Column(0, 0, [DebugBlock])
+NOT_FOUND_COLUMN.set_height_difference(*[NOT_FOUND_COLUMN]*8)
+
+
+class Region:
+    def __init__(self, x, y, size):
+        self.x = x
+        self.y = y
+        print('creating region', x, y, size)
+        self.center_x = x + size//2
+        self.center_y = y + size//2
+        self.size = size
+        # self.columns: dict[tuple[int, int]: Column] = {}
+        self.columns: list[list[None | Column]] = [[None] * size for _ in range(size)]
+        self.full_filled = False
+
+    @staticmethod
+    def check_distance(x, y, frame_x, frame_y, r) -> bool:
+        distance = ((frame_x-x) ** 2 + (frame_y-y) ** 2) ** .5
+        # print('dist', distance, 'r', r)
+        return distance < r
+
+    def check_region_distance(self, frame_x, frame_y, r) -> bool:
+        return self.check_distance(self.center_x, self.center_y, frame_x, frame_y, r)
+
+    def get_column(self, x, y) -> Column:
+        x -= self.x
+        y -= self.y
+        column = self.columns[y][x]
+        if column is not None:
+            return column
+        else:
+            return NOT_FOUND_COLUMN.copy_to_x_y(x, y, True)
+
+    def set_column(self, x: int, y: int, column: Column):
+        x -= self.x
+        y -= self.y
+        self.columns[y][x] = column
+        if len(self.columns) == self.size**2:
+            self.full_filled = True
+
+    def get_rect(self) -> pg.Rect:
+        return pg.Rect(self.x, self.y, self.size, self.size)
+
+
 class World:
-    def __init__(self, seed=0):
-        self.columns = {}
-        self.not_found_column: Column = Column(0, 0, [DebugBlock])
-        self.not_found_column.set_height_difference(*[self.not_found_column]*8)
-        self.DEFAULT_ADDED_BLOCK: type = Stone
+    def __init__(self, load_distance: int, seed: int = 0):
+        # dict with coordinate keys with another dict with coordinates keys and Columns
+        self.regions: dict[tuple[int, int]: Region] = {}
+        self.height_map = HeightMap(seed)
+        self.load_distance = load_distance
+        self.test_fill_with_regions()
+
+        self.DEFAULT_ADDED_BLOCK: type = Grass
 
         self.render_order = RenderOrder()
 
-        self.height_map = HeightMap(seed)
-        self.test_fill_with_height_map()
+    def add_region(self, x2, y2):
+        region = Region(x2*HEIGHT_TILE_SIZE, y2*HEIGHT_TILE_SIZE, HEIGHT_TILE_SIZE)
+        self.regions[(x2, y2)] = region
+
+    def get_region(self, x, y) -> Region:
+        x2 = x // HEIGHT_TILE_SIZE
+        y2 = y // HEIGHT_TILE_SIZE
+        """if (x2, y2) not in self.regions:
+            self.add_region(x2, y2)"""
+        return self.regions[(x2, y2)]
+
+    def check_region(self, x, y):
+        x2 = x // HEIGHT_TILE_SIZE
+        y2 = y // HEIGHT_TILE_SIZE
+        return (x2, y2) in self.regions
 
     def get_column(self, x, y) -> Column:
-        if (x, y) in self.columns:
-            return self.columns[(x, y)]
+        if self.check_region(x, y):
+            region = self.get_region(x, y)
+            column = region.get_column(x, y)
+            '''if not column.height_difference_are_set:
+                self.set_columns_h_diff_in_rect(pg.Rect(column.x, column.y, 1, 1))'''
+            return column
         else:
-            return self.not_found_column.copy_to_x_y(x, y, True)
+            return NOT_FOUND_COLUMN.copy_to_x_y(x, y, True)
+
+    def set_column(self, x, y, column):
+        region = self.get_region(x, y)
+        region.set_column(x, y, column)
 
     def get_columns_in_rect_generator(self, rect: pg.Rect):
         for i, j in self.render_order.get_order(rect):
-            if (i, j) in self.columns:
-                yield self.columns[(i, j)]
-            else:
-                yield self.not_found_column.copy_to_x_y(i, j, True)
+            yield self.get_column(i, j)
 
     def add_block(self, block: tuple[int, int, int], _type: None | type = None):
         x, y, z = block
@@ -137,6 +203,14 @@ class World:
         rect = pg.Rect(x-1, y-1, 3, 3)
         self.set_columns_h_diff_in_rect(rect)
 
+    def set_columns_in_rect(self, rect: pg.Rect):
+        for i in range(rect.left, rect.right):
+            for j in range(rect.top, rect.bottom):
+                height = self.height_map.get_height(i, j)
+                new_column = Column.from_height(i, j, height)
+                self.set_column(i, j, new_column)
+        self.set_columns_h_diff_in_rect(rect)
+
     def set_columns_h_diff_in_rect(self, rect: pg.Rect):
         for i in range(rect.left, rect.right):
             for j in range(rect.top, rect.bottom):
@@ -150,16 +224,50 @@ class World:
                 bottom_left  = self.get_column(i-1, j+1)
                 bottom_right = self.get_column(i+1, j+1)
                 column.set_height_difference(left, top, right, bottom, top_left, top_right, bottom_left, bottom_right)
-                if (i, j) not in self.columns and any(column.get_top_block_neighbors()):
-                    self.columns[(i, j)] = column
+                '''if (i, j) not in self.columns and any(column.get_top_block_neighbors()):
+                    self.columns[(i, j)] = column'''
+
+    def check_regions_distance(self, frame_x: int, frame_y: int):
+        # removing too far regions
+        for key in list(self.regions.keys()):
+            r: Region = self.regions[key]
+            if not r.check_region_distance(frame_x, frame_y, self.load_distance * 1.5):
+                print('deleting too far region', key)
+                self.regions.pop(key)
+        # adding nearby regions
+        left = (frame_x - self.load_distance) // HEIGHT_TILE_SIZE
+        right = (frame_x + self.load_distance) // HEIGHT_TILE_SIZE
+        top = (frame_y - self.load_distance) // HEIGHT_TILE_SIZE
+        bottom = (frame_y + self.load_distance) // HEIGHT_TILE_SIZE
+        for i in range(left, right+1):
+            for j in range(top, bottom+1):
+                x = i * HEIGHT_TILE_SIZE
+                y = j * HEIGHT_TILE_SIZE
+                if (i, j) not in self.regions and Region.check_distance(frame_x, frame_y, x, y, self.load_distance):
+                    print('add nearby region', i, j, x, y)
+                    pg.display.set_caption(f'Adding {i} {j} region...')
+                    self.add_region(i, j)
+                    rect = self.get_region(x, y).get_rect()
+                    self.set_columns_in_rect(rect)
+        print('regions after checking: ')
+        for key in sorted(list(self.regions.keys())):
+            print(key)
+
+    def test_fill_with_regions(self):
+        self.check_regions_distance(0, 0)
 
     def test_fill_with_height_map(self):
-        for i in range(-50, 51):
-            for j in range(-50, 51):
+        left, right = -200, 201
+        top, bottom = -200, 201
+        for i in range(left, right):
+            for j in range(top, bottom):
                 height = self.height_map.get_height(i, j)
                 new_column = Column.from_height(i, j, height)
-                self.columns[(i, j)] = new_column
-        self.set_columns_h_diff_in_rect(pg.Rect(-51, -51, 102, 102))
+                self.set_column(i, j, new_column)
+        self.set_columns_h_diff_in_rect(pg.Rect(left, top, (right-left), (bottom-top)))
+        for region_key in self.regions:
+            r = self.regions[region_key]
+            print(r.x, r.y, r.full_filled, len(r.columns))
 
     def test_fill(self):
         blocks1 = [Stone, Dirt, Stone]
@@ -172,11 +280,11 @@ class World:
                     column = test_column_1
                 else:
                     column = test_column_2
-                self.columns[(i, j)] = column.copy_to_x_y(i, j)
+                self.set_column(i, j, column.copy_to_x_y(i, j))
         for i in range(6, 9):
             for j in range(6, 9):
-                self.columns[(i, j)] = test_column_2.copy_to_x_y(i, j)
-        self.columns[(20, 20)] = Column(20, 20, [Stone for _ in range(8)])
+                self.set_column(i, j, test_column_2.copy_to_x_y(i, j))
+        '''self.columns[(20, 20)] = Column(20, 20, [Stone for _ in range(8)])
         self.columns[(30, 20)] = Column(30, 20, [Grass for _ in range(8)])
         self.columns[(40, 20)] = Column(40, 20, [Grass, Grass, Stone, Stone, Stone, Stone, Stone])
         self.columns[(23, 35)] = Column(23, 35, [Grass, Grass, Grass, Grass, Grass, Grass, Grass, Grass])
@@ -197,5 +305,5 @@ class World:
         self.columns[(21, 39)] = Column(21, 39, [Grass])
         self.columns[(19, 40)] = Column(19, 40, [Grass])
         self.columns[(20, 40)] = Column(20, 40, [Grass])
-        self.columns[(21, 40)] = Column(21, 40, [Grass])
+        self.columns[(21, 40)] = Column(21, 40, [Grass])'''
         self.set_columns_h_diff_in_rect(pg.Rect(-50, -160, 200, 240))

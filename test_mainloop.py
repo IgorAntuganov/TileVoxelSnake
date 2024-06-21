@@ -7,6 +7,7 @@ from world import *
 from camera import *
 from mesh import *
 from trapezoid import SidesDrawer
+from generation.constants import HEIGHT_TILE_SIZE
 
 sides_drawer = SidesDrawer()
 sides_drawer.set_print_cache_size(True)
@@ -15,7 +16,8 @@ sides_drawer.create_cache()
 clock = pg.time.Clock()
 camera = CameraFrame((0, 0), 1536//BASE_LEVEL_SIZE, 960//BASE_LEVEL_SIZE, (0, 0))
 layers = camera.get_layers()
-world = World()
+load_distance = int((HEIGHT_TILE_SIZE + max(camera.get_rect().size)))
+world = World(load_distance)
 terr_mesh = TerrainMech(sides_drawer, layers, (1536, 960))
 frame = 0
 
@@ -67,6 +69,9 @@ while True:
         pressed_offset = pressed_offset[0] / clock.get_fps() * 60, pressed_offset[1] / clock.get_fps() * 60
     camera.move(pressed_offset)
 
+    if frame % 120 == 0:
+        world.check_regions_distance(*camera.get_rect().center)
+
     # render
     # times = [time.time()]
     scr.fill((0, 0, 0))
@@ -110,7 +115,7 @@ while True:
         scr.blit(sprite, mouse_rect.topleft)
 
     # times.append(time.time())  # 8
-    pg.display.set_caption(str(clock.get_fps()))
+    pg.display.set_caption(str(camera.get_rect().center) + ' ' + str(clock.get_fps()))
 
     # if frame % 25 == 0:
     #     print(' - ' * 30)

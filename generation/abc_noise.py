@@ -138,7 +138,8 @@ class NoiseTile(Noise, ABC):
 
     def set_bottom_right_neighbor(self, bottom_right_neighbor_values):
         for self_region, neighbor_region in zip(self.values, bottom_right_neighbor_values):
-            self_region[-1][-1] = neighbor_region[0][0]
+            if len(neighbor_region) != 0:
+                self_region[-1][-1] = neighbor_region[0][0]
 
 
 class DataNoiseTile(NoiseTile, ABC):
