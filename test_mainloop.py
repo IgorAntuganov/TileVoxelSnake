@@ -69,6 +69,7 @@ while True:
         pressed_offset = pressed_offset[0] / clock.get_fps() * 60, pressed_offset[1] / clock.get_fps() * 60
     camera.move(pressed_offset)
 
+    world.load_regions_partly()
     if frame % 120 == 0:
         world.check_regions_distance(*camera.get_rect().center)
 
@@ -128,4 +129,4 @@ while True:
     #             print(i, round(1/t), t)
 
     pg.display.update()
-    clock.tick(1000)
+    clock.tick(60)

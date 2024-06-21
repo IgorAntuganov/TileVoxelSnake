@@ -1,6 +1,9 @@
 from blocks import *
 from render_order import RenderOrder
-from generation.height_map import HeightMap, HEIGHT_TILE_SIZE
+from generation.height_map import HeightMap
+from generation.constants import HEIGHT_TILE_SIZE, LOADING_PART_SIZE
+LOADING_PARTS_COUNT = HEIGHT_TILE_SIZE // LOADING_PART_SIZE
+LOADING_PARTS_TOTAL_COUNT = (HEIGHT_TILE_SIZE // LOADING_PART_SIZE) ** 2
 
 
 class Column:
@@ -104,19 +107,31 @@ class Region:
     def __init__(self, x, y, size):
         self.x = x
         self.y = y
-        print('creating region', x, y, size)
         self.center_x = x + size//2
         self.center_y = y + size//2
         self.size = size
-        # self.columns: dict[tuple[int, int]: Column] = {}
         self.columns: list[list[None | Column]] = [[None] * size for _ in range(size)]
+
+        self.part_size = self.size // LOADING_PART_SIZE
+        assert self.part_size * LOADING_PART_SIZE == self.size
+        self.filled_parts = 0
         self.full_filled = False
 
     @staticmethod
     def check_distance(x, y, frame_x, frame_y, r) -> bool:
         distance = ((frame_x-x) ** 2 + (frame_y-y) ** 2) ** .5
-        # print('dist', distance, 'r', r)
         return distance < r
+
+    def get_next_part_rect(self) -> pg.Rect:
+        i = self.filled_parts // LOADING_PARTS_COUNT
+        j = self.filled_parts % LOADING_PARTS_COUNT
+        x = self.x + i * LOADING_PART_SIZE
+        y = self.y + j * LOADING_PART_SIZE
+        self.filled_parts += 1
+        return pg.Rect(x, y, LOADING_PART_SIZE, LOADING_PART_SIZE)
+
+    def check_if_fully_filled(self) -> bool:
+        return self.filled_parts == LOADING_PARTS_TOTAL_COUNT
 
     def check_region_distance(self, frame_x, frame_y, r) -> bool:
         return self.check_distance(self.center_x, self.center_y, frame_x, frame_y, r)
@@ -134,8 +149,6 @@ class Region:
         x -= self.x
         y -= self.y
         self.columns[y][x] = column
-        if len(self.columns) == self.size**2:
-            self.full_filled = True
 
     def get_rect(self) -> pg.Rect:
         return pg.Rect(self.x, self.y, self.size, self.size)
@@ -143,8 +156,8 @@ class Region:
 
 class World:
     def __init__(self, load_distance: int, seed: int = 0):
-        # dict with coordinate keys with another dict with coordinates keys and Columns
         self.regions: dict[tuple[int, int]: Region] = {}
+        self.loading_regions: list[Region] = []
         self.height_map = HeightMap(seed)
         self.load_distance = load_distance
         self.test_fill_with_regions()
@@ -156,12 +169,20 @@ class World:
     def add_region(self, x2, y2):
         region = Region(x2*HEIGHT_TILE_SIZE, y2*HEIGHT_TILE_SIZE, HEIGHT_TILE_SIZE)
         self.regions[(x2, y2)] = region
+        self.loading_regions.append(region)
+
+    def load_regions_partly(self):
+        new_loading_regions = []
+        for region in self.loading_regions:
+            rect = region.get_next_part_rect()
+            self.set_columns_in_rect(rect)
+            if not region.check_if_fully_filled():
+                new_loading_regions.append(region)
+        self.loading_regions = new_loading_regions
 
     def get_region(self, x, y) -> Region:
         x2 = x // HEIGHT_TILE_SIZE
         y2 = y // HEIGHT_TILE_SIZE
-        """if (x2, y2) not in self.regions:
-            self.add_region(x2, y2)"""
         return self.regions[(x2, y2)]
 
     def check_region(self, x, y):
@@ -173,8 +194,6 @@ class World:
         if self.check_region(x, y):
             region = self.get_region(x, y)
             column = region.get_column(x, y)
-            '''if not column.height_difference_are_set:
-                self.set_columns_h_diff_in_rect(pg.Rect(column.x, column.y, 1, 1))'''
             return column
         else:
             return NOT_FOUND_COLUMN.copy_to_x_y(x, y, True)
@@ -209,7 +228,8 @@ class World:
                 height = self.height_map.get_height(i, j)
                 new_column = Column.from_height(i, j, height)
                 self.set_column(i, j, new_column)
-        self.set_columns_h_diff_in_rect(rect)
+        bigger_rect = pg.Rect(rect.left-1, rect.top-1, rect.width+2, rect.height+2)
+        self.set_columns_h_diff_in_rect(bigger_rect)
 
     def set_columns_h_diff_in_rect(self, rect: pg.Rect):
         for i in range(rect.left, rect.right):
@@ -224,15 +244,13 @@ class World:
                 bottom_left  = self.get_column(i-1, j+1)
                 bottom_right = self.get_column(i+1, j+1)
                 column.set_height_difference(left, top, right, bottom, top_left, top_right, bottom_left, bottom_right)
-                '''if (i, j) not in self.columns and any(column.get_top_block_neighbors()):
-                    self.columns[(i, j)] = column'''
 
     def check_regions_distance(self, frame_x: int, frame_y: int):
         # removing too far regions
         for key in list(self.regions.keys()):
             r: Region = self.regions[key]
             if not r.check_region_distance(frame_x, frame_y, self.load_distance * 1.5):
-                print('deleting too far region', key)
+                # print('deleting too far region', key)
                 self.regions.pop(key)
         # adding nearby regions
         left = (frame_x - self.load_distance) // HEIGHT_TILE_SIZE
@@ -244,14 +262,12 @@ class World:
                 x = i * HEIGHT_TILE_SIZE
                 y = j * HEIGHT_TILE_SIZE
                 if (i, j) not in self.regions and Region.check_distance(frame_x, frame_y, x, y, self.load_distance):
-                    print('add nearby region', i, j, x, y)
+                    # print('add nearby region', i, j, x, y)
                     pg.display.set_caption(f'Adding {i} {j} region...')
                     self.add_region(i, j)
-                    rect = self.get_region(x, y).get_rect()
-                    self.set_columns_in_rect(rect)
-        print('regions after checking: ')
-        for key in sorted(list(self.regions.keys())):
-            print(key)
+        # print('regions after checking: ')
+        # for key in sorted(list(self.regions.keys())):
+        #     print(key)
 
     def test_fill_with_regions(self):
         self.check_regions_distance(0, 0)

@@ -1,3 +1,4 @@
+import time
 import pygame as pg
 import pickle
 import os
@@ -32,6 +33,7 @@ class SidesDrawer:
         self._print_cache_size = using
 
     def create_cache(self):
+        start = time.time()
         for key in self.keys:
             is_hor, texture_name, size, part, next_part = key
             texture = self._textures_cache[texture_name]
@@ -42,7 +44,8 @@ class SidesDrawer:
                 image = self.get_pixel_column_with_anisotropic(texture, size, part, next_part)
                 self._lines_cache[key] = image
         if self._print_cache_size:
-            print('cache created by keys from disk:', len(self._lines_cache.keys()))
+            t = time.time() - start
+            print('cache created by keys from disk:', len(self._lines_cache.keys()), 'time consuming:', t)
 
     def save_cache(self):
         folder = PATH_TO_CACHE
