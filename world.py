@@ -28,11 +28,10 @@ class Column:
             'bottom_right': 0
         }
         self.height_difference_are_set = False
-        self._figures: list[tuple[pg.Rect, pg.Surface, tuple[int, int, int]]] = []
 
-    @classmethod
-    def from_height(cls, x, y, height):
-        blocks = [Grass]
+    @staticmethod
+    def from_height(x, y, height):
+        blocks = [Grass if height > 5 else Sand]
         for i in range(height-1):
             if i < height // 2:
                 blocks.append(Dirt)
@@ -40,11 +39,12 @@ class Column:
                 blocks.append(Stone)
         return Column(x, y, blocks)
 
-    def set_figures(self, figures: list[tuple[pg.Rect, pg.Surface, tuple[int, int, int]]]):
-        self._figures = figures
+    @staticmethod
+    def from_pickle(data):
+        pass
 
-    def get_figures(self) -> list[tuple[pg.Rect, pg.Surface, tuple[int, int, int]]]:
-        return self._figures
+    def to_pickle(self):
+        pass
 
     def copy_to_x_y(self, x, y, height_difference_are_set=False):
         new_blocks = [block.copy_to_x_y(x, y) for block in self.blocks]
@@ -168,7 +168,7 @@ class World:
         self.folder = PATH_TO_SAVES + f'{name}/'
         self.height_map = HeightMap(self.folder, seed)
         self.load_distance = load_distance
-        self.test_fill_with_regions()
+        self.preload_start_area()
 
         self.DEFAULT_ADDED_BLOCK: type = Grass
 
@@ -178,21 +178,6 @@ class World:
         region = Region(x2 * WORLD_CHUNK_SIZE, y2 * WORLD_CHUNK_SIZE, WORLD_CHUNK_SIZE)
         self.regions[(x2, y2)] = region
         self.loading_regions.append(region)
-
-    def load_regions_partly(self):
-        if len(self.loading_regions) != 0:
-            if self.loading_regions_ind >= len(self.loading_regions):
-                self.loading_regions_ind = 0
-                self.loading_regions = self.next_loading_regions
-                self.next_loading_regions = []
-
-        if len(self.loading_regions) != 0:  # (after swap)
-            loading_region = self.loading_regions[self.loading_regions_ind]
-            rect = loading_region.get_next_part_rect()
-            self.set_columns_in_rect(rect)
-            if not loading_region.check_if_fully_filled():
-                self.next_loading_regions.append(loading_region)
-            self.loading_regions_ind += 1
 
     def get_region(self, x, y) -> Region:
         x2 = x // WORLD_CHUNK_SIZE
@@ -215,10 +200,6 @@ class World:
     def set_column(self, x, y, column):
         region = self.get_region(x, y)
         region.set_column(x, y, column)
-
-    def get_columns_in_rect_generator(self, rect: pg.Rect):
-        for i, j in self.render_order.get_order(rect):
-            yield self.get_column(i, j)
 
     def add_block(self, block: tuple[int, int, int], _type: None | type = None):
         x, y, z = block
@@ -287,57 +268,24 @@ class World:
                 print(key, end=' ')
             print()
 
-    def test_fill_with_regions(self):
-        self.check_regions_distance(0, 0)
+    def load_regions_partly(self):
+        if len(self.loading_regions) != 0:
+            if self.loading_regions_ind >= len(self.loading_regions):
+                self.loading_regions_ind = 0
+                self.loading_regions = self.next_loading_regions
+                self.next_loading_regions = []
 
-    '''def test_fill_with_height_map(self):
-        left, right = -200, 201
-        top, bottom = -200, 201
-        for i in range(left, right):
-            for j in range(top, bottom):
-                height = self.height_map.get_height(i, j)
-                new_column = Column.from_height(i, j, height)
-                self.set_column(i, j, new_column)
-        self.set_columns_h_diff_in_rect(pg.Rect(left, top, (right-left), (bottom-top)))
-        for region_key in self.regions:
-            r = self.regions[region_key]
-            print(r.x, r.y, r.full_filled, len(r.columns))
+        if len(self.loading_regions) != 0:  # (after swap)
+            loading_region = self.loading_regions[self.loading_regions_ind]
+            rect = loading_region.get_next_part_rect()
+            self.set_columns_in_rect(rect)
+            if not loading_region.check_if_fully_filled():
+                self.next_loading_regions.append(loading_region)
+            self.loading_regions_ind += 1
 
-    def test_fill(self):
-        blocks1 = [Stone, Dirt, Stone]
-        blocks2 = [Grass,  Dirt, Stone, Stone]
-        test_column_1 = Column(0, 0, blocks1)
-        test_column_2 = Column(0, 0, blocks2)
-        for i in range(-30, 151):
-            for j in range(-150, 51):
-                if (i % 2 == j % 2 and not(abs(i) < 10 and abs(j) < 10)) or i > 1 and j > 1:
-                    column = test_column_1
-                else:
-                    column = test_column_2
-                self.set_column(i, j, column.copy_to_x_y(i, j))
-        for i in range(6, 9):
-            for j in range(6, 9):
-                self.set_column(i, j, test_column_2.copy_to_x_y(i, j))
-        self.columns[(20, 20)] = Column(20, 20, [Stone for _ in range(8)])
-        self.columns[(30, 20)] = Column(30, 20, [Grass for _ in range(8)])
-        self.columns[(40, 20)] = Column(40, 20, [Grass, Grass, Stone, Stone, Stone, Stone, Stone])
-        self.columns[(23, 35)] = Column(23, 35, [Grass, Grass, Grass, Grass, Grass, Grass, Grass, Grass])
-        self.columns[(22, 35)] = Column(22, 35, [Grass, Grass, Grass, Grass, Grass, Grass, Grass])
-        self.columns[(21, 35)] = Column(21, 35, [Grass, Grass, Grass, Grass, Grass, Grass])
-        self.columns[(20, 35)] = Column(20, 35, [Grass, Grass, Grass, Grass, Grass])
-        self.columns[(19, 36)] = Column(19, 36, [Grass, Grass, Grass, Grass])
-        self.columns[(20, 36)] = Column(20, 36, [Grass, Grass, Grass, Grass])
-        self.columns[(21, 36)] = Column(21, 36, [Grass, Grass, Grass, Grass])
-        self.columns[(19, 37)] = Column(19, 37, [Grass, Grass, Grass])
-        self.columns[(20, 37)] = Column(20, 37, [Grass, Grass, Grass])
-        self.columns[(21, 37)] = Column(21, 37, [Grass, Grass, Grass])
-        self.columns[(19, 38)] = Column(19, 38, [Grass, Grass])
-        self.columns[(20, 38)] = Column(20, 38, [Grass, Grass])
-        self.columns[(21, 38)] = Column(21, 38, [Grass, Grass])
-        self.columns[(19, 39)] = Column(19, 39, [Grass])
-        self.columns[(20, 39)] = Column(20, 39, [Grass])
-        self.columns[(21, 39)] = Column(21, 39, [Grass])
-        self.columns[(19, 40)] = Column(19, 40, [Grass])
-        self.columns[(20, 40)] = Column(20, 40, [Grass])
-        self.columns[(21, 40)] = Column(21, 40, [Grass])
-        self.set_columns_h_diff_in_rect(pg.Rect(-50, -160, 200, 240))'''
+    def preload_start_area(self, frame_x=0, frame_y=0):
+        self.check_regions_distance(frame_x, frame_y)
+
+    def get_columns_in_rect_generator(self, rect: pg.Rect):
+        for i, j in self.render_order.get_order(rect):
+            yield self.get_column(i, j)
