@@ -48,24 +48,50 @@ class FullBlock(Block, ABC):
 class SingleSpriteBlock(FullBlock, ABC):
     @property
     @abstractmethod
-    def sprite(self):
-        return 'debug2.png'
+    def sprite(self) -> str:
+        pass
 
     @classmethod
     def load_sprites(cls):
         cls.sprites = BlockSpritesDict(*[cls.sprite] * 6)
 
-# Block classes: -----------------------------------
 
+class SingleSideSpriteBlock(FullBlock, ABC):
+    @property
+    @abstractmethod
+    def top_sprite(self) -> str:
+        pass
 
-class Grass(FullBlock):
-    top_sprite = 'grass.png'
-    side_sprite = 'grass_side.png'
-    bottom_sprite = 'dirt.png'
+    @property
+    @abstractmethod
+    def side_sprite(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def bottom_sprite(self) -> str:
+        pass
 
     @classmethod
     def load_sprites(cls):
         cls.sprites = BlockSpritesDict(cls.top_sprite, cls.bottom_sprite, *[cls.side_sprite] * 4)
+
+
+# Block classes: -----------------------------------
+
+class Grass(SingleSideSpriteBlock):
+    top_sprite = 'grass.png'
+    side_sprite = 'grass_side.png'
+    bottom_sprite = 'dirt.png'
+
+
+class OakLog(SingleSideSpriteBlock):
+    top_sprite = bottom_sprite = 'oak_log_top.png'
+    side_sprite = 'oak_log_side.png'
+
+
+class Leaves(SingleSpriteBlock):
+    sprite = 'leaves.png'
 
 
 class Dirt(SingleSpriteBlock):

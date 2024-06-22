@@ -76,7 +76,7 @@ class ShadowSprites:
 
 class BlockSprite:
     def __init__(self, path, angle=0):
-        self.image = pg.image.load(PATH_TO_BLOCKS+path).convert()
+        self.image = pg.image.load(PATH_TO_BLOCKS+path).convert_alpha()
         self.image = pg.transform.rotate(self.image, angle)
         self.image = pg.transform.scale_by(self.image, 2)  # For more accurate trapezoids, doesn't reduce fps
 

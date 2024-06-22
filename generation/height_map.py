@@ -14,3 +14,6 @@ class HeightMap:
         value = max(0.0, value-0.1)
         value = int(value*MAX_HEIGHT)
         return value
+
+    def get_value(self, x, y) -> float:
+        return self.noise_grid.get_noise_point(x, y)

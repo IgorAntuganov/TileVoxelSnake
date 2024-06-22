@@ -57,6 +57,12 @@ while True:
             if event.key == pg.K_3:
                 world.DEFAULT_ADDED_BLOCK = Stone
             if event.key == pg.K_4:
+                world.DEFAULT_ADDED_BLOCK = Sand
+            if event.key == pg.K_5:
+                world.DEFAULT_ADDED_BLOCK = OakLog
+            if event.key == pg.K_6:
+                world.DEFAULT_ADDED_BLOCK = Leaves
+            if event.key == pg.K_7:
                 world.DEFAULT_ADDED_BLOCK = DebugBlock
     pressed_offset = [0, 0]
     pressed = pg.key.get_pressed()
