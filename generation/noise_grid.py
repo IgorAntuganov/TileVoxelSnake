@@ -1,16 +1,14 @@
-import time
 import os
 import pygame as pg
 from constants import HEIGHT_GENERATING_INFO
 from generation._NU_value_noise import ValueNoise
 from generation.perlin_noise import PerlinNoise
 from generation.abc_noise import Noise, DataNoiseTile
-from generation.constants import PATH_TO_NOISE
 
 
 class NoiseGrid:
-    def __init__(self, world_seed: int,
-                 unic_name: str,
+    def __init__(self, world_folder: str,
+                 unique_name: str,
                  noise_type: type,
                  tile_size: int,
                  octaves: int | list[int] | None):
@@ -19,26 +17,30 @@ class NoiseGrid:
         :param tile_size: literally
         :param octaves: octaves in noise
         """
-        self.world_seed = world_seed
-        self.unic_name = unic_name
+        self.unique_name = unique_name
+        self.folder = world_folder + f'{self.unique_name} noise/'
+
+        if not os.path.isdir(world_folder):
+            os.mkdir(world_folder)
+
+        if not os.path.isdir(self.folder):
+            os.mkdir(self.folder)
+
         assert noise_type in [PerlinNoise, ValueNoise]
         self.noise_type = noise_type
         self.tile_size = tile_size
         self.octaves = octaves
         self.grid: dict[tuple[int, int]: Noise] = {}
-        self.load_from_disk()
+        # self.load_from_disk()
 
-    def load_from_disk(self):
-        folder = PATH_TO_NOISE + f'world {self.world_seed}/'
-        if not os.path.isdir(folder):
-            os.mkdir(folder)
+    '''def load_from_disk(self):
         file_name_start = DataNoiseTile.get_file_name(self.unic_name)
-        for file in os.listdir(folder):
+        for file in os.listdir(self.folder):
             if file.startswith(file_name_start):
                 without_pickle = file.split('.')[0]
                 i, j = without_pickle.split('_')[-2:]
                 i, j = int(i), int(j)
-                self.load_and_finish_calculating_tile(i, j)
+                self.load_tile(i, j)'''
 
     def merge_tile_with_neighbors(self, tile, tile_i, tile_j):
         if (tile_i, tile_j - 1) in self.grid:
@@ -61,25 +63,40 @@ class NoiseGrid:
             bottom_right_tile = self.grid[(tile_i + 1, tile_j + 1)]
             tile.set_bottom_right_neighbor(bottom_right_tile.get_values())
 
-    def load_and_finish_calculating_tile(self, i, j):
-        new_tile = self.noise_type(self.world_seed,
-                                   self.unic_name,
-                                   i, j,
-                                   (self.tile_size, self.tile_size),
-                                   self.octaves)
-        if not new_tile.loaded:
-            if HEIGHT_GENERATING_INFO:
-                print('generating noise tile', i, j)
-            new_tile.calculate_values()
-            self.merge_tile_with_neighbors(new_tile, i, j)
-            new_tile.calculate_points()
-            new_tile.calculate_normalized_points()
-            new_tile.save_to_file()
-        self.grid[(i, j)] = new_tile
+    def get_save_file_path(self, i, j) -> str:
+        return self.folder + f'{i}_{j}.pickle'
+
+    def check_if_tile_saved(self, i, j) -> bool:
+        return os.path.isfile(self.get_save_file_path(i, j))
+
+    def create_tile(self, i, j) -> Noise:
+        if HEIGHT_GENERATING_INFO:
+            print('generating noise tile', i, j)
+        new_tile: DataNoiseTile = self.noise_type((self.tile_size, self.tile_size),
+                                                  self.octaves)
+        new_tile.calculate_values()
+        self.merge_tile_with_neighbors(new_tile, i, j)
+        new_tile.calculate_points()
+        new_tile.calculate_normalized_points()
+        path = self.get_save_file_path(i, j)
+        new_tile.save_to_file(path)
+        return new_tile
+
+    def load_tile(self, i, j) -> Noise:
+        if HEIGHT_GENERATING_INFO:
+            print('loading noise tile', i, j)
+        loaded_tile: DataNoiseTile = self.noise_type((self.tile_size, self.tile_size),
+                                                     self.octaves)
+        path = self.get_save_file_path(i, j)
+        loaded_tile.update_with_save_file(path)
+        return loaded_tile
 
     def get_or_create_tile(self, i, j) -> Noise:
         if (i, j) not in self.grid:
-            self.load_and_finish_calculating_tile(i, j)
+            if self.check_if_tile_saved(i, j):
+                self.grid[(i, j)] = self.load_tile(i, j)
+            else:
+                self.grid[(i, j)] = self.create_tile(i, j)
         return self.grid[(i, j)]
 
     def get_texture(self, rect: pg.Rect, print_progress=False) -> pg.Surface:
@@ -111,23 +128,3 @@ class NoiseGrid:
         y = j % self.tile_size
         point = tile.get_normalized_points()[y][x]
         return point
-
-
-def test():
-    file_name = f'{int(time.time())}'
-    size = 256
-    noise = NoiseGrid(0, 'SavingTest', PerlinNoise, size, list(range(5)))
-    rect = pg.Rect(-1, -1, 4, 4)
-    # rect = pg.Rect(0, 0, 2, 2)
-    texture = noise.get_texture(rect, True)
-    pg.image.save(texture, f'perlin_test_images/grid{file_name}.png')
-    if texture.get_height() < 1080:
-        scr = pg.display.set_mode(texture.get_size())
-        scr.blit(texture, (0, 0))
-        pg.display.update()
-        while True:
-            [exit() for event in pg.event.get() if event.type == pg.QUIT]
-
-
-if __name__ == '__main__':
-    test()

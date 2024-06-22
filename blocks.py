@@ -27,16 +27,13 @@ class Block(ABC):
         return type(self)(*args, **kwargs)
 
 
-class FullBlock(Block):
+class FullBlock(Block, ABC):
     debug_sprite = 'debug.png'
 
     @classmethod
     @abstractmethod
     def load_sprites(cls):
         cls.sprites = BlockSpritesDict(*[cls.debug_sprite] * 6)
-
-    '''def get_top_sprite_resized(self, size: int) -> pg.Surface:
-        return self.sprites.get_top_resized(size)'''
 
     def get_top_sprite_resized_shaded(self, size: int,
                                       neighbors: tuple[bool, bool, bool, bool, bool, bool, bool, bool],
@@ -53,7 +50,7 @@ class FullBlock(Block):
         return self.sprites.get_side_shaded(side, size)
 
 
-class SingleSpriteBlock(FullBlock):
+class SingleSpriteBlock(FullBlock, ABC):
     sprite = 'debug2.png'
 
     @classmethod

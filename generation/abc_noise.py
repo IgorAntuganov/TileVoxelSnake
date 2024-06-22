@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 import math
 import pickle
 import pygame as pg
-from generation.constants import PATH_TO_NOISE
 
 
 class Noise(ABC):
@@ -147,24 +146,8 @@ class DataNoiseTile(NoiseTile, ABC):
     def get_file_name(cls, unic_name):
         return f"{unic_name}_noise"
 
-    def __init__(self, world_seed, unic_name, i, j, sizes: tuple[int, int], octaves: None | int | list[int]):
-        """ Class for saving noise in files
-        :param world_seed: using for file naming
-        :param i: i coordinate in noise grid
-        :param j: j coordinate in noise grid
-        :param unic_name: noise name (noise purpose)
-        """
-        super().__init__(sizes, octaves)
-        self.file_name = DataNoiseTile.get_file_name(unic_name) + f'_{i}_{j}'
-        self.path = PATH_TO_NOISE+f'world {world_seed}/'+self.file_name+'.pickle'
-        try:
-            self.load_from_file()
-            self.loaded = True
-        except FileNotFoundError:
-            self.loaded = False
-
-    def load_from_file(self):
-        with open(self.path, 'rb') as file:
+    def update_with_save_file(self, path):
+        with open(path, 'rb') as file:
             _dict = pickle.load(file)
             self.sizes = _dict['sizes']
             self.octaves = _dict['octaves']
@@ -173,7 +156,7 @@ class DataNoiseTile(NoiseTile, ABC):
             self.normalized_points = _dict['norm_points']
             self.values_are_set, self.points_are_set, self.normalized_points_are_set = _dict['are_set']
 
-    def save_to_file(self):
+    def save_to_file(self, path):
         _dict = {
             'sizes': self.sizes,
             'octaves': self.octaves,
@@ -182,5 +165,5 @@ class DataNoiseTile(NoiseTile, ABC):
             'norm_points': self.get_normalized_points(),
             'are_set': [self.values_are_set, self.points_are_set, self.normalized_points_are_set]
         }
-        with open(self.path, 'wb') as file:
+        with open(path, 'wb') as file:
             pickle.dump(_dict, file)

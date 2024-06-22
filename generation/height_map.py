@@ -5,8 +5,8 @@ from generation.constants import *
 
 
 class HeightMap:
-    def __init__(self, world_seed: int):
-        self.noise_grid = NoiseGrid(world_seed, 'height', PerlinNoise, HEIGHT_NOISE_TILE_SIZE, HEIGHT_OCTAVES)
+    def __init__(self, world_folder: str, world_seed: int):
+        self.noise_grid = NoiseGrid(world_folder, 'height', PerlinNoise, HEIGHT_NOISE_TILE_SIZE, HEIGHT_OCTAVES)
         self.noise_grid.set_noise_at_rect(pg.Rect(*START_HEIGHT_AREA))
 
     def get_height(self, x, y) -> int:

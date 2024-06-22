@@ -1,7 +1,7 @@
 from blocks import *
 from render_order import RenderOrder
 from generation.height_map import HeightMap
-from constants import HEIGHT_GENERATING_INFO
+from constants import HEIGHT_GENERATING_INFO, PATH_TO_SAVES
 from generation.constants import CHUNK_LOADING_PART_SIZE, WORLD_CHUNK_SIZE
 LOADING_PARTS_COUNT = WORLD_CHUNK_SIZE // CHUNK_LOADING_PART_SIZE
 LOADING_PARTS_TOTAL_COUNT = (WORLD_CHUNK_SIZE // CHUNK_LOADING_PART_SIZE) ** 2
@@ -157,14 +157,16 @@ class Region:
 
 
 class World:
-    def __init__(self, load_distance: int, seed: int = 0):
+    def __init__(self, load_distance: int, seed: int = 0, name: str = 'test wrold'):
         self.regions: dict[tuple[int, int]: Region] = {}
 
         self.loading_regions: list[Region] = []
         self.loading_regions_ind = 0
         self.next_loading_regions: list[Region] = []
 
-        self.height_map = HeightMap(seed)
+        self.name = name
+        self.folder = PATH_TO_SAVES + f'{name}/'
+        self.height_map = HeightMap(self.folder, seed)
         self.load_distance = load_distance
         self.test_fill_with_regions()
 

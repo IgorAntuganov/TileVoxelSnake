@@ -1,4 +1,4 @@
-PATH_TO_NOISE = 'generation/noise_saves/'
+PATH_TO_NOISE = 'saves/'
 
 MAX_HEIGHT = 20
 HEIGHT_NOISE_TILE_SIZE = 64
