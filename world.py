@@ -1,3 +1,5 @@
+import os
+import pickle
 from blocks import *
 from render_order import RenderOrder
 from generation.height_map import HeightMap
@@ -40,11 +42,31 @@ class Column:
         return Column(x, y, blocks)
 
     @staticmethod
-    def from_pickle(data):
-        pass
+    def from_pickle(data: dict):
+        x, y = data['x'], data['y']
+        height_diff = data['hd']
+        height_diff_are_set = data['hd_are_set']
+        blocks = []
+        for block in data['blocks']:
+            block_class = blocks_classes_dict[block]
+            blocks.append(block_class)
+        pickle_column = Column(x, y, blocks)
+        pickle_column.height_difference = height_diff
+        pickle_column.height_difference_are_set = height_diff_are_set
+        return pickle_column
 
-    def to_pickle(self):
-        pass
+    def to_pickle(self) -> dict:
+        disk_data = {
+            'x': self.x,
+            'y': self.y,
+            'hd': self.height_difference,
+            'hd_are_set': self.height_difference_are_set,
+            'blocks': [],
+        }
+        for block in self.blocks:
+            block_name = reversed_blocks_classes_dict[type(block)]
+            disk_data['blocks'].append(block_name)
+        return disk_data
 
     def copy_to_x_y(self, x, y, height_difference_are_set=False):
         new_blocks = [block.copy_to_x_y(x, y) for block in self.blocks]
@@ -100,6 +122,37 @@ class Column:
         self.height_difference_are_set = False
 
 
+class ChangedColumnsCatalog:
+    def __init__(self, path: str):
+        self.folder = path
+        if not os.path.isdir(path):
+            os.mkdir(path)
+        self.columns: dict[tuple[int, int]: Column] = {}
+
+    def get_column_file_name(self, column: Column):
+        return self.folder + f'{column.x}_{column.y}.pickle'
+
+    def load_changed_columns(self):
+        for file_name in os.listdir(self.folder):
+            path = self.folder + file_name
+            with open(path, 'rb') as file:
+                data = pickle.load(file)
+                column = Column.from_pickle(data)
+                i, j = column.x, column.y
+                self.columns[(i, j)] = column
+
+    def check_if_column_was_changed(self, i, j) -> bool:
+        return (i, j) in self.columns
+
+    def get_changed_column(self, i, j) -> Column:
+        return self.columns[(i, j)]
+
+    def add_changed_column(self, column: Column):
+        path = self.get_column_file_name(column)
+        with open(path, 'wb') as file:
+            pickle.dump(column.to_pickle(), file)
+
+
 NOT_FOUND_COLUMN = Column(0, 0, [DebugBlock])
 NOT_FOUND_COLUMN.set_height_difference(*[NOT_FOUND_COLUMN]*8)
 
@@ -120,7 +173,6 @@ class Region:
 
     @staticmethod
     def check_distance(center_x, center_y, frame_x, frame_y, r) -> bool:
-        # distance = ((frame_x-x) ** 2 + (frame_y-y) ** 2) ** .5
         distance = max(abs(frame_x - center_x), abs(frame_y - center_y))
         return distance < r
 
@@ -170,6 +222,10 @@ class World:
         self.load_distance = load_distance
         self.preload_start_area()
 
+        path_to_changed_columns = self.folder + 'changed columns/'
+        self.changed_columns = ChangedColumnsCatalog(path_to_changed_columns)
+        self.changed_columns.load_changed_columns()
+
         self.DEFAULT_ADDED_BLOCK: type = Grass
 
         self.render_order = RenderOrder()
@@ -201,7 +257,7 @@ class World:
         region = self.get_region(x, y)
         region.set_column(x, y, column)
 
-    def add_block(self, block: tuple[int, int, int], _type: None | type = None):
+    def add_block_and_save_changes(self, block: tuple[int, int, int], _type: None | type = None):
         x, y, z = block
         if _type is None:
             _type = self.DEFAULT_ADDED_BLOCK
@@ -209,19 +265,24 @@ class World:
         column.add_block_on_top(_type)
         rect = pg.Rect(x - 1, y - 1, 3, 3)
         self.set_columns_h_diff_in_rect(rect)
+        self.changed_columns.add_changed_column(column)
 
-    def remove_block(self, block: tuple[int, int, int]):
+    def remove_block_and_save_changes(self, block: tuple[int, int, int]):
         x, y, z = block
         column = self.get_column(x, y)
         column.remove_top_block()
         rect = pg.Rect(x-1, y-1, 3, 3)
         self.set_columns_h_diff_in_rect(rect)
+        self.changed_columns.add_changed_column(column)
 
     def set_columns_in_rect(self, rect: pg.Rect):
         for i in range(rect.left, rect.right):
             for j in range(rect.top, rect.bottom):
-                height = self.height_map.get_height(i, j)
-                new_column = Column.from_height(i, j, height)
+                if self.changed_columns.check_if_column_was_changed(i, j):
+                    new_column = self.changed_columns.get_changed_column(i, j)
+                else:
+                    height = self.height_map.get_height(i, j)
+                    new_column = Column.from_height(i, j, height)
                 self.set_column(i, j, new_column)
         bigger_rect = pg.Rect(rect.left-1, rect.top-1, rect.width+2, rect.height+2)
         self.set_columns_h_diff_in_rect(bigger_rect)

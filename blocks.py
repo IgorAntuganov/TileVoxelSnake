@@ -14,14 +14,6 @@ class Block(ABC):
         self.y = y
         self.z = z
 
-    def get_xyz(self):
-        return self.x, self.y, self.z
-
-    def set_xyz(self, x, y, z):
-        self.x = x
-        self.y = y
-        self.z = z
-
     def copy_to_x_y(self, x, y):
         return type(self)(x, y, self.z)
 

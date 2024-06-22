@@ -31,16 +31,6 @@ class NoiseGrid:
         self.tile_size = tile_size
         self.octaves = octaves
         self.grid: dict[tuple[int, int]: Noise] = {}
-        # self.load_from_disk()
-
-    '''def load_from_disk(self):
-        file_name_start = DataNoiseTile.get_file_name(self.unic_name)
-        for file in os.listdir(self.folder):
-            if file.startswith(file_name_start):
-                without_pickle = file.split('.')[0]
-                i, j = without_pickle.split('_')[-2:]
-                i, j = int(i), int(j)
-                self.load_tile(i, j)'''
 
     def merge_tile_with_neighbors(self, tile, tile_i, tile_j):
         if (tile_i, tile_j - 1) in self.grid:

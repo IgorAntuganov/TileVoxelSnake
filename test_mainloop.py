@@ -109,9 +109,9 @@ while True:
                     block_to_add = figure.directed_block
 
     if block_to_delete is not None:
-        world.remove_block(block_to_delete)
+        world.remove_block_and_save_changes(block_to_delete)
     if block_to_add is not None:
-        world.add_block(block_to_add)
+        world.add_block_and_save_changes(block_to_add)
     if mouse_rect is not None:
         sprite = pg.Surface(mouse_rect.size)
         sprite.fill((200, 200, 200))
