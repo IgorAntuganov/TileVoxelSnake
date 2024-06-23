@@ -1,7 +1,7 @@
 import os
 import pygame as pg
 from constants import HEIGHT_GENERATING_INFO
-from generation._NU_value_noise import ValueNoise
+from generation.value_noise import ValueNoise
 from generation.perlin_noise import PerlinNoise
 from generation.abc_noise import Noise, DataNoiseTile
 

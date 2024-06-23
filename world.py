@@ -3,6 +3,7 @@ import pickle
 from blocks import *
 from render_order import RenderOrder
 from generation.height_map import HeightMap
+from generation.biom_map import BiomeMap
 from constants import HEIGHT_GENERATING_INFO, PATH_TO_SAVES
 from generation.constants import CHUNK_LOADING_PART_SIZE, WORLD_CHUNK_SIZE
 LOADING_PARTS_COUNT = WORLD_CHUNK_SIZE // CHUNK_LOADING_PART_SIZE
@@ -30,16 +31,6 @@ class Column:
             'bottom_right': 0
         }
         self.height_difference_are_set = False
-
-    @staticmethod
-    def from_height(x, y, height):
-        blocks = [Grass if height > 5 else Sand]
-        for i in range(height-1):
-            if i < height // 2:
-                blocks.append(Dirt)
-            else:
-                blocks.append(Stone)
-        return Column(x, y, blocks)
 
     @staticmethod
     def from_pickle(data: dict):
@@ -222,6 +213,8 @@ class World:
         self.load_distance = load_distance
         self.preload_start_area()
 
+        self.biome_map = BiomeMap(self.folder, seed)
+
         path_to_changed_columns = self.folder + 'changed columns/'
         self.changed_columns = ChangedColumnsCatalog(path_to_changed_columns)
         self.changed_columns.load_changed_columns()
@@ -282,8 +275,11 @@ class World:
                     new_column = self.changed_columns.get_changed_column(i, j)
                 else:
                     height = self.height_map.get_height(i, j)
-                    new_column = Column.from_height(i, j, height)
+                    biome = self.biome_map.get_biome(i, j)
+                    blocks = biome.blocks_from_height(height)
+                    new_column = Column(i, j, blocks)
                 self.set_column(i, j, new_column)
+
         bigger_rect = pg.Rect(rect.left-1, rect.top-1, rect.width+2, rect.height+2)
         self.set_columns_h_diff_in_rect(bigger_rect)
 
