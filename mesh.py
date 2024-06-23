@@ -1,8 +1,9 @@
 # import time
 import pygame as pg
-from camera import Layers
-from world import Column
+from camera import Layers, CameraFrame
+from world import Column, World
 from trapezoid import SidesDrawer
+from render_order import RenderOrder
 
 
 class Figure:
@@ -22,14 +23,15 @@ class TerrainMech:
         self.layers = layers
         self.elements: list[list[Figure]] = []
         self.scr_rect = pg.Rect(0, 0, *scr_sizes)
+        self.render_order = RenderOrder()
 
-    def create_mesh(self, columns):
-        """:param columns: generator -> Column"""
-
+    def create_mesh(self, world: World, camera: CameraFrame):
         self.elements = []
 
-        for column in columns:
+        column_cords = camera.get_rect()
+        for i, j in self.render_order.get_order(camera.get_rect()):
             column: Column
+            column = world.get_column(i, j)
             figures: list[Figure] = []
 
             # top sprites of first non-transparent block at column

@@ -206,14 +206,18 @@ while len(checking_classes) != 0:
 
     checking_classes = new_checking_classes
 
+
+blocks_classes_dict = {_class.__name__: _class for _class in non_abc_classes}
+reversed_blocks_classes_dict = {_class: _class.__name__ for _class in non_abc_classes}
+
 if NOT_ABSTRACT_BLOCKS_CLASSES_INFO:
     print('non abstract blocks:')
     for _class in non_abc_classes:
         print(_class.__name__)
 
+    print(blocks_classes_dict)
+    print(reversed_blocks_classes_dict)
 
-blocks_classes_dict = {_class.__name__: _class for _class in non_abc_classes}
-reversed_blocks_classes_dict = {_class: _class.__name__ for _class in non_abc_classes}
 
 for _class in blocks_classes_dict.values():
     _class.load_sprites()

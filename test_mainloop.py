@@ -18,10 +18,11 @@ sides_drawer.set_print_cache_size(TRAPEZOIDS_CACHE_INFO)
 sides_drawer.create_cache()
 
 clock = pg.time.Clock()
-camera = CameraFrame((0, 0), 1536//BASE_LEVEL_SIZE, 960//BASE_LEVEL_SIZE, (0, 0))
-layers = camera.get_layers()
-load_distance = int(max(camera.get_rect().size)/2) + WORLD_CHUNK_SIZE
-world = World(load_distance)
+camera_frame = CameraFrame((0, 0), 1536 // BASE_LEVEL_SIZE, 960 // BASE_LEVEL_SIZE, (0, 0))
+layers = camera_frame.get_layers()
+load_distance = int(max(camera_frame.get_rect().size) / 2) + WORLD_CHUNK_SIZE
+world = World()
+world_filler = WorldFiller(world, load_distance)
 terr_mesh = TerrainMech(sides_drawer, layers, (1536, 960))
 
 frame = 0
@@ -46,7 +47,7 @@ while True:
                 offset[0] -= .2
             if event.key == pg.K_d:
                 offset[0] += .3
-            camera.move(offset)
+            camera_frame.move(offset)
         if event.type == pg.MOUSEBUTTONDOWN:
             if event.button == 1:
                 mouse_left_click = True
@@ -81,29 +82,19 @@ while True:
         pressed_offset[0] += .195
     if clock.get_fps() != 0:
         pressed_offset = pressed_offset[0] / clock.get_fps() * 60, pressed_offset[1] / clock.get_fps() * 60
-    camera.move(pressed_offset)
+    camera_frame.move(pressed_offset)
 
-    world.load_regions_by_1()
+    world_filler.load_regions_by_1()
     if frame % 50 == 0:
-        world.check_regions_distance(*camera.get_rect().center)
+        world_filler.check_regions_distance(*camera_frame.get_rect().center)
 
     if frame % 10000 == 0:
         gc.collect()
 
-    # render
-    # times = [time.time()]
     scr.fill((0, 0, 0))
-    # times.append(time.time())  # 1
-    column_cords = camera.get_rect()
-    # times.append(time.time())  # 2
-    columns_to_draw = world.get_columns_in_rect_generator(column_cords)
-    # times.append(time.time())  # 3
-    camera.update_layers()
-    # times.append(time.time())  # 4
-    terr_mesh.create_mesh(columns_to_draw)
-    # times.append(time.time())  # 6
+    camera_frame.update_layers()
+    terr_mesh.create_mesh(world, camera_frame)
     ordered = terr_mesh.get_elements()
-    # times.append(time.time())  # 7
     mouse_rect = None
     block_to_add = None
     block_to_delete = None
@@ -111,7 +102,7 @@ while True:
     for column_figures in ordered:
         for figure in column_figures:
             rect, sprite = figure.rect, figure.sprite
-            if camera.screen_rect.colliderect(rect):
+            if camera_frame.screen_rect.colliderect(rect):
                 scr.blit(sprite, rect)
 
             if rect.collidepoint(pg.mouse.get_pos()):
@@ -132,24 +123,14 @@ while True:
         sprite.set_alpha(120)
         scr.blit(sprite, mouse_rect.topleft)
 
-    # times.append(time.time())  # 8
     frame_time = round(time.time() - last_frame_end, 5)
     fps = str(round(clock.get_fps(), 2))
     if SET_FPS_CAPTION:
-        pg.display.set_caption(str(camera.get_rect().center) + ' fps: ' + fps + ' ft: ' + str(frame_time))
+        pg.display.set_caption(str(camera_frame.get_rect().center) + ' fps: ' + fps + ' ft: ' + str(frame_time))
     if PRINT_FPS:
-        print(str(camera.get_rect().center) + ' fps: ' + fps + ' ft: ' + str(frame_time) +
+        print(str(camera_frame.get_rect().center) + ' fps: ' + fps + ' ft: ' + str(frame_time) +
               ('' if frame_time < 0.03 else ' --- '))
     last_frame_end = time.time()
-    # if frame % 25 == 0:
-    #     print(' - ' * 30)
-    #     print(len(ordered), 'blocks on screen')
-    #     for i in range(1, len(times)):
-    #         t = round(times[i]-times[i-1], 10)
-    #         if t == 0:
-    #             print(i, t)
-    #         else:
-    #             print(i, round(1/t), t)
 
     pg.display.update()
     clock.tick(60)

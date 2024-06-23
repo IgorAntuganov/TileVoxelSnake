@@ -1,7 +1,6 @@
 import os
 import pickle
 from blocks import *
-from render_order import RenderOrder
 from generation.height_map import HeightMap
 from generation.biome_map import BiomeMap, Forest
 from generation.halton_sequence import HaltonPoints
@@ -13,8 +12,8 @@ from generation.constants import WORLD_CHUNK_SIZE, WATER_LEVEL, \
 
 class Column:
     def __init__(self, x, y, blocks: list[type]):
-        """ ! Takes only non-transparent blocks, but transparent can be added later with add_block_on_top
-        :param blocks: blocks from top to bottom as types (ex: [Grass, Dirt, Dirt, Stone])
+        """
+        :param blocks: blocks from top to bottom as types !Transparent can't follow non-transparent blocks!
         """
         self.x = x
         self.y = y
@@ -22,10 +21,12 @@ class Column:
         self.transparent_blocks: list[Block] = []
         for i in range(len(blocks)):
             block = blocks[i](x, y, len(blocks)-i-1)
-            assert not block.is_transparent
-            self.blocks.append(block)
+            if not block.is_transparent:
+                self.blocks.append(block)
+            else:
+                assert len(self.blocks) == 0
+                self.transparent_blocks.append(block)
 
-        self.height = len(blocks)
         self.height_difference: dict[str: int] = {
             'left': 0,
             'top': 0,
@@ -36,22 +37,21 @@ class Column:
             'bottom_left': 0,
             'bottom_right': 0
         }
-        self.height_difference_2: dict[str: int] = {
-            'left': 0,
-            'top': 0,
-            'right': 0,
-            'bottom': 0,
-            'top_left': 0,
-            'top_right': 0,
-            'bottom_left': 0,
-            'bottom_right': 0
-        }
+        self.height_difference_2 = self.height_difference.copy()
         self.height_difference_are_set = False
 
         if FILLING_COLUMNS_INFO:
             print('new column created', self.x, self.y)
             for block in self.blocks + self.transparent_blocks:
                 print(block.z, block.__class__.__name__)
+
+    @property
+    def nt_height(self):
+        return len(self.blocks)
+
+    @property
+    def full_height(self):
+        return len(self.blocks) + len(self.transparent_blocks)
 
     @staticmethod
     def from_pickle(data: dict):
@@ -60,14 +60,18 @@ class Column:
         height_diff_2 = data['hd2']
         height_diff_are_set = data['hd_are_set']
         blocks = []
+        for block in data['transparent_blocks']:
+            block_class = blocks_classes_dict[block]
+            blocks.append(block_class)
         for block in data['blocks']:
             block_class = blocks_classes_dict[block]
             blocks.append(block_class)
+
         pickle_column = Column(x, y, blocks)
 
-        for block in data['transparent_blocks'][::-1]:
-            block_class = blocks_classes_dict[block]
-            pickle_column.add_block_on_top(block_class)
+        # for block in data['transparent_blocks'][::-1]:
+        #     block_class = blocks_classes_dict[block]
+        #     pickle_column.add_block_on_top(block_class)
 
         pickle_column.height_difference = height_diff
         pickle_column.height_difference_2 = height_diff_2
@@ -101,48 +105,73 @@ class Column:
     def get_top_block(self) -> Block:
         if len(self.transparent_blocks) != 0:
             return self.transparent_blocks[0]
-        if self.height > 0:
+        if self.nt_height > 0:
             return self.blocks[0]
         return DebugBlock(self.x, self.y, 0)
 
     def get_block(self, z) -> Block | FullBlock:
-        if len(self.blocks) > 0:
-            if len(self.blocks) > z:
+        if self.nt_height > 0:
+            if self.nt_height > z:
                 return self.blocks[-z-1]
             elif len(self.transparent_blocks) > 0:
-                ind = - z + len(self.blocks) - 1
+                ind = - z + self.nt_height - 1
                 return self.transparent_blocks[ind]
         return DebugBlock(self.x, self.y, z)
 
     def get_first_non_transparent(self) -> Block:
-        if self.height > 0:
+        if self.nt_height > 0:
             return self.blocks[0]
         return DebugBlock(self.x, self.y, 0)
+
+    def remove_top_block(self):
+        if len(self.transparent_blocks) > 0:
+            self.transparent_blocks = self.transparent_blocks[1:]
+        else:
+            self.blocks = self.blocks[1:]
+            self.height_difference_are_set = False
+        if FILLING_COLUMNS_INFO:
+            print('removing block')
+            print(self.x, self.y, len(self.blocks), len(self.transparent_blocks))
+
+    def add_block_on_top(self, block_type: type):
+        z = len(self.blocks) + len(self.transparent_blocks)
+        block = block_type(self.x, self.y, z)
+        if not block.is_transparent:
+            if len(self.transparent_blocks) != 0:
+                print(self.x, self.y, self.blocks, self.transparent_blocks, block_type)
+            assert len(self.transparent_blocks) == 0
+            self.blocks.insert(0, block)
+            self.height_difference_are_set = False
+        else:
+            self.transparent_blocks.insert(0, block)
+        if FILLING_COLUMNS_INFO:
+            print('adding block')
+            print(self.x, self.y, len(self.blocks), len(self.transparent_blocks))
+            print('block z', block.z, 'height', self.nt_height)
+            for block in self.transparent_blocks + self.blocks:
+                print(block.z, block.__class__.__name__)
 
     def set_height_difference(self, left, top, right, bottom, top_left, top_right, bottom_left, bottom_right):
         """left, top, right, bottom - adjacent Columns;
         top_left, top_right, bottom_left, bottom_right - diagonal Columns"""
-        self.height_difference['left'] = self.height + len(self.transparent_blocks) - left.height - len(left.transparent_blocks)
-        self.height_difference['top'] = self.height + len(self.transparent_blocks) - top.height - len(top.transparent_blocks)
-        self.height_difference['right'] = self.height + len(self.transparent_blocks) - right.height - len(right.transparent_blocks)
-        self.height_difference['bottom'] = self.height + len(self.transparent_blocks) - bottom.height - len(bottom.transparent_blocks)
-        self.height_difference['top_left'] = self.height + len(self.transparent_blocks) - top_left.height - len(top_left.transparent_blocks)
-        self.height_difference['top_right'] = self.height + len(self.transparent_blocks) - top_right.height - len(top_right.transparent_blocks)
-        self.height_difference['bottom_left'] = self.height + len(self.transparent_blocks) - bottom_left.height - len(bottom_left.transparent_blocks)
-        self.height_difference['bottom_right'] = self.height + len(self.transparent_blocks) - bottom_right.height - len(bottom_right.transparent_blocks)
 
-        self.height_difference_2['left'] = self.height + len(self.transparent_blocks) - left.height
-        self.height_difference_2['top'] = self.height + len(self.transparent_blocks) - top.height
-        self.height_difference_2['right'] = self.height + len(self.transparent_blocks) - right.height
-        self.height_difference_2['bottom'] = self.height + len(self.transparent_blocks) - bottom.height
-        self.height_difference_2['top_left'] = self.height + len(self.transparent_blocks) - top_left.height
-        self.height_difference_2['top_right'] = self.height + len(self.transparent_blocks) - top_right.height
-        self.height_difference_2['bottom_left'] = self.height + len(self.transparent_blocks) - bottom_left.height
-        self.height_difference_2['bottom_right'] = self.height + len(self.transparent_blocks) - bottom_right.height
+        columns = {
+            'left': left,
+            'top': top,
+            'right': right,
+            'bottom': bottom,
+            'top_left': top_left,
+            'top_right': top_right,
+            'bottom_left': bottom_left,
+            'bottom_right': bottom_right
+        }
+
+        for key in columns:
+            self.height_difference[key] = self.full_height - columns[key].full_height
+            self.height_difference_2[key] = self.full_height - columns[key].nt_height
 
         if FILLING_COLUMNS_INFO:
             print('set diffs', self.x, self.y, self.height_difference, self.height_difference_2)
-
         self.height_difference_are_set = True
 
     def get_height_difference(self) -> dict[str: int]:
@@ -163,34 +192,6 @@ class Column:
                 self.height_difference['top_right'] < 0,
                 self.height_difference['bottom_right'] < 0,
                 self.height_difference['bottom_left'] < 0)
-
-    def remove_top_block(self):
-        if len(self.transparent_blocks) > 0:
-            self.transparent_blocks = self.transparent_blocks[1:]
-        else:
-            self.blocks = self.blocks[1:]
-            self.height -= 1
-            self.height_difference_are_set = False
-        if FILLING_COLUMNS_INFO:
-            print('removing block')
-            print(self.x, self.y, len(self.blocks), len(self.transparent_blocks))
-
-    def add_block_on_top(self, block_type: type):
-        z = len(self.blocks) + len(self.transparent_blocks)
-        block = block_type(self.x, self.y, z)
-        if not block.is_transparent:
-            assert len(self.transparent_blocks) == 0
-            self.blocks.insert(0, block)
-            self.height += 1
-            self.height_difference_are_set = False
-        else:
-            self.transparent_blocks.insert(0, block)
-        if FILLING_COLUMNS_INFO:
-            print('adding block')
-            print(self.x, self.y, len(self.blocks), len(self.transparent_blocks))
-            print('block z', block.z, 'height', self.height)
-            for block in self.transparent_blocks + self.blocks:
-                print(block.z, block.__class__.__name__)
 
 
 class ChangedColumnsCatalog:
@@ -271,31 +272,20 @@ class Region:
 
 
 class World:
-    def __init__(self, load_distance: int, seed: int = 0, name: str = 'test wrld'):
-        self.regions: dict[tuple[int, int]: Region] = {}
+    def __init__(self, name: str = 'test wrld'):
+        self.name = name
 
+        self.regions: dict[tuple[int, int]: Region] = {}
         self.loading_regions: list[Region] = []
 
-        self.name = name
         self.folder = PATH_TO_SAVES + f'{name}/'
         if not os.path.isdir(self.folder):
             os.mkdir(self.folder)
-        self.height_map = HeightMap(self.folder, seed)
-        self.load_distance = load_distance
-        self.preload_start_area()
-
-        self.biome_map = BiomeMap(self.folder, seed)
-
-        self.tree_generator = HaltonPoints(self.folder, 'trees', TREES_CHUNK_SIZE, TREES_IN_CHUNK, TREE_AVOIDING_RADIUS)
-        self.blocks_to_add_stash: dict[tuple[int, int]: list[Block]] = {}
-
         path_to_changed_columns = self.folder + 'changed columns/'
         self.changed_columns = ChangedColumnsCatalog(path_to_changed_columns)
         self.changed_columns.load_changed_columns()
 
         self.DEFAULT_ADDED_BLOCK: type = Grass
-
-        self.render_order = RenderOrder()
 
     def add_region(self, x2, y2):
         region = Region(x2 * WORLD_CHUNK_SIZE, y2 * WORLD_CHUNK_SIZE, WORLD_CHUNK_SIZE)
@@ -344,79 +334,6 @@ class World:
         self.set_columns_h_diff_in_rect(rect)
         self.changed_columns.add_changed_column(column)
 
-    def set_block_to_add_during_generation(self, block):
-        if (block.x, block.y) not in self.blocks_to_add_stash:
-            self.blocks_to_add_stash[(block.x, block.y)] = [block]
-        else:
-            self.blocks_to_add_stash[(block.x, block.y)].append(block)
-
-    def check_stash_for_column(self, column, i, j):
-        if (i, j) in self.blocks_to_add_stash:
-            blocks_from_stash: list[Block] = self.blocks_to_add_stash[(i, j)]
-            blocks_from_stash.sort(key=lambda b: b.z)
-            while blocks_from_stash[0].z > column.height + len(column.transparent_blocks):
-                if blocks_from_stash[0].is_transparent:
-                    column.add_block_on_top(Shadow)
-                else:
-                    column.add_block_on_top(type(column.get_top_block()))
-            for block in blocks_from_stash:
-                if not block.z <= column.height + len(column.transparent_blocks):
-                    column.add_block_on_top(type(block))
-            self.blocks_to_add_stash.pop((i, j))
-        self.set_columns_h_diff_in_rect(pg.Rect(i-1, j-1, 3, 3))
-
-    def add_stash_blocks_to_rect(self, rect: pg.Rect):
-        for i in range(rect.left, rect.right):
-            for j in range(rect.top, rect.bottom):
-                checking_column = self.get_column(i, j)
-                self.check_stash_for_column(checking_column, i, j)
-
-    def set_columns_in_rect(self, rect: pg.Rect):
-        structures = []
-        for i in range(rect.left, rect.right):
-            for j in range(rect.top, rect.bottom):
-                if self.changed_columns.check_if_column_was_changed(i, j):
-                    new_column = self.changed_columns.get_changed_column(i, j)
-                else:
-                    height = self.height_map.get_height(i, j)
-                    biome = self.biome_map.get_biome(i, j)
-                    blocks = biome.blocks_from_height(height)
-                    new_column = Column(i, j, blocks)
-
-                    if len(blocks) < WATER_LEVEL:
-                        for _ in range(WATER_LEVEL - len(blocks)):
-                            new_column.add_block_on_top(Water)
-
-                    if biome is Forest and len(blocks) >= WATER_LEVEL:
-                        trees = self.tree_generator.get_points_by_point(i, j)
-                        if (i, j) in trees:
-                            if i + j % 3 == 0:
-                                structures.append(Tree2(i, j, new_column.height))
-                            else:
-                                structures.append(Tree1(i, j, new_column.height))
-
-                self.set_column(i, j, new_column)
-
-        self.add_stash_blocks_to_rect(rect)
-
-        for structure in structures:
-            for block in structure.get_blocks_sorted():
-                i, j = block.x, block.y
-                if rect.collidepoint(i, j):
-                    editing_column = self.get_column(i, j)
-                    height_diff = editing_column.height + len(editing_column.transparent_blocks) - structure.z
-                    if type(block) is Shadow:
-                        for i in range(max(0, -height_diff-1)):
-                            editing_column.add_block_on_top(Shadow)
-                    if height_diff >= block.z - structure.z:
-                        continue
-                    editing_column.add_block_on_top(type(block))
-                else:
-                    self.set_block_to_add_during_generation(block)
-
-        bigger_rect = pg.Rect(rect.left-1, rect.top-1, rect.width+2, rect.height+2)
-        self.set_columns_h_diff_in_rect(bigger_rect)
-
     def set_columns_h_diff_in_rect(self, rect: pg.Rect):
         if FILLING_COLUMNS_INFO:
             print('start setting h diffs -----------------------------------')
@@ -435,14 +352,104 @@ class World:
                 bottom_right = self.get_column(i+1, j+1)
                 column.set_height_difference(left, top, right, bottom, top_left, top_right, bottom_left, bottom_right)
 
+
+class WorldFiller:
+    def __init__(self, world: World, load_distance: int, seed: int = 0, ):
+        self.world = world
+
+        name = world.name
+        self.folder = PATH_TO_SAVES + f'{name}/'
+        self.height_map = HeightMap(self.folder, seed)
+        self.load_distance = load_distance
+        self.preload_start_area()
+
+        self.biome_map = BiomeMap(self.folder, seed)
+
+        self.tree_generator = HaltonPoints(self.folder, 'trees', TREES_CHUNK_SIZE, TREES_IN_CHUNK, TREE_AVOIDING_RADIUS)
+        self.blocks_to_add_stash: dict[tuple[int, int]: list[Block]] = {}
+
+    def set_block_to_add_during_generation(self, block):
+        if (block.x, block.y) not in self.blocks_to_add_stash:
+            self.blocks_to_add_stash[(block.x, block.y)] = [block]
+        else:
+            self.blocks_to_add_stash[(block.x, block.y)].append(block)
+
+    def check_stash_for_column(self, column, i, j):
+        if (i, j) in self.blocks_to_add_stash:
+            blocks_from_stash: list[Block] = self.blocks_to_add_stash[(i, j)]
+            blocks_from_stash.sort(key=lambda b: b.z)
+            while blocks_from_stash[0].z > column.nt_height + len(column.transparent_blocks):
+                if blocks_from_stash[0].is_transparent:
+                    column.add_block_on_top(Shadow)
+                else:
+                    column.add_block_on_top(type(column.get_top_block()))
+            for block in blocks_from_stash:
+                if not block.z <= column.nt_height + len(column.transparent_blocks):
+                    column.add_block_on_top(type(block))
+            self.blocks_to_add_stash.pop((i, j))
+        self.world.set_columns_h_diff_in_rect(pg.Rect(i-1, j-1, 3, 3))
+
+    def add_stash_blocks_to_rect(self, rect: pg.Rect):
+        for i in range(rect.left, rect.right):
+            for j in range(rect.top, rect.bottom):
+                checking_column = self.world.get_column(i, j)
+                self.check_stash_for_column(checking_column, i, j)
+
+    def set_columns_in_rect(self, rect: pg.Rect):
+        structures = []
+        for i in range(rect.left, rect.right):
+            for j in range(rect.top, rect.bottom):
+                if self.world.changed_columns.check_if_column_was_changed(i, j):
+                    new_column = self.world.changed_columns.get_changed_column(i, j)
+                else:
+                    height = self.height_map.get_height(i, j)
+                    biome = self.biome_map.get_biome(i, j)
+                    blocks = biome.blocks_from_height(height)
+
+                    if len(blocks) < WATER_LEVEL:
+                        for _ in range(WATER_LEVEL - len(blocks)):
+                            blocks = [Water] * (WATER_LEVEL - len(blocks)) + blocks
+
+                    new_column = Column(i, j, blocks)
+
+                    if biome is Forest and len(blocks) > WATER_LEVEL:
+                        trees = self.tree_generator.get_points_by_point(i, j)
+                        if (i, j) in trees:
+                            if i + j % 3 == 0:
+                                structures.append(Tree2(i, j, new_column.nt_height))
+                            else:
+                                structures.append(Tree1(i, j, new_column.nt_height))
+
+                self.world.set_column(i, j, new_column)
+
+        self.add_stash_blocks_to_rect(rect)
+
+        for structure in structures:
+            for block in structure.get_blocks_sorted():
+                i, j = block.x, block.y
+                if rect.collidepoint(i, j):
+                    editing_column = self.world.get_column(i, j)
+                    height_diff = editing_column.nt_height + len(editing_column.transparent_blocks) - structure.z
+                    if type(block) is Shadow:
+                        for i in range(max(0, -height_diff - 1)):
+                            editing_column.add_block_on_top(Shadow)
+                    if height_diff >= block.z - structure.z:
+                        continue
+                    editing_column.add_block_on_top(type(block))
+                else:
+                    self.set_block_to_add_during_generation(block)
+
+        bigger_rect = pg.Rect(rect.left - 1, rect.top - 1, rect.width + 2, rect.height + 2)
+        self.world.set_columns_h_diff_in_rect(bigger_rect)
+
     def check_regions_distance(self, frame_x: int, frame_y: int):
         # removing too far regions
-        for key in list(self.regions.keys()):
-            r: Region = self.regions[key]
+        for key in list(self.world.regions.keys()):
+            r: Region = self.world.regions[key]
             if not r.check_region_distance(frame_x, frame_y, self.load_distance * 1.5):
                 if HEIGHT_GENERATING_INFO:
                     print('deleting too far region', key)
-                self.regions.pop(key)
+                self.world.regions.pop(key)
         # adding nearby regions
         left = (frame_x - self.load_distance) // WORLD_CHUNK_SIZE
         right = (frame_x + self.load_distance) // WORLD_CHUNK_SIZE
@@ -452,20 +459,20 @@ class World:
             for j in range(top, bottom+1):
                 center_x = i * WORLD_CHUNK_SIZE + WORLD_CHUNK_SIZE // 2
                 center_y = j * WORLD_CHUNK_SIZE + WORLD_CHUNK_SIZE // 2
-                if (i, j) not in self.regions and \
+                if (i, j) not in self.world.regions and \
                         Region.check_distance(frame_x, frame_y, center_x, center_y, self.load_distance):
                     if HEIGHT_GENERATING_INFO:
                         print('add nearby region', i, j, center_x, center_y)
-                    self.add_region(i, j)
+                    self.world.add_region(i, j)
         if HEIGHT_GENERATING_INFO:
             print('regions after checking: ')
-            for key in sorted(list(self.regions.keys())):
+            for key in sorted(list(self.world.regions.keys())):
                 print(key, end=' ')
             print()
 
     def load_regions_by_1(self):
-        if len(self.loading_regions) > 0:
-            loading_region = self.loading_regions.pop()
+        if len(self.world.loading_regions) > 0:
+            loading_region = self.world.loading_regions.pop()
             rect = loading_region.get_rect()
             loading_region.filled = True
             self.set_columns_in_rect(rect)
@@ -474,15 +481,12 @@ class World:
     def check_stash(self):
         if len(self.blocks_to_add_stash) > 0:
             for x, y in list(self.blocks_to_add_stash.keys()):
-                if self.check_is_region(x, y):
-                    region = self.get_region(x, y)
+                if self.world.check_is_region(x, y):
+                    region = self.world.get_region(x, y)
                     if region.filled:
-                        column = self.get_column(x, y)
+                        column = self.world.get_column(x, y)
                         self.check_stash_for_column(column, x, y)
 
     def preload_start_area(self, frame_x=0, frame_y=0):
         self.check_regions_distance(frame_x, frame_y)
 
-    def get_columns_in_rect_generator(self, rect: pg.Rect):
-        for i, j in self.render_order.get_order(rect):
-            yield self.get_column(i, j)
