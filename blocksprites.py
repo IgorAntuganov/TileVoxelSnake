@@ -73,6 +73,15 @@ class ShadowSprites:
             self.cache[key] = shade
         return self.cache[key]
 
+    def get_full_shade(self, size: int) -> pg.Surface:
+        key = (size, 'full')
+        if key not in self.cache:
+            shade = pg.Surface((size, size), pg.SRCALPHA)
+            power = 255 * self.shade_power
+            shade.fill((0, 0, 0, power))
+            self.cache[key] = shade
+        return self.cache[key]
+
 
 class BlockSprite:
     def __init__(self, path, angle=0):
@@ -118,7 +127,17 @@ class BlockSpritesDict:
                 if not (is_shaded or next_is_shaded) and neighbors[i+4]:
                     shade = self.shade_maker.get_diagonal_shade(DIAGONALS_NAMES[i], size)
                     image.blit(shade, (0, 0))
-            self.scale_shaded_cache[key] = image
+            self.scale_shaded_cache[key] = image.copy()
+        return self.scale_shaded_cache[key]
+
+    def get_top_resized_fully_shaded(self, size: int, z: int):
+        key = (False, size, z)
+        if key not in self.scale_shaded_cache:
+            image = pg.transform.scale(self._top.image, (size, size))
+            image = height_recolor(image, z)
+            shade = self.shade_maker.get_full_shade(size)
+            image.blit(shade, (0, 0))
+            self.scale_shaded_cache[key] = image.copy()
         return self.scale_shaded_cache[key]
 
     def get_side(self, n) -> pg.Surface:
@@ -134,5 +153,5 @@ class BlockSpritesDict:
         n = SIDES_NAMES.index(side)
         sprite = self._sides[n].image.copy()
         sprite.blit(shade, (0, 0))
-        self.shaded_sides_cache[key] = sprite
+        self.shaded_sides_cache[key] = sprite.copy()
         return sprite

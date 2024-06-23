@@ -63,6 +63,8 @@ while True:
             if event.key == pg.K_6:
                 world.DEFAULT_ADDED_BLOCK = Leaves
             if event.key == pg.K_7:
+                world.DEFAULT_ADDED_BLOCK = Air
+            if event.key == pg.K_8:
                 world.DEFAULT_ADDED_BLOCK = DebugBlock
     pressed_offset = [0, 0]
     pressed = pg.key.get_pressed()

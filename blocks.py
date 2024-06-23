@@ -9,10 +9,22 @@ from blocksprites import BlockSpritesDict
 
 
 class Block(ABC):
+    debug_sprite = 'debug.png'
+
     def __init__(self, x, y, z):
         self.x = x
         self.y = y
         self.z = z
+
+    @property
+    @abstractmethod
+    def is_transparent(self) -> bool:
+        pass
+
+    @property
+    @abstractmethod
+    def have_collision(self) -> bool:
+        pass
 
     def copy_to_x_y(self, x, y):
         return type(self)(x, y, self.z)
@@ -20,10 +32,6 @@ class Block(ABC):
     # For creating blocks in Column
     def __call__(self, *args, **kwargs):
         return type(self)(*args, **kwargs)
-
-
-class FullBlock(Block, ABC):
-    debug_sprite = 'debug.png'
 
     @classmethod
     @abstractmethod
@@ -35,6 +43,9 @@ class FullBlock(Block, ABC):
                                       z: int) -> pg.Surface:
         return self.sprites.get_top_resized_shaded(size, neighbors, z)
 
+    def get_top_sprite_fully_shaded(self, size: int, z: int):
+        return self.sprites.get_top_resized_fully_shaded(size, z)
+
     def get_side_sprite(self, side: str):
         assert side in SIDES_NAMES
         return self.sprites.get_side(SIDES_NAMES.index(side))
@@ -43,6 +54,18 @@ class FullBlock(Block, ABC):
         assert side in SIDES_NAMES
         size = self.sprites.side_sprite_sizes
         return self.sprites.get_side_shaded(side, size)
+
+
+class FullBlock(Block, ABC):
+    debug_sprite = 'debug.png'
+
+    @property
+    def is_transparent(self) -> bool:
+        return False
+
+    @property
+    def have_collision(self) -> bool:
+        return True
 
 
 class SingleSpriteBlock(FullBlock, ABC):
@@ -98,6 +121,34 @@ class OakLog(SingleSideSpriteBlock):
 
 class Leaves(SingleSpriteBlock):
     sprite = 'leaves.png'
+
+    @property
+    def is_transparent(self) -> bool:
+        return True
+
+
+class Air(SingleSpriteBlock):
+    sprite = 'air.png'
+
+    @property
+    def have_collision(self) -> bool:
+        return False
+
+    @property
+    def is_transparent(self) -> bool:
+        return True
+
+
+class Water(SingleSpriteBlock):
+    sprite = 'water.png'
+
+    @property
+    def have_collision(self) -> bool:
+        return False
+
+    @property
+    def is_transparent(self) -> bool:
+        return True
 
 
 class Dirt(SingleSpriteBlock):

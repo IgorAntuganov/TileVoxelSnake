@@ -32,10 +32,27 @@ class TerrainMech:
             column: Column
             figures: list[Figure] = []
 
-            # top sprites of blocks
+            # top sprites of first non-transparent block at column
             top_block = column.get_top_block()
-            x, y, z = column.x, column.y, top_block.z
+            block = column.get_first_non_transparent()
+            assert column.height_difference_are_set
             hd = column.height_difference
+            hd2 = column.height_difference_2
+
+            if block.z != top_block.z:
+                x, y, z = column.x, column.y, block.z
+                rect_size = self.layers.get_n_level_size(z)
+                top_block_rect = self.layers.get_rect(x, y, z)
+                if top_block_rect.colliderect(self.scr_rect):
+                    if len(column.transparent_blocks) > 0:
+                        sprite = block.get_top_sprite_fully_shaded(rect_size, z)
+                    else:
+                        sprite = block.get_top_sprite_resized_shaded(rect_size, (False,)*8, z)
+                    top_figure = Figure(top_block_rect, sprite, (x, y, z), (x, y, z + 1))
+                    figures.append(top_figure)
+
+            # top sprites of top blocks at column
+            x, y, z = column.x, column.y, top_block.z
             rect_size = self.layers.get_n_level_size(z)
             top_block_rect = self.layers.get_rect(x, y, z)
             if top_block_rect.colliderect(self.scr_rect):
@@ -47,60 +64,67 @@ class TerrainMech:
             # sides of blocks
             column_bottom_rect = self.layers.get_rect(x, y, 0)
 
-            for i in range(max(hd.values())):
+            values = list(hd.values())+list(hd2.values())
+            for i in range(max(values)):
+                if column.x == -9 and column.y == -5:
+                    print(i, hd, hd2)
                 side_z = z - i
                 block = column.get_block(side_z)
                 top_rect = self.layers.get_rect(x, y, side_z)
                 bottom_rect = self.layers.get_rect(x, y, side_z - 1)
                 # bottom side
-                if top_block_rect.bottom < column_bottom_rect.bottom and i < hd['bottom']:
-                    if i == hd['bottom'] - 1:
-                        sprite = block.get_side_sprite_shaded('bottom')
-                        sprite_name = f"{block.__class__.__name__}_bottom_shaded"
-                    else:
-                        sprite = block.get_side_sprite('bottom')
-                        sprite_name = f"{block.__class__.__name__}_bottom"
+                if top_block_rect.bottom < column_bottom_rect.bottom:
+                    if (not block.is_transparent and i < hd2['bottom']) or (block.is_transparent and i < hd['bottom']):
+                        if i == hd2['bottom'] - 1:
+                            sprite = block.get_side_sprite_shaded('bottom')
+                            sprite_name = f"{block.__class__.__name__}_bottom_shaded"
+                        else:
+                            sprite = block.get_side_sprite('bottom')
+                            sprite_name = f"{block.__class__.__name__}_bottom"
 
-                    figure = self.create_bottom_figure(x, y, side_z, sprite, sprite_name, top_rect, bottom_rect)
-                    if figure is not None:
-                        figures.append(figure)
+                        figure = self.create_bottom_figure(x, y, side_z, sprite, sprite_name, top_rect, bottom_rect)
+                        if figure is not None:
+                            figures.append(figure)
 
                 # top side
-                if top_block_rect.top > column_bottom_rect.top and i < hd['top']:
-                    if i == hd['top'] - 1:
-                        sprite = block.get_side_sprite_shaded('top')
-                        sprite_name = f"{block.__class__.__name__}_top_shaded"
-                    else:
-                        sprite = block.get_side_sprite('top')
-                        sprite_name = f"{block.__class__.__name__}_top"
+                if top_block_rect.top > column_bottom_rect.top:
+                    if (not block.is_transparent and i < hd2['top']) or (block.is_transparent and i < hd['top']):
+                        if i == hd['top'] - 1:
+                            sprite = block.get_side_sprite_shaded('top')
+                            sprite_name = f"{block.__class__.__name__}_top_shaded"
+                        else:
+                            sprite = block.get_side_sprite('top')
+                            sprite_name = f"{block.__class__.__name__}_top"
 
-                    figure = self.create_top_figure(x, y, side_z, sprite, sprite_name, top_rect, bottom_rect)
-                    if figure is not None:
-                        figures.append(figure)
+                        figure = self.create_top_figure(x, y, side_z, sprite, sprite_name, top_rect, bottom_rect)
+                        if figure is not None:
+                            figures.append(figure)
 
                 # right side
-                if top_block_rect.right < column_bottom_rect.right and i < hd['right']:
-                    if i == hd['right'] - 1:
-                        sprite = block.get_side_sprite_shaded('right')
-                        sprite_name = f"{block.__class__.__name__}_right_shaded"
-                    else:
-                        sprite = block.get_side_sprite('right')
-                        sprite_name = f"{block.__class__.__name__}_right"
-                    figure = self.create_right_figure(x, y, side_z, sprite, sprite_name, top_rect, bottom_rect)
-                    if figure is not None:
-                        figures.append(figure)
+                if top_block_rect.right < column_bottom_rect.right:
+                    if (not block.is_transparent and i < hd2['right']) or (block.is_transparent and i < hd['right']):
+                        if i == hd['right'] - 1:
+                            sprite = block.get_side_sprite_shaded('right')
+                            sprite_name = f"{block.__class__.__name__}_right_shaded"
+                        else:
+                            sprite = block.get_side_sprite('right')
+                            sprite_name = f"{block.__class__.__name__}_right"
+                        figure = self.create_right_figure(x, y, side_z, sprite, sprite_name, top_rect, bottom_rect)
+                        if figure is not None:
+                            figures.append(figure)
 
                 # left side
-                if top_block_rect.left > column_bottom_rect.left and i < hd['left']:
-                    if i == hd['left'] - 1:
-                        sprite = column.get_block(side_z).get_side_sprite_shaded('left')
-                        sprite_name = f"{block.__class__.__name__}_left_shaded"
-                    else:
-                        sprite = column.get_block(side_z).get_side_sprite('left')
-                        sprite_name = f"{block.__class__.__name__}_left"
-                    figure = self.create_left_figure(x, y, side_z, sprite, sprite_name, top_rect, bottom_rect)
-                    if figure is not None:
-                        figures.append(figure)
+                if top_block_rect.left > column_bottom_rect.left:
+                    if (not block.is_transparent and i < hd2['left']) or (block.is_transparent and i < hd['left']):
+                        if i == hd['left'] - 1:
+                            sprite = column.get_block(side_z).get_side_sprite_shaded('left')
+                            sprite_name = f"{block.__class__.__name__}_left_shaded"
+                        else:
+                            sprite = column.get_block(side_z).get_side_sprite('left')
+                            sprite_name = f"{block.__class__.__name__}_left"
+                        figure = self.create_left_figure(x, y, side_z, sprite, sprite_name, top_rect, bottom_rect)
+                        if figure is not None:
+                            figures.append(figure)
 
             self.elements.append(figures)
 

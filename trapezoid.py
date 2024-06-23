@@ -22,7 +22,7 @@ class SidesDrawer:
             if filename == CACHE_KEYS_FILENAME:
                 continue
             file_path = folder + '/' + filename
-            image = pg.image.load(file_path).convert()
+            image = pg.image.load(file_path).convert_alpha()
             key = filename.split('.')[0]
             self._textures_cache[key] = image
 
@@ -129,7 +129,7 @@ class SidesDrawer:
                 pixel_string = self._lines_cache[key]
             else:
                 pixel_string = self.get_pixel_string_with_anisotropic(*args)
-                self._lines_cache[key] = pixel_string
+                self._lines_cache[key] = pixel_string.copy()
                 if self._print_cache_size:
                     print('in cache:', len(self._lines_cache))
 
@@ -141,12 +141,14 @@ class SidesDrawer:
         texture_y_1 = part1 * texture.get_height()
         texture_y_2 = part2 * texture.get_height()
 
-        surfaces = []
+        pstring = pg.Surface((texture.get_width(), 1), pg.SRCALPHA)
         for k in range(int(texture_y_1), int(texture_y_2)+1):
-            crop = pg.Surface((texture.get_width(), 1))
+            crop = pg.Surface((texture.get_width(), 1), pg.SRCALPHA)
             crop.blit(texture, (0, -k))
-            surfaces.append(crop)
-        pstring = pg.transform.average_surfaces(surfaces)
+            y_diff = abs(texture_y_1 - texture_y_2)
+            if k != int(texture_y_1):
+                crop.set_alpha(int(255 / y_diff))
+            pstring.blit(crop, (0, 0))
 
         if width < texture.get_width():
             resized = pg.transform.smoothscale(pstring, (width, 1))
@@ -219,7 +221,7 @@ class SidesDrawer:
                 pixel_column = self._lines_cache[key]
             else:
                 pixel_column = self.get_pixel_column_with_anisotropic(*args)
-                self._lines_cache[key] = pixel_column
+                self._lines_cache[key] = pixel_column.copy()
                 if self._print_cache_size:
                     print('in cache:', len(self._lines_cache))
 
@@ -232,12 +234,14 @@ class SidesDrawer:
         texture_x_1 = part1 * texture.get_width()
         texture_x_2 = part2 * texture.get_width()
 
-        surfaces = []
-        for k in range(int(texture_x_1), int(texture_x_2+1)):
-            crop = pg.Surface((1, texture.get_height()))
+        pstring = pg.Surface((1, texture.get_height()), pg.SRCALPHA)
+        for k in range(int(texture_x_1), int(texture_x_2 + 1)):
+            crop = pg.Surface((1, texture.get_height()), pg.SRCALPHA)
             crop.blit(texture, (-k, 0))
-            surfaces.append(crop)
-        pstring = pg.transform.average_surfaces(surfaces)
+            x_diff = abs(texture_x_1 - texture_x_2)
+            if k != int(texture_x_1):
+                crop.set_alpha(int(255 / x_diff))
+            pstring.blit(crop, (0, 0))
 
         if height < texture.get_height():
             resized = pg.transform.smoothscale(pstring, (1, height))
