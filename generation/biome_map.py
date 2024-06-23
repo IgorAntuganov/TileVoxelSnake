@@ -64,7 +64,7 @@ class BiomeMap:
         value = self.get_value(x, y)
         if value < 0.4:
             return Desert
-        elif value < 0.65:
+        elif value < 0.6:
             return Fields
         else:
             return Forest

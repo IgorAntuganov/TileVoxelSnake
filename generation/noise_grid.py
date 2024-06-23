@@ -20,9 +20,6 @@ class NoiseGrid:
         self.unique_name = unique_name
         self.folder = world_folder + f'{self.unique_name} noise/'
 
-        if not os.path.isdir(world_folder):
-            os.mkdir(world_folder)
-
         if not os.path.isdir(self.folder):
             os.mkdir(self.folder)
 

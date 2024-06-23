@@ -3,9 +3,11 @@ import pickle
 from blocks import *
 from render_order import RenderOrder
 from generation.height_map import HeightMap
-from generation.biom_map import BiomeMap
+from generation.biome_map import BiomeMap, Forest
+from generation.halton_sequence import HaltonPoints
 from constants import HEIGHT_GENERATING_INFO, PATH_TO_SAVES, FILLING_COLUMNS_INFO
-from generation.constants import CHUNK_LOADING_PART_SIZE, WORLD_CHUNK_SIZE, WATER_LEVEL
+from generation.constants import CHUNK_LOADING_PART_SIZE, WORLD_CHUNK_SIZE, WATER_LEVEL, \
+    TREES_CHUNK_SIZE, TREES_IN_CHUNK, TREE_AVOIDING_RADIUS
 LOADING_PARTS_COUNT = WORLD_CHUNK_SIZE // CHUNK_LOADING_PART_SIZE
 LOADING_PARTS_TOTAL_COUNT = (WORLD_CHUNK_SIZE // CHUNK_LOADING_PART_SIZE) ** 2
 
@@ -290,11 +292,15 @@ class World:
 
         self.name = name
         self.folder = PATH_TO_SAVES + f'{name}/'
+        if not os.path.isdir(self.folder):
+            os.mkdir(self.folder)
         self.height_map = HeightMap(self.folder, seed)
         self.load_distance = load_distance
         self.preload_start_area()
 
         self.biome_map = BiomeMap(self.folder, seed)
+
+        self.tree_generator = HaltonPoints(self.folder, 'trees', TREES_CHUNK_SIZE, TREES_IN_CHUNK, TREE_AVOIDING_RADIUS)
 
         path_to_changed_columns = self.folder + 'changed columns/'
         self.changed_columns = ChangedColumnsCatalog(path_to_changed_columns)
@@ -365,6 +371,11 @@ class World:
                     if len(blocks) < WATER_LEVEL:
                         for _ in range(WATER_LEVEL - len(blocks)):
                             new_column.add_block_on_top(Water)
+
+                    if biome is Forest and len(blocks) >= WATER_LEVEL:
+                        trees = self.tree_generator.get_points_by_point(i, j)
+                        if (i, j) in trees:
+                            new_column.add_block_on_top(OakLog)
 
                 self.set_column(i, j, new_column)
 
