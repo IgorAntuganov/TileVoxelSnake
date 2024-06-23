@@ -1,3 +1,6 @@
+import gc
+gc.disable()
+
 import time
 import pygame as pg
 pg.init()
@@ -83,8 +86,9 @@ while True:
     world.load_regions_by_1()
     if frame % 50 == 0:
         world.check_regions_distance(*camera.get_rect().center)
-        print('checking regions')
-        # world.check_stash()
+
+    if frame % 10000 == 0:
+        gc.collect()
 
     # render
     # times = [time.time()]
@@ -135,7 +139,7 @@ while True:
         pg.display.set_caption(str(camera.get_rect().center) + ' fps: ' + fps + ' ft: ' + str(frame_time))
     if PRINT_FPS:
         print(str(camera.get_rect().center) + ' fps: ' + fps + ' ft: ' + str(frame_time) +
-              ('' if frame_time < 0.02 else ' --- '))
+              ('' if frame_time < 0.03 else ' --- '))
     last_frame_end = time.time()
     # if frame % 25 == 0:
     #     print(' - ' * 30)
