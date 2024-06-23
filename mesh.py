@@ -66,8 +66,6 @@ class TerrainMech:
 
             values = list(hd.values())+list(hd2.values())
             for i in range(max(values)):
-                if column.x == -9 and column.y == -5:
-                    print(i, hd, hd2)
                 side_z = z - i
                 block = column.get_block(side_z)
                 top_rect = self.layers.get_rect(x, y, side_z)

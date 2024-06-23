@@ -63,7 +63,7 @@ while True:
             if event.key == pg.K_6:
                 world.DEFAULT_ADDED_BLOCK = Leaves
             if event.key == pg.K_7:
-                world.DEFAULT_ADDED_BLOCK = Air
+                world.DEFAULT_ADDED_BLOCK = Shadow
             if event.key == pg.K_8:
                 world.DEFAULT_ADDED_BLOCK = DebugBlock
     pressed_offset = [0, 0]

@@ -86,6 +86,7 @@ class ShadowSprites:
 class BlockSprite:
     def __init__(self, path, angle=0):
         self.image = pg.image.load(PATH_TO_BLOCKS+path).convert_alpha()
+        assert self.image.get_height() == self.image.get_width()
         self.image = pg.transform.rotate(self.image, angle)
         self.image = pg.transform.scale_by(self.image, 2)  # For more accurate trapezoids, doesn't reduce fps
 
@@ -109,7 +110,14 @@ class BlockSpritesDict:
         self._side3 = BlockSprite(side3, 90)
         self._side4 = BlockSprite(side4)
         self._sides = [self._side1, self._side2, self._side3, self._side4]
-        self.side_sprite_sizes = self._side1.image.get_width()
+
+    def get_top_resized(self, size: int, z: int):
+        key = ('not shaded', size, z)
+        if key not in self.scale_shaded_cache:
+            image = pg.transform.scale(self._top.image, (size, size))
+            image = height_recolor(image, z)
+            self.scale_shaded_cache[key] = image.copy()
+        return self.scale_shaded_cache[key]
 
     def get_top_resized_shaded(self, size: int,
                                neighbors: tuple[bool, bool, bool, bool, bool, bool, bool, bool],
@@ -131,7 +139,7 @@ class BlockSpritesDict:
         return self.scale_shaded_cache[key]
 
     def get_top_resized_fully_shaded(self, size: int, z: int):
-        key = (False, size, z)
+        key = ('fully shaded', size, z)
         if key not in self.scale_shaded_cache:
             image = pg.transform.scale(self._top.image, (size, size))
             image = height_recolor(image, z)
@@ -140,18 +148,20 @@ class BlockSpritesDict:
             self.scale_shaded_cache[key] = image.copy()
         return self.scale_shaded_cache[key]
 
-    def get_side(self, n) -> pg.Surface:
+    def get_side(self, side: str) -> pg.Surface:
+        n = SIDES_NAMES.index(side)
         return self._sides[n].image
 
-    def get_side_shaded(self, side: str, size: int) -> pg.Surface:
+    def get_side_shaded(self, side: str) -> pg.Surface:
         key = side
-        if key in self.shaded_sides_cache:
-            return self.shaded_sides_cache[key]
-        shade = self.shade_maker.get_shade(side, size, True)
-        if side in ['top', 'left']:  # Undo the rotation of the top sprite shadow
-            shade = pg.transform.rotate(shade, 180)
         n = SIDES_NAMES.index(side)
         sprite = self._sides[n].image.copy()
+        if key in self.shaded_sides_cache:
+            return self.shaded_sides_cache[key]
+        shade = self.shade_maker.get_shade(side, sprite.get_height(), True)
+        if side in ['top', 'left']:  # Undo the rotation of the top sprite shadow
+            shade = pg.transform.rotate(shade, 180)
+
         sprite.blit(shade, (0, 0))
         self.shaded_sides_cache[key] = sprite.copy()
         return sprite

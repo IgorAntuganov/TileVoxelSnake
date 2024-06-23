@@ -48,12 +48,11 @@ class Block(ABC):
 
     def get_side_sprite(self, side: str):
         assert side in SIDES_NAMES
-        return self.sprites.get_side(SIDES_NAMES.index(side))
+        return self.sprites.get_side(side)
 
     def get_side_sprite_shaded(self, side: str) -> pg.Surface:
         assert side in SIDES_NAMES
-        size = self.sprites.side_sprite_sizes
-        return self.sprites.get_side_shaded(side, size)
+        return self.sprites.get_side_shaded(side)
 
 
 class FullBlock(Block, ABC):
@@ -127,7 +126,7 @@ class Leaves(SingleSpriteBlock):
         return True
 
 
-class Air(SingleSpriteBlock):
+class Shadow(SingleSpriteBlock):
     sprite = 'air.png'
 
     @property
@@ -137,6 +136,15 @@ class Air(SingleSpriteBlock):
     @property
     def is_transparent(self) -> bool:
         return True
+
+    def get_side_sprite_shaded(self, side: str) -> pg.Surface:
+        assert side in SIDES_NAMES
+        return self.sprites.get_side(side)
+
+    def get_top_sprite_resized_shaded(self, size: int,
+                                      neighbors: tuple[bool, bool, bool, bool, bool, bool, bool, bool],
+                                      z: int) -> pg.Surface:
+        return self.sprites.get_top_resized(size, z)
 
 
 class Water(SingleSpriteBlock):
