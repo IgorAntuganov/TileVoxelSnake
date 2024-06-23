@@ -16,6 +16,9 @@ class Block(ABC):
         self.y = y
         self.z = z
 
+    def get_xyz(self) -> tuple[int, int, int]:
+        return self.x, self.y, self.z
+
     @property
     @abstractmethod
     def is_transparent(self) -> bool:
@@ -173,6 +176,14 @@ class Sand(SingleSpriteBlock):
 
 class DebugBlock(SingleSpriteBlock):
     sprite = 'debug.png'
+
+
+class TransparentDebugBlock(SingleSpriteBlock):
+    sprite = 'debug.png'
+
+    @property
+    def is_transparent(self) -> bool:
+        return True
 
 
 # Loading sprites and define blocks_class_dict -------------------

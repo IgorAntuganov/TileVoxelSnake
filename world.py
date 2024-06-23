@@ -5,11 +5,10 @@ from render_order import RenderOrder
 from generation.height_map import HeightMap
 from generation.biome_map import BiomeMap, Forest
 from generation.halton_sequence import HaltonPoints
+from generation.structures import Tree1, Tree2
 from constants import HEIGHT_GENERATING_INFO, PATH_TO_SAVES, FILLING_COLUMNS_INFO
-from generation.constants import CHUNK_LOADING_PART_SIZE, WORLD_CHUNK_SIZE, WATER_LEVEL, \
+from generation.constants import WORLD_CHUNK_SIZE, WATER_LEVEL, \
     TREES_CHUNK_SIZE, TREES_IN_CHUNK, TREE_AVOIDING_RADIUS
-LOADING_PARTS_COUNT = WORLD_CHUNK_SIZE // CHUNK_LOADING_PART_SIZE
-LOADING_PARTS_TOTAL_COUNT = (WORLD_CHUNK_SIZE // CHUNK_LOADING_PART_SIZE) ** 2
 
 
 class Column:
@@ -238,26 +237,15 @@ class Region:
         self.size = size
         self.columns: list[list[None | Column]] = [[None] * size for _ in range(size)]
 
-        self.part_size = self.size // CHUNK_LOADING_PART_SIZE
-        assert self.part_size * CHUNK_LOADING_PART_SIZE == self.size
-        self.filled_parts = 0
-        self.full_filled = False
+        self.filled = False
 
     @staticmethod
     def check_distance(center_x, center_y, frame_x, frame_y, r) -> bool:
         distance = max(abs(frame_x - center_x), abs(frame_y - center_y))
         return distance < r
 
-    def get_next_part_rect(self) -> pg.Rect:
-        i = self.filled_parts // LOADING_PARTS_COUNT
-        j = self.filled_parts % LOADING_PARTS_COUNT
-        x = self.x + i * CHUNK_LOADING_PART_SIZE
-        y = self.y + j * CHUNK_LOADING_PART_SIZE
-        self.filled_parts += 1
-        return pg.Rect(x, y, CHUNK_LOADING_PART_SIZE, CHUNK_LOADING_PART_SIZE)
-
     def check_if_fully_filled(self) -> bool:
-        return self.filled_parts == LOADING_PARTS_TOTAL_COUNT
+        return self.filled
 
     def check_region_distance(self, frame_x, frame_y, r) -> bool:
         return self.check_distance(self.center_x, self.center_y, frame_x, frame_y, r)
@@ -283,12 +271,10 @@ class Region:
 
 
 class World:
-    def __init__(self, load_distance: int, seed: int = 0, name: str = 'test wrold'):
+    def __init__(self, load_distance: int, seed: int = 0, name: str = 'test wrld'):
         self.regions: dict[tuple[int, int]: Region] = {}
 
         self.loading_regions: list[Region] = []
-        self.loading_regions_ind = 0
-        self.next_loading_regions: list[Region] = []
 
         self.name = name
         self.folder = PATH_TO_SAVES + f'{name}/'
@@ -301,6 +287,7 @@ class World:
         self.biome_map = BiomeMap(self.folder, seed)
 
         self.tree_generator = HaltonPoints(self.folder, 'trees', TREES_CHUNK_SIZE, TREES_IN_CHUNK, TREE_AVOIDING_RADIUS)
+        self.blocks_to_add_stash: dict[tuple[int, int]: list[Block]] = {}
 
         path_to_changed_columns = self.folder + 'changed columns/'
         self.changed_columns = ChangedColumnsCatalog(path_to_changed_columns)
@@ -313,7 +300,7 @@ class World:
     def add_region(self, x2, y2):
         region = Region(x2 * WORLD_CHUNK_SIZE, y2 * WORLD_CHUNK_SIZE, WORLD_CHUNK_SIZE)
         self.regions[(x2, y2)] = region
-        self.loading_regions.append(region)
+        self.loading_regions.insert(0, region)
 
     def get_region(self, x, y) -> Region:
         x2 = x // WORLD_CHUNK_SIZE
@@ -357,7 +344,35 @@ class World:
         self.set_columns_h_diff_in_rect(rect)
         self.changed_columns.add_changed_column(column)
 
+    def set_block_to_add_during_generation(self, block):
+        if (block.x, block.y) not in self.blocks_to_add_stash:
+            self.blocks_to_add_stash[(block.x, block.y)] = [block]
+        else:
+            self.blocks_to_add_stash[(block.x, block.y)].append(block)
+
+    def check_stash_for_column(self, column, i, j):
+        if (i, j) in self.blocks_to_add_stash:
+            blocks_from_stash: list[Block] = self.blocks_to_add_stash[(i, j)]
+            blocks_from_stash.sort(key=lambda b: b.z)
+            while blocks_from_stash[0].z > column.height + len(column.transparent_blocks):
+                if blocks_from_stash[0].is_transparent:
+                    column.add_block_on_top(Shadow)
+                else:
+                    column.add_block_on_top(type(column.get_top_block()))
+            for block in blocks_from_stash:
+                if not block.z <= column.height + len(column.transparent_blocks):
+                    column.add_block_on_top(type(block))
+            self.blocks_to_add_stash.pop((i, j))
+        self.set_columns_h_diff_in_rect(pg.Rect(i-1, j-1, 3, 3))
+
+    def add_stash_blocks_to_rect(self, rect: pg.Rect):
+        for i in range(rect.left, rect.right):
+            for j in range(rect.top, rect.bottom):
+                checking_column = self.get_column(i, j)
+                self.check_stash_for_column(checking_column, i, j)
+
     def set_columns_in_rect(self, rect: pg.Rect):
+        structures = []
         for i in range(rect.left, rect.right):
             for j in range(rect.top, rect.bottom):
                 if self.changed_columns.check_if_column_was_changed(i, j):
@@ -375,16 +390,36 @@ class World:
                     if biome is Forest and len(blocks) >= WATER_LEVEL:
                         trees = self.tree_generator.get_points_by_point(i, j)
                         if (i, j) in trees:
-                            new_column.add_block_on_top(OakLog)
+                            if i + j % 3 == 0:
+                                structures.append(Tree2(i, j, new_column.height))
+                            else:
+                                structures.append(Tree1(i, j, new_column.height))
 
                 self.set_column(i, j, new_column)
+
+        self.add_stash_blocks_to_rect(rect)
+
+        for structure in structures:
+            for block in structure.get_blocks_sorted():
+                i, j = block.x, block.y
+                if rect.collidepoint(i, j):
+                    editing_column = self.get_column(i, j)
+                    height_diff = editing_column.height + len(editing_column.transparent_blocks) - structure.z
+                    if type(block) is Shadow:
+                        for i in range(max(0, -height_diff-1)):
+                            editing_column.add_block_on_top(Shadow)
+                    if height_diff >= block.z - structure.z:
+                        continue
+                    editing_column.add_block_on_top(type(block))
+                else:
+                    self.set_block_to_add_during_generation(block)
 
         bigger_rect = pg.Rect(rect.left-1, rect.top-1, rect.width+2, rect.height+2)
         self.set_columns_h_diff_in_rect(bigger_rect)
 
     def set_columns_h_diff_in_rect(self, rect: pg.Rect):
         if FILLING_COLUMNS_INFO:
-            print('start setting h diffs _________-----------------------------------____________________')
+            print('start setting h diffs -----------------------------------')
         for i in range(rect.left, rect.right):
             for j in range(rect.top, rect.bottom):
                 column = self.get_column(i,   j)
@@ -428,20 +463,22 @@ class World:
                 print(key, end=' ')
             print()
 
-    def load_regions_partly(self):
-        if len(self.loading_regions) != 0:
-            if self.loading_regions_ind >= len(self.loading_regions):
-                self.loading_regions_ind = 0
-                self.loading_regions = self.next_loading_regions
-                self.next_loading_regions = []
-
-        if len(self.loading_regions) != 0:  # (after swap)
-            loading_region = self.loading_regions[self.loading_regions_ind]
-            rect = loading_region.get_next_part_rect()
+    def load_regions_by_1(self):
+        if len(self.loading_regions) > 0:
+            loading_region = self.loading_regions.pop()
+            rect = loading_region.get_rect()
+            loading_region.filled = True
             self.set_columns_in_rect(rect)
-            if not loading_region.check_if_fully_filled():
-                self.next_loading_regions.append(loading_region)
-            self.loading_regions_ind += 1
+            self.check_stash()
+
+    def check_stash(self):
+        if len(self.blocks_to_add_stash) > 0:
+            for x, y in list(self.blocks_to_add_stash.keys()):
+                if self.check_is_region(x, y):
+                    region = self.get_region(x, y)
+                    if region.filled:
+                        column = self.get_column(x, y)
+                        self.check_stash_for_column(column, x, y)
 
     def preload_start_area(self, frame_x=0, frame_y=0):
         self.check_regions_distance(frame_x, frame_y)

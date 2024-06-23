@@ -80,9 +80,11 @@ while True:
         pressed_offset = pressed_offset[0] / clock.get_fps() * 60, pressed_offset[1] / clock.get_fps() * 60
     camera.move(pressed_offset)
 
-    world.load_regions_partly()
-    if frame % 25 == 0:
+    world.load_regions_by_1()
+    if frame % 50 == 0:
         world.check_regions_distance(*camera.get_rect().center)
+        print('checking regions')
+        # world.check_stash()
 
     # render
     # times = [time.time()]
@@ -132,7 +134,8 @@ while True:
     if SET_FPS_CAPTION:
         pg.display.set_caption(str(camera.get_rect().center) + ' fps: ' + fps + ' ft: ' + str(frame_time))
     if PRINT_FPS:
-        print(str(camera.get_rect().center) + ' fps: ' + fps + ' ft: ' + str(frame_time))
+        print(str(camera.get_rect().center) + ' fps: ' + fps + ' ft: ' + str(frame_time) +
+              ('' if frame_time < 0.02 else ' --- '))
     last_frame_end = time.time()
     # if frame % 25 == 0:
     #     print(' - ' * 30)
