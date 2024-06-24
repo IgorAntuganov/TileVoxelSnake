@@ -14,13 +14,15 @@ from world import *
 from camera import *
 from terrain_mesh import *
 from trapezoid import TrapeziodTexturer
+from sides_drawer import SidesDrawer
 from gui.ui_mesh import UIMesh
 from events_handler import EventHandler
 from gui.player import Player
 
-sides_drawer = TrapeziodTexturer()
-sides_drawer.set_print_cache_size(TRAPEZOIDS_CACHE_INFO)
-sides_drawer.create_cache()
+trap_drawer = TrapeziodTexturer()
+trap_drawer.set_print_cache_size(TRAPEZOIDS_CACHE_INFO)
+trap_drawer.create_cache()
+sides_drawer = SidesDrawer(trap_drawer, scr.get_rect())
 
 clock = pg.time.Clock()
 camera_frame = CameraFrame((0, 0), 1536 // BASE_LEVEL_SIZE, 960 // BASE_LEVEL_SIZE, (0, 0))
@@ -33,7 +35,7 @@ world_filler = WorldFiller(world, load_distance)
 terr_mesh = TerrainMech(sides_drawer, camera_frame, (1536, 960))
 ui_mesh = UIMesh(camera_frame, (1536, 960))
 
-events_handler = EventHandler(world, camera_frame, sides_drawer)
+events_handler = EventHandler(world, camera_frame, trap_drawer)
 
 player = Player(0, 0, 9)
 
@@ -62,10 +64,10 @@ while True:
     terr_mesh.create_mesh(world)
     terr_mesh.draw_terrain(scr)
 
-    events_handler.handle(player, fps)
-
     ui_mesh.create_ui_mesh(player, terr_mesh.mouse_rect)
     ui_mesh.draw_ui(scr)
+
+    events_handler.handle(player, fps)
 
     if SET_FPS_CAPTION:
         pg.display.set_caption(str(camera_frame.get_rect().center) + ' fps: ' + str(fps)  + ' ft: ' + str(frame_time))

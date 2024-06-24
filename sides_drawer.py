@@ -14,8 +14,9 @@ class Figure:
 
 
 class SidesDrawer:
-    def __init__(self, trap_drawer: TrapeziodTexturer):
+    def __init__(self, trap_drawer: TrapeziodTexturer, scr_rect: pg.Rect):
         self.trap_drawer = trap_drawer
+        self.scr_rect = scr_rect
 
     def create_bottom_figure(self, x, y, z, sprite: pg.Surface, sprite_name, top_rect, bottom_rect) -> Figure | None:
         top = top_rect.right - top_rect.left
@@ -59,7 +60,6 @@ class SidesDrawer:
             trapezoid_sprite = self.trap_drawer.get_vert_trapezoid(sprite, sprite_name, left + 3, right + 3, width, offset)
             return Figure(rect, trapezoid_sprite, (x, y, z), (x + 1, y, z))
 
-
     def create_left_figure(self, x, y, z, sprite: pg.Surface, sprite_name, top_rect, bottom_rect) -> Figure | None:
         left = top_rect.bottom - top_rect.top
         right = bottom_rect.bottom - bottom_rect.top
@@ -67,9 +67,9 @@ class SidesDrawer:
         offset = bottom_rect.top - top_rect.top
 
         rect_top = min(bottom_rect.top, top_rect.top)
-        sizes = self.sides_drawer.get_vert_trapezoid_sizes(left + 3, right + 3, width, offset)
+        sizes = self.trap_drawer.get_vert_trapezoid_sizes(left + 3, right + 3, width, offset)
         rect = pg.Rect((bottom_rect.left, rect_top - 1), sizes)
 
         if rect.colliderect(self.scr_rect):
-            trapezoid_sprite = self.sides_drawer.get_vert_trapezoid(sprite, sprite_name, left + 3, right + 3, width, offset)
+            trapezoid_sprite = self.trap_drawer.get_vert_trapezoid(sprite, sprite_name, left + 3, right + 3, width, offset)
             return Figure(rect, trapezoid_sprite, (x, y, z), (x - 1, y, z))

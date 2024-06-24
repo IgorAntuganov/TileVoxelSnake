@@ -111,7 +111,7 @@ class Grass(SingleSideSpriteBlock):
 
 
 class ForestGrass(SingleSideSpriteBlock):
-    top_sprite = 'podzol_top.png'
+    top_sprite = 'forest_grass1.png'
     side_sprite = 'podzol_side.png'
     bottom_sprite = 'dirt.png'
 

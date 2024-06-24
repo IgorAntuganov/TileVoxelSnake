@@ -1,6 +1,6 @@
 import pygame as pg
 from camera import CameraFrame
-from gui.player import Player
+from gui.player import Player, Tile
 
 
 class UIFigure:
@@ -15,7 +15,7 @@ class UIMesh:
         self.sizes = sizes
         self.elements = []
 
-    def create_ui_mesh(self, player: Player, hovered_block_rect: pg.Rect | None):
+    def create_ui_mesh(self, player: Player, hovered_block_rect: pg.Rect | None, special_blocks: list[Tile] = []):
         self.elements = []
         layers = self.camera.get_layers()
 

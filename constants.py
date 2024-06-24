@@ -1,4 +1,5 @@
 # Settings
+# visual setting
 
 BASE_LEVEL_SIZE = 32  # size in pixels of top side of block at z = 0
 LAYERS_OFFSET = 1  # only int > 0, difference in pixel between layers top side sprites sizes
@@ -10,7 +11,12 @@ SHADOW_STRENGTH = 0.2  # 0 <= x <= 1
 
 HEIGHT_RECOLOR_STRENGTH = 0.3
 
-PLAYER_SIZE = 1.2  # 0 < x <= 1 size in part of BASE_LEVEL_SIZE
+# gameplay settings
+
+START_PLAYER_STAMINA = 2
+END_PLAYER_STAMINA = 5
+START_PLAYER_COOLDOWN = 15  # in frames
+END_PLAYER_COOLDOWN = 8  # in frames
 
 # Debug info
 
@@ -20,10 +26,11 @@ SET_FPS_CAPTION = False
 PRINT_FPS = False
 NOT_ABSTRACT_BLOCKS_CLASSES_INFO = False
 FILLING_COLUMNS_INFO = False
+
 # Constants
 
 PATH_TO_BLOCKS = 'sprites/blocks/'
-PATH_TO_PLAYER = 'sprites/player/'
+PATH_TO_TILES = 'sprites/tiles/'
 
 PATH_TO_CACHE = 'trapezoids_cache'
 CACHE_KEYS_FILENAME = 'keys.pickle'
