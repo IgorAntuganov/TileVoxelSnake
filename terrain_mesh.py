@@ -1,6 +1,5 @@
-# import time
 import pygame as pg
-from camera import Layers, CameraFrame
+from camera import CameraFrame
 from world import Column, World
 from trapezoid import SidesDrawer
 from render_order import RenderOrder
@@ -18,18 +17,22 @@ class Figure:
 
 
 class TerrainMech:
-    def __init__(self, sides_drawer: SidesDrawer, layers: Layers, scr_sizes):
+    def __init__(self, sides_drawer: SidesDrawer, camera: CameraFrame, scr_sizes):
         self.sides_drawer = sides_drawer
-        self.layers = layers
+        self.camera = camera
+        self.layers = camera.get_layers()
         self.elements: list[list[Figure]] = []
         self.scr_rect = pg.Rect(0, 0, *scr_sizes)
         self.render_order = RenderOrder()
 
-    def create_mesh(self, world: World, camera: CameraFrame):
+        self.mouse_rect = None
+        self.hovered_block = None
+        self.directed_block = None
+
+    def create_mesh(self, world: World):
         self.elements = []
 
-        column_cords = camera.get_rect()
-        for i, j in self.render_order.get_order(camera.get_rect()):
+        for i, j in self.render_order.get_order(self.camera.get_rect()):
             column: Column
             column = world.get_column(i, j)
             figures: list[Figure] = []
@@ -192,3 +195,15 @@ class TerrainMech:
 
     def get_elements(self) -> list[list[Figure]]:
         return self.elements
+
+    def draw_terrain(self, scr: pg.Surface):
+        for column_figures in self.elements:
+            for figure in column_figures:
+                rect, sprite = figure.rect, figure.sprite
+                if self.camera.screen_rect.colliderect(rect):
+                    scr.blit(sprite, rect)
+
+                if rect.collidepoint(pg.mouse.get_pos()):
+                    self.mouse_rect = rect.copy()
+                    self.hovered_block = figure.origin_block
+                    self.directed_block = figure.directed_block

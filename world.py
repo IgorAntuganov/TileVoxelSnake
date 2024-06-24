@@ -221,9 +221,9 @@ class ChangedColumnsCatalog:
             pickle.dump(column.to_pickle(), file)
 
 
-NOT_FOUND_COLUMN = Column(0, 0, [DebugBlock])
+NOT_FOUND_COLUMN = Column(0, 0, [Shadow])
 NOT_FOUND_COLUMN.set_height_difference(*[NOT_FOUND_COLUMN]*8)
-NOT_FOUND_COLUMN2 = Column(0, 0, [Grass])
+NOT_FOUND_COLUMN2 = Column(0, 0, [DebugBlock])
 NOT_FOUND_COLUMN2.set_height_difference(*[NOT_FOUND_COLUMN2]*8)
 
 
@@ -449,7 +449,7 @@ class WorldFiller:
         self.world.set_columns_h_diff_in_rect(bigger_rect)
         yield
 
-    def check_regions_distance(self, frame_x: int, frame_y: int):
+    def update_regions_by_distance(self, frame_x: int, frame_y: int):
         # removing too far regions
         for key in list(self.world.regions.keys()):
             r: Region = self.world.regions[key]
@@ -506,4 +506,4 @@ class WorldFiller:
                         self.check_stash_for_column(column, x, y)
 
     def preload_start_area(self, frame_x=0, frame_y=0):
-        self.check_regions_distance(frame_x, frame_y)
+        self.update_regions_by_distance(frame_x, frame_y)

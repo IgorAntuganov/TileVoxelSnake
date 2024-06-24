@@ -10,6 +10,8 @@ SHADOW_STRENGTH = 0.2  # 0 <= x <= 1
 
 HEIGHT_RECOLOR_STRENGTH = 0.3
 
+PLAYER_SIZE = 1.2  # 0 < x <= 1 size in part of BASE_LEVEL_SIZE
+
 # Debug info
 
 TRAPEZOIDS_CACHE_INFO = False
@@ -20,8 +22,8 @@ NOT_ABSTRACT_BLOCKS_CLASSES_INFO = False
 FILLING_COLUMNS_INFO = False
 # Constants
 
-PATH_TO_SPRITES = 'sprites/'
 PATH_TO_BLOCKS = 'sprites/blocks/'
+PATH_TO_PLAYER = 'sprites/player/'
 
 PATH_TO_CACHE = 'trapezoids_cache'
 CACHE_KEYS_FILENAME = 'keys.pickle'
