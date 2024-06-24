@@ -2,12 +2,12 @@ import pygame as pg
 from world import World
 from camera import CameraFrame
 from blocks import *
-from trapezoid import SidesDrawer
+from trapezoid import TrapeziodTexturer
 from gui.player import Player
 
 
 class EventHandler:
-    def __init__(self, world: World, camera: CameraFrame, sides_drawer: SidesDrawer):
+    def __init__(self, world: World, camera: CameraFrame, sides_drawer: TrapeziodTexturer):
         self.world = world
         self.camera = camera
         self.sides_drawer = sides_drawer

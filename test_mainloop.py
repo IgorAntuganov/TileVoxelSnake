@@ -13,12 +13,12 @@ from constants import TRAPEZOIDS_CACHE_INFO, SET_FPS_CAPTION, PRINT_FPS
 from world import *
 from camera import *
 from terrain_mesh import *
-from trapezoid import SidesDrawer
+from trapezoid import TrapeziodTexturer
 from gui.ui_mesh import UIMesh
 from events_handler import EventHandler
 from gui.player import Player
 
-sides_drawer = SidesDrawer()
+sides_drawer = TrapeziodTexturer()
 sides_drawer.set_print_cache_size(TRAPEZOIDS_CACHE_INFO)
 sides_drawer.create_cache()
 

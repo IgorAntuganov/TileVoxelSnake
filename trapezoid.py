@@ -5,7 +5,7 @@ import os
 from constants import PATH_TO_CACHE, CACHE_KEYS_FILENAME
 
 
-class SidesDrawer:
+class TrapeziodTexturer:
     def __init__(self):
         folder = PATH_TO_CACHE
         cache_file = folder + '/' + CACHE_KEYS_FILENAME
