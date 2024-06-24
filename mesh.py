@@ -37,7 +37,13 @@ class TerrainMech:
             # top sprites of first non-transparent block at column
             top_block = column.get_top_block()
             block = column.get_first_non_transparent()
-            assert column.height_difference_are_set
+            # assert column.height_difference_are_set
+            if not column.height_difference_are_set:
+                rect = self.layers.get_rect(column.x, column.y, 0)
+                red = pg.Surface(rect.size)
+                red.fill((255, 20, 20))
+                self.elements.append([Figure(rect, red, (0, 0, 0), (0, 0, 0))])
+                continue
             hd = column.height_difference
             hd2 = column.height_difference_2
 

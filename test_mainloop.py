@@ -84,12 +84,17 @@ while True:
         pressed_offset = pressed_offset[0] / clock.get_fps() * 60, pressed_offset[1] / clock.get_fps() * 60
     camera_frame.move(pressed_offset)
 
-    world_filler.load_regions_by_1()
+    for _ in range(5):
+        world_filler.load_chucks_by_part()
     if frame % 50 == 0:
+        if PRINT_FPS:
+            print('check regions')
         world_filler.check_regions_distance(*camera_frame.get_rect().center)
 
-    if frame % 10000 == 0:
+    if frame % 300 == 0:
         gc.collect()
+        if PRINT_FPS:
+            print('garbage collection')
 
     scr.fill((0, 0, 0))
     camera_frame.update_layers()

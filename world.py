@@ -69,10 +69,6 @@ class Column:
 
         pickle_column = Column(x, y, blocks)
 
-        # for block in data['transparent_blocks'][::-1]:
-        #     block_class = blocks_classes_dict[block]
-        #     pickle_column.add_block_on_top(block_class)
-
         pickle_column.height_difference = height_diff
         pickle_column.height_difference_2 = height_diff_2
         pickle_column.height_difference_are_set = height_diff_are_set
@@ -227,6 +223,8 @@ class ChangedColumnsCatalog:
 
 NOT_FOUND_COLUMN = Column(0, 0, [DebugBlock])
 NOT_FOUND_COLUMN.set_height_difference(*[NOT_FOUND_COLUMN]*8)
+NOT_FOUND_COLUMN2 = Column(0, 0, [Grass])
+NOT_FOUND_COLUMN2.set_height_difference(*[NOT_FOUND_COLUMN2]*8)
 
 
 class Region:
@@ -290,7 +288,8 @@ class World:
     def add_region(self, x2, y2):
         region = Region(x2 * WORLD_CHUNK_SIZE, y2 * WORLD_CHUNK_SIZE, WORLD_CHUNK_SIZE)
         self.regions[(x2, y2)] = region
-        self.loading_regions.insert(0, region)
+        # self.loading_regions.insert(0, region)
+        self.loading_regions.append(region)
 
     def get_region(self, x, y) -> Region:
         x2 = x // WORLD_CHUNK_SIZE
@@ -310,7 +309,7 @@ class World:
         else:
             if FILLING_COLUMNS_INFO:
                 print('not is region, copying not fount column')
-            return NOT_FOUND_COLUMN.copy_to_x_y(x, y, True)
+            return NOT_FOUND_COLUMN2.copy_to_x_y(x, y, True)
 
     def set_column(self, x, y, column):
         region = self.get_region(x, y)
@@ -368,6 +367,9 @@ class WorldFiller:
         self.tree_generator = HaltonPoints(self.folder, 'trees', TREES_CHUNK_SIZE, TREES_IN_CHUNK, TREE_AVOIDING_RADIUS)
         self.blocks_to_add_stash: dict[tuple[int, int]: list[Block]] = {}
 
+        self.current_loading_iterator = None
+        self.loading_region: None | Region = None
+
     def set_block_to_add_during_generation(self, block):
         if (block.x, block.y) not in self.blocks_to_add_stash:
             self.blocks_to_add_stash[(block.x, block.y)] = [block]
@@ -389,13 +391,14 @@ class WorldFiller:
             self.blocks_to_add_stash.pop((i, j))
         self.world.set_columns_h_diff_in_rect(pg.Rect(i-1, j-1, 3, 3))
 
-    def add_stash_blocks_to_rect(self, rect: pg.Rect):
+    def add_stash_blocks_to_rect_generator(self, rect: pg.Rect):
         for i in range(rect.left, rect.right):
             for j in range(rect.top, rect.bottom):
                 checking_column = self.world.get_column(i, j)
                 self.check_stash_for_column(checking_column, i, j)
+            yield
 
-    def set_columns_in_rect(self, rect: pg.Rect):
+    def set_columns_in_rect_generator(self, rect: pg.Rect):
         structures = []
         for i in range(rect.left, rect.right):
             for j in range(rect.top, rect.bottom):
@@ -421,8 +424,10 @@ class WorldFiller:
                                 structures.append(Tree1(i, j, new_column.nt_height))
 
                 self.world.set_column(i, j, new_column)
+            yield
 
-        self.add_stash_blocks_to_rect(rect)
+        for _ in self.add_stash_blocks_to_rect_generator(rect):
+            yield
 
         for structure in structures:
             for block in structure.get_blocks_sorted():
@@ -438,9 +443,11 @@ class WorldFiller:
                     editing_column.add_block_on_top(type(block))
                 else:
                     self.set_block_to_add_during_generation(block)
+            yield
 
         bigger_rect = pg.Rect(rect.left - 1, rect.top - 1, rect.width + 2, rect.height + 2)
         self.world.set_columns_h_diff_in_rect(bigger_rect)
+        yield
 
     def check_regions_distance(self, frame_x: int, frame_y: int):
         # removing too far regions
@@ -470,13 +477,24 @@ class WorldFiller:
                 print(key, end=' ')
             print()
 
-    def load_regions_by_1(self):
-        if len(self.world.loading_regions) > 0:
-            loading_region = self.world.loading_regions.pop()
-            rect = loading_region.get_rect()
-            loading_region.filled = True
-            self.set_columns_in_rect(rect)
-            self.check_stash()
+    def load_chucks_by_part(self):
+        if len(self.world.loading_regions) > 0 and self.current_loading_iterator is None:
+            if self.current_loading_iterator is None:
+                self.loading_region = self.world.loading_regions.pop()
+                rect = self.loading_region.get_rect().copy()
+                self.current_loading_iterator = self.set_columns_in_rect_generator(rect)
+        elif self.current_loading_iterator is not None:
+            if not self.world.check_is_region(self.loading_region.x, self.loading_region.y):
+                self.loading_region = None
+                self.current_loading_iterator = None
+            else:
+                try:
+                    next(self.current_loading_iterator)
+                except StopIteration:
+                    self.loading_region.filled = True
+                    self.check_stash()
+                    self.current_loading_iterator = None
+                    self.loading_region = None
 
     def check_stash(self):
         if len(self.blocks_to_add_stash) > 0:
@@ -489,4 +507,3 @@ class WorldFiller:
 
     def preload_start_area(self, frame_x=0, frame_y=0):
         self.check_regions_distance(frame_x, frame_y)
-
