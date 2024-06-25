@@ -3,7 +3,7 @@ from world import World
 from camera import CameraFrame
 from blocks import *
 from trapezoid import TrapeziodTexturer
-from gui.player import Player
+from gui.tiles import Player
 from constants import CAMERA_SPEED, BLOCKS_PER_MOVE
 
 

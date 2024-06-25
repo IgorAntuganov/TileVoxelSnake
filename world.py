@@ -6,8 +6,8 @@ from generation.biome_map import BiomeMap, Forest
 from generation.halton_sequence import HaltonPoints
 from generation.structures import Tree1, Tree2
 from constants import HEIGHT_GENERATING_INFO, PATH_TO_SAVES, FILLING_COLUMNS_INFO
-from generation.constants import WORLD_CHUNK_SIZE, WATER_LEVEL, \
-    TREES_CHUNK_SIZE, TREES_IN_CHUNK, TREE_AVOIDING_RADIUS
+from generation.constants import *
+from gui.tiles import VioletTile, Tile
 
 
 class Column:
@@ -235,6 +235,7 @@ class Region:
         self.center_y = y + size//2
         self.size = size
         self.columns: list[list[None | Column]] = [[None] * size for _ in range(size)]
+        self.tiles: dict[tuple[int, int]: Tile] = {}
 
         self.filled = False
 
@@ -265,6 +266,12 @@ class Region:
         y -= self.y
         self.columns[y][x] = column
 
+    def set_tile(self, x, y, tile: Tile):
+        self.tiles[(x, y)] = tile
+
+    def get_tiles(self) -> list[Tile]:
+        return list(self.tiles.values())
+
     def get_rect(self) -> pg.Rect:
         return pg.Rect(self.x, self.y, self.size, self.size)
 
@@ -288,7 +295,6 @@ class World:
     def add_region(self, x2, y2):
         region = Region(x2 * WORLD_CHUNK_SIZE, y2 * WORLD_CHUNK_SIZE, WORLD_CHUNK_SIZE)
         self.regions[(x2, y2)] = region
-        # self.loading_regions.insert(0, region)
         self.loading_regions.append(region)
 
     def get_region(self, x, y) -> Region:
@@ -311,9 +317,19 @@ class World:
                 print('not is region, copying not fount column')
             return NOT_FOUND_COLUMN2.copy_to_x_y(x, y, True)
 
-    def set_column(self, x, y, column):
+    def set_column(self, x, y, column: Column):
         region = self.get_region(x, y)
         region.set_column(x, y, column)
+
+    def add_tile(self, x, y, tile: Tile):
+        region = self.get_region(x, y)
+        region.set_tile(x, y, tile)
+
+    def get_all_tiles(self) -> list[Tile]:
+        tiles = []
+        for region in self.regions.values():
+            tiles += region.get_tiles()
+        return tiles
 
     def add_block_and_save_changes(self, block: tuple[int, int, int], _type: None | type = None):
         x, y, z = block
@@ -366,6 +382,8 @@ class WorldFiller:
 
         self.tree_generator = HaltonPoints(self.folder, 'trees', TREES_CHUNK_SIZE, TREES_IN_CHUNK, TREE_AVOIDING_RADIUS)
         self.blocks_to_add_stash: dict[tuple[int, int]: list[Block]] = {}
+
+        self.tile_generator = HaltonPoints(self.folder, 'tiles', TILES_CHUNK_SIZE, TILES_IN_CHUNK, TILE_AVOIDING_RADIUS)
 
         self.current_loading_iterator = None
         self.loading_region: None | Region = None
@@ -422,6 +440,12 @@ class WorldFiller:
                                 structures.append(Tree2(i, j, new_column.nt_height))
                             else:
                                 structures.append(Tree1(i, j, new_column.nt_height))
+
+                    if len(blocks) > WATER_LEVEL:
+                        tiles = self.tile_generator.get_points_by_point(i, j)
+                        if (i, j) in tiles:
+                            tile = VioletTile(i, j, len(blocks)-1)
+                            self.world.add_tile(i, j, tile)
 
                 self.world.set_column(i, j, new_column)
             yield

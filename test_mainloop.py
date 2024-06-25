@@ -17,7 +17,7 @@ from trapezoid import TrapeziodTexturer
 from sides_drawer import SidesDrawer
 from gui.ui_mesh import UIMesh
 from events_handler import EventHandler
-from gui.player import Player
+from gui.tiles import Player
 
 trap_drawer = TrapeziodTexturer()
 trap_drawer.set_print_cache_size(TRAPEZOIDS_CACHE_INFO)
@@ -64,7 +64,7 @@ while True:
     terr_mesh.create_mesh(world)
     terr_mesh.draw_terrain(scr)
 
-    ui_mesh.create_ui_mesh(player, terr_mesh.mouse_rect)
+    ui_mesh.create_ui_mesh(world, player, terr_mesh.mouse_rect)
     ui_mesh.draw_ui(scr)
 
     events_handler.handle(player, fps)
