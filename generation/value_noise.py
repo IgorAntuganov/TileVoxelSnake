@@ -37,22 +37,3 @@ class ValueNoise(DataNoiseTile):
                     value = interpolate_sigmoid(top, bottom, yf)
                     value = value / k1 / 2
                     self.points[j][i] += value
-
-
-def test():
-    file_name = f'{int(time.time())}'
-    width1, height1 = 256, 256
-    noise = ValueNoise((width1, height1), list(range(4, 8)))
-    noise.calculate_values()
-    noise.calculate_points(print_progress=True)
-    texture = noise.get_texture()
-    pg.image.save(texture, f'perlin_test_images/value{file_name}.png')
-    scr = pg.display.set_mode((width1, height1))
-    scr.blit(texture, (0, 0))
-    pg.display.update()
-    while True:
-        [exit() for event in pg.event.get() if event.type == pg.QUIT]
-
-
-if __name__ == '__main__':
-    test()

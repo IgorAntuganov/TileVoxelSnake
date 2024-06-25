@@ -46,3 +46,26 @@ PATH_TO_SAVES = 'saves/'
 
 SIDES_NAMES = ['left', 'top', 'right', 'bottom']
 DIAGONALS_NAMES = ['top_left', 'top_right', 'bottom_left', 'bottom_right']
+
+
+# Generation constants
+PATH_TO_NOISE = 'saves/'
+
+MAX_HEIGHT = 20
+HEIGHT_NOISE_TILE_SIZE = 64
+HEIGHT_OCTAVES = [0, 2, 3]
+START_HEIGHT_AREA = (-2, -2, 4, 4)
+WORLD_CHUNK_SIZE = 12
+
+BIOME_NOISE_TILE_SIZE = 64
+BIOME_OCTAVES = [0, 1, 2, 3]
+
+TREES_CHUNK_SIZE = 128
+TREES_IN_CHUNK = 350
+TREE_AVOIDING_RADIUS = 6
+
+TILES_CHUNK_SIZE = 32
+TILES_IN_CHUNK = 6
+TILE_AVOIDING_RADIUS = 3
+
+WATER_LEVEL = 5

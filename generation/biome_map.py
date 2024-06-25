@@ -3,7 +3,7 @@ from typing import Type
 import pygame as pg
 from generation.noise_grid import NoiseGrid
 from generation.value_noise import ValueNoise
-from generation.constants import *
+from constants import *
 from blocks import *
 
 

@@ -1,7 +1,7 @@
 import math
 import pygame as pg
 from constants import *
-from generation.constants import MAX_HEIGHT
+from constants import MAX_HEIGHT
 
 
 def recolor(sprite: pg.Surface, coefficient: float) -> pg.Surface:

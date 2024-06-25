@@ -5,8 +5,7 @@ from generation.height_map import HeightMap
 from generation.biome_map import BiomeMap, Forest
 from generation.halton_sequence import HaltonPoints
 from generation.structures import Tree1, Tree2
-from constants import HEIGHT_GENERATING_INFO, PATH_TO_SAVES, FILLING_COLUMNS_INFO
-from generation.constants import *
+from constants import *
 from gui.objects import tiles_types, Tile
 from world_column import Column, NOT_FOUND_COLUMN2
 from world_region import Region

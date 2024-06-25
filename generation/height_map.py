@@ -1,7 +1,7 @@
 import pygame as pg
 from generation.noise_grid import NoiseGrid
 from generation.perlin_noise import PerlinNoise
-from generation.constants import *
+from constants import *
 
 
 class HeightMap:
