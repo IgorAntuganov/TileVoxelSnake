@@ -4,7 +4,7 @@ from camera import CameraFrame
 from blocks import *
 from trapezoid import TrapeziodTexturer
 from gui.player import Player
-from constants import CAMERA_SPEED
+from constants import CAMERA_SPEED, BLOCKS_PER_MOVE
 
 
 class EventHandler:
@@ -26,16 +26,16 @@ class EventHandler:
                 exit()
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_w:
-                    player_move[1] -= 2
+                    player_move[1] -= 1
                     continue
                 if event.key == pg.K_s:
-                    player_move[1] += 2
+                    player_move[1] += 1
                     continue
                 if event.key == pg.K_a:
-                    player_move[0] -= 2
+                    player_move[0] -= 1
                     continue
                 if event.key == pg.K_d:
-                    player_move[0] += 2
+                    player_move[0] += 1
                     continue
                 if event.key == pg.K_SPACE:
                     player_move[2] += 1
@@ -80,21 +80,21 @@ class EventHandler:
         self.camera.move(pressed_offset)
 
         if player.stamina > 0 and any(player_move):
-            next_position = player.x + player_move[0], player.y + player_move[1]
-            next_column = self.world.get_column(*next_position)
-            if next_column.full_height - 1 <= player.z:
+            for _ in range(BLOCKS_PER_MOVE):
+                next_position = player.x + player_move[0], player.y + player_move[1]
+                next_column = self.world.get_column(*next_position)
+                if next_column.full_height - 1 <= player.z:
+                    player.move(*player_move[:2], 0)
+            player.spend_stamina(False)
 
-                player.move(*player_move[:2], 0)
-                player.spend_stamina(False)
+            column_under_player = self.world.get_column(player.x, player.y)
+            height = column_under_player.full_height - 1
 
-                column_under_player = self.world.get_column(player.x, player.y)
-                height = column_under_player.full_height - 1
+            if player.z - height < 1:
+                player.move(0, 0, player_move[2])
 
-                if player.z - height < 1:
-                    player.move(0, 0, player_move[2])
-
-                if player_move[2] != 1:
-                    player.fall(height)
+            if player_move[2] != 1:
+                player.fall(height)
 
         elif player.stamina == 0:
             column_under_player = self.world.get_column(player.x, player.y)
@@ -105,5 +105,4 @@ class EventHandler:
         height = column_under_player.full_height - 1
         if player.z < height:
             player.fall(height)
-        print(player.stamina)
 

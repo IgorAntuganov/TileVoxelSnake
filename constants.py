@@ -18,7 +18,9 @@ END_PLAYER_STAMINA = 5
 START_PLAYER_COOLDOWN = 0.6  # in seconds
 END_PLAYER_COOLDOWN = 0.2  # in seconds
 
-CAMERA_SPEED = 5  # in blocks per second
+BLOCKS_PER_MOVE = 2
+
+CAMERA_SPEED = 8  # in blocks per second
 
 # Debug info
 
