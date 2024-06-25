@@ -200,7 +200,7 @@ class ChangedColumnsCatalog:
     def get_column_file_name(self, column: Column):
         return self.folder + f'{column.x}_{column.y}.pickle'
 
-    def load_changed_columns(self):
+    def load(self):
         for file_name in os.listdir(self.folder):
             path = self.folder + file_name
             with open(path, 'rb') as file:
@@ -221,9 +221,33 @@ class ChangedColumnsCatalog:
             pickle.dump(column.to_pickle(), file)
 
 
+class TakenTilesCatalog:
+    def __init__(self, path):
+        self.folder = path
+        self.file = self.folder + 'taken_tile.pickle'
+        if not os.path.isdir(path):
+            os.mkdir(path)
+        self.taken = set()
+        if not os.path.isfile(self.file):
+            with open(self.file, 'wb') as file:
+                pickle.dump(self.taken, file)
+
+    def load(self):
+        with open(self.file, 'rb') as file:
+            self.taken = pickle.load(file)
+
+    def add_tile(self, tile: Tile):
+        self.taken.add((tile.x, tile.y, tile.z))
+        with open(self.file, 'wb') as file:
+            pickle.dump(self.taken, file)
+
+    def check_if_already_taken(self, tile: Tile) -> bool:
+        return (tile.x, tile.y, tile.z) in self.taken
+
+
 NOT_FOUND_COLUMN = Column(0, 0, [Shadow])
 NOT_FOUND_COLUMN.set_height_difference(*[NOT_FOUND_COLUMN]*8)
-NOT_FOUND_COLUMN2 = Column(0, 0, [DebugBlock])
+NOT_FOUND_COLUMN2 = Column(0, 0, [TransparentDebugBlock])
 NOT_FOUND_COLUMN2.set_height_difference(*[NOT_FOUND_COLUMN2]*8)
 
 
@@ -291,7 +315,11 @@ class World:
             os.mkdir(self.folder)
         path_to_changed_columns = self.folder + 'changed columns/'
         self.changed_columns = ChangedColumnsCatalog(path_to_changed_columns)
-        self.changed_columns.load_changed_columns()
+        self.changed_columns.load()
+
+        path_to_taken_tiles = self.folder + 'taken tiles/'
+        self.taken_tiles = TakenTilesCatalog(path_to_taken_tiles)
+        self.taken_tiles.load()
 
         self.DEFAULT_ADDED_BLOCK: type = Glass
 
@@ -337,6 +365,7 @@ class World:
     def set_tile_as_taken(self, tile: Tile):
         region = self.get_region(tile.x, tile.y)
         region.set_tile_as_taken(tile)
+        self.taken_tiles.add_tile(tile)
 
     def add_block_and_save_changes(self, block: tuple[int, int, int], _type: None | type = None):
         x, y, z = block
@@ -454,7 +483,10 @@ class WorldFiller:
                             z_offset = ((i+j) % 3) - 1
                             tile_type = tiles_types[(i+j) % len(tiles_types)]
                             tile = tile_type(i, j, len(blocks)-1 + z_offset)
-                            self.world.add_tile(i, j, tile)
+                            if not self.world.taken_tiles.check_if_already_taken(tile):
+                                self.world.add_tile(i, j, tile)
+                            else:
+                                print('already taken tile: ', i, j)
 
                 self.world.set_column(i, j, new_column)
             yield

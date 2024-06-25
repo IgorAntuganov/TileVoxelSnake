@@ -81,9 +81,9 @@ while True:
         caption = str(camera_frame.get_rect().center) + ' fps: ' + str(fps)  + ' ft: ' + str(frame_time)
     else:
         caption = str(camera_frame.get_rect().center) + ' FPS: ' + str(fps) + ' level: ' + str(player.level)
-        caption += ' stamina: ' + str(player.max_stamina)
-        caption += ' cooldown: ' + str(round(player.stamina_cooldown, 2))
-        caption += ' blocks cooldown: ' + str(BLOCK_INTERACTION_COOLDOWN)
+        caption += ' stamina:' + str(player.max_stamina)
+        caption += ' cooldown:' + str(round(player.stamina_cooldown, 2))
+        caption += ' blocks cooldown:' + str(BLOCK_INTERACTION_COOLDOWN)
     pg.display.set_caption(caption)
 
     last_frame_end = time.time()
