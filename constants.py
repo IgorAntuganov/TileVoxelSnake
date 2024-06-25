@@ -15,8 +15,10 @@ HEIGHT_RECOLOR_STRENGTH = 0.3
 
 START_PLAYER_STAMINA = 2
 END_PLAYER_STAMINA = 5
-START_PLAYER_COOLDOWN = 15  # in frames
-END_PLAYER_COOLDOWN = 8  # in frames
+START_PLAYER_COOLDOWN = 0.6  # in seconds
+END_PLAYER_COOLDOWN = 0.2  # in seconds
+
+CAMERA_SPEED = 5  # in blocks per second
 
 # Debug info
 

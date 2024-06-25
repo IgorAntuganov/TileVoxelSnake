@@ -37,7 +37,7 @@ ui_mesh = UIMesh(camera_frame, (1536, 960))
 
 events_handler = EventHandler(world, camera_frame, trap_drawer)
 
-player = Player(0, 0, 9)
+player = Player(0, 0, 0)
 
 frame = 0
 last_frame_end = time.time()
