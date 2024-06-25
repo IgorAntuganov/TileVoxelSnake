@@ -18,6 +18,7 @@ from sides_drawer import SidesDrawer
 from gui.ui_mesh import UIMesh
 from events_handler import EventHandler
 from gui.tiles import Player
+from gui.snake import Snake
 
 trap_drawer = TrapeziodTexturer()
 trap_drawer.set_print_cache_size(TRAPEZOIDS_CACHE_INFO)
@@ -38,6 +39,7 @@ ui_mesh = UIMesh(camera_frame, (1536, 960))
 events_handler = EventHandler(world, camera_frame, trap_drawer)
 
 player = Player(0, 0, 0)
+snake = Snake(player)
 
 frame = 0
 last_frame_end = time.time()
@@ -49,7 +51,7 @@ while True:
 
     for _ in range(5):
         world_filler.load_chucks_by_part()
-    if frame % 50 == 0:
+    if frame % 25 == 0:
         if PRINT_FPS:
             print('check regions')
         world_filler.update_regions_by_distance(*camera_frame.get_rect().center)
@@ -64,10 +66,10 @@ while True:
     terr_mesh.create_mesh(world)
     terr_mesh.draw_terrain(scr)
 
-    ui_mesh.create_ui_mesh(world, player, terr_mesh.mouse_rect)
+    ui_mesh.create_ui_mesh(world, player, snake, terr_mesh.mouse_rect)
     ui_mesh.draw_ui(scr)
 
-    events_handler.handle(player, fps)
+    events_handler.handle(player, snake, fps)
 
     if SET_FPS_CAPTION:
         pg.display.set_caption(str(camera_frame.get_rect().center) + ' fps: ' + str(fps)  + ' ft: ' + str(frame_time))

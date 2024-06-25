@@ -4,6 +4,7 @@ from camera import CameraFrame
 from blocks import *
 from trapezoid import TrapeziodTexturer
 from gui.tiles import Player
+from gui.snake import Snake
 from constants import CAMERA_SPEED, BLOCKS_PER_MOVE
 
 
@@ -13,7 +14,7 @@ class EventHandler:
         self.camera = camera
         self.sides_drawer = sides_drawer
 
-    def handle(self, player: Player, fps: float):
+    def handle(self, player: Player, snake: Snake, fps: float):
         events = pg.event.get()
         mouse_left_click = False
         mouse_right_click = False
@@ -25,21 +26,17 @@ class EventHandler:
                 self.sides_drawer.save_cache()
                 exit()
             if event.type == pg.KEYDOWN:
-                if event.key == pg.K_w:
-                    player_move[1] -= 1
-                    continue
-                if event.key == pg.K_s:
-                    player_move[1] += 1
-                    continue
-                if event.key == pg.K_a:
-                    player_move[0] -= 1
-                    continue
-                if event.key == pg.K_d:
-                    player_move[0] += 1
-                    continue
-                if event.key == pg.K_SPACE:
-                    player_move[2] += 1
-                    continue
+                if not any(player_move):
+                    if event.key == pg.K_w:
+                        player_move[1] -= 1
+                    if event.key == pg.K_s:
+                        player_move[1] += 1
+                    if event.key == pg.K_a:
+                        player_move[0] -= 1
+                    if event.key == pg.K_d:
+                        player_move[0] += 1
+                    if event.key == pg.K_SPACE:
+                        player_move[2] += 1
 
             if event.type == pg.MOUSEBUTTONDOWN:
                 if event.button == 1:
@@ -84,14 +81,14 @@ class EventHandler:
                 next_position = player.x + player_move[0], player.y + player_move[1]
                 next_column = self.world.get_column(*next_position)
                 if next_column.full_height - 1 <= player.z:
-                    player.move(*player_move[:2], 0)
+                    snake.move_horizontally(*player_move[:2])
             player.spend_stamina(False)
 
             column_under_player = self.world.get_column(player.x, player.y)
             height = column_under_player.full_height - 1
 
             if player.z - height < 1:
-                player.move(0, 0, player_move[2])
+                snake.move_player_vertically(player_move[2])
 
             if player_move[2] != 1:
                 player.fall(height)
@@ -106,3 +103,8 @@ class EventHandler:
         if player.z < height:
             player.fall(height)
 
+        all_tiles = self.world.get_all_tiles()
+        for tile in all_tiles:
+            if player.x == tile.x and player.y == tile.y and player.z == tile.z:
+                snake.add_tile(tile)
+                self.world.set_tile_as_taken(tile)

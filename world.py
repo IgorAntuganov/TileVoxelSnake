@@ -7,7 +7,7 @@ from generation.halton_sequence import HaltonPoints
 from generation.structures import Tree1, Tree2
 from constants import HEIGHT_GENERATING_INFO, PATH_TO_SAVES, FILLING_COLUMNS_INFO
 from generation.constants import *
-from gui.tiles import VioletTile, Tile
+from gui.tiles import tiles_types, Tile
 
 
 class Column:
@@ -272,6 +272,9 @@ class Region:
     def get_tiles(self) -> list[Tile]:
         return list(self.tiles.values())
 
+    def set_tile_as_taken(self, tile: Tile):
+        self.tiles.pop((tile.x, tile.y))
+
     def get_rect(self) -> pg.Rect:
         return pg.Rect(self.x, self.y, self.size, self.size)
 
@@ -330,6 +333,10 @@ class World:
         for region in self.regions.values():
             tiles += region.get_tiles()
         return tiles
+
+    def set_tile_as_taken(self, tile: Tile):
+        region = self.get_region(tile.x, tile.y)
+        region.set_tile_as_taken(tile)
 
     def add_block_and_save_changes(self, block: tuple[int, int, int], _type: None | type = None):
         x, y, z = block
@@ -444,7 +451,9 @@ class WorldFiller:
                     if len(blocks) > WATER_LEVEL:
                         tiles = self.tile_generator.get_points_by_point(i, j)
                         if (i, j) in tiles:
-                            tile = VioletTile(i, j, len(blocks)-1)
+                            z_offset = ((i+j) % 3) - 1
+                            tile_type = tiles_types[(i+j) % len(tiles_types)]
+                            tile = tile_type(i, j, len(blocks)-1 + z_offset)
                             self.world.add_tile(i, j, tile)
 
                 self.world.set_column(i, j, new_column)

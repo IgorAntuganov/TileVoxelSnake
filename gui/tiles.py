@@ -41,6 +41,12 @@ class Tile(ABC):
         self.y += y
         self.z += z
 
+    def move_to_point(self, x, y, z):
+        self.last_location = self.x, self.y, self.z
+        self.x = x
+        self.y = y
+        self.z = z
+
 
 class Player(Tile):
     def __init__(self, x: int, y: int, z: int):
@@ -118,3 +124,6 @@ class BlueTile(ColoredTile):
 
 class VioletTile(ColoredTile):
     sprite = 'violet_tile.png'
+
+
+tiles_types = [RedTile, GreenTile, YellowTile, BlueTile, VioletTile]
