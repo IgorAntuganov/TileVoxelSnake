@@ -1,6 +1,6 @@
 import pygame as pg
 from camera import CameraFrame
-from gui.tiles import Player, Tile
+from gui.objects import Player, Tile
 from gui.snake import Snake
 from world import World
 

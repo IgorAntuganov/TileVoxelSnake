@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import time
 import pygame as pg
-from constants import PATH_TO_TILES, START_PLAYER_STAMINA, START_PLAYER_COOLDOWN
+from constants import *
 from camera import Layers
 
 
@@ -51,7 +51,7 @@ class Tile(ABC):
 class Player(Tile):
     def __init__(self, x: int, y: int, z: int):
         super().__init__(x, y, z)
-        self.angle: int = 0
+        self.level: int = 1
         self.stamina: int = 0
         self.max_stamina: int = START_PLAYER_STAMINA
         self.stamina_cooldown = START_PLAYER_COOLDOWN
@@ -73,8 +73,10 @@ class Player(Tile):
         else:
             sprite = self.sprites['no_stamina']
         sprite = pg.transform.scale(sprite, rect.size)
-        assert self.angle in [0, 90, 180, 270]
-        return pg.transform.rotate(sprite, self.angle)
+        return sprite
+
+    def init_cooldown(self):
+        self.stamina_cooldown_start = time.time()
 
     def spend_stamina(self, full: bool = False):
         if full:
@@ -82,7 +84,7 @@ class Player(Tile):
         else:
             self.stamina -= 1
         if self.stamina == 0:
-            self.stamina_cooldown_start = time.time()
+            self.init_cooldown()
 
     def update_cooldown(self):
         if time.time() - self.stamina_cooldown_start > self.stamina_cooldown:
@@ -90,6 +92,13 @@ class Player(Tile):
 
     def fall(self, height: int):
         self.z = height
+
+    def level_up(self):
+        self.level += 1
+        if self.max_stamina < END_PLAYER_STAMINA:
+            self.max_stamina += STAMINA_LEVEL_UP_STEP
+        if self.stamina_cooldown > END_PLAYER_COOLDOWN:
+            self.stamina_cooldown -= COOLDOWN_LEVEL_UP_STEP
 
 
 class ColoredTile(Tile, ABC):

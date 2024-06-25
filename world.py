@@ -7,7 +7,7 @@ from generation.halton_sequence import HaltonPoints
 from generation.structures import Tree1, Tree2
 from constants import HEIGHT_GENERATING_INFO, PATH_TO_SAVES, FILLING_COLUMNS_INFO
 from generation.constants import *
-from gui.tiles import tiles_types, Tile
+from gui.objects import tiles_types, Tile
 
 
 class Column:

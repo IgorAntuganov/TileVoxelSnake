@@ -9,15 +9,15 @@ pg.init()
 scr = pg.display.set_mode((1536, 960))
 pg.display.set_caption('Voxels')
 
-from constants import TRAPEZOIDS_CACHE_INFO, SET_FPS_CAPTION, PRINT_FPS
+from constants import TRAPEZOIDS_CACHE_INFO, SET_FPS_CAPTION
 from world import *
 from camera import *
 from terrain_mesh import *
 from trapezoid import TrapeziodTexturer
 from sides_drawer import SidesDrawer
 from gui.ui_mesh import UIMesh
-from events_handler import EventHandler
-from gui.tiles import Player
+from events_handler import EventHandler, InfoScreen
+from gui.objects import Player
 from gui.snake import Snake
 
 trap_drawer = TrapeziodTexturer()
@@ -37,6 +37,7 @@ terr_mesh = TerrainMech(sides_drawer, camera_frame, (1536, 960))
 ui_mesh = UIMesh(camera_frame, (1536, 960))
 
 events_handler = EventHandler(world, camera_frame, trap_drawer)
+info_screens: list[InfoScreen] = []
 
 player = Player(0, 0, 0)
 snake = Snake(player)
@@ -52,14 +53,10 @@ while True:
     for _ in range(5):
         world_filler.load_chucks_by_part()
     if frame % 25 == 0:
-        if PRINT_FPS:
-            print('check regions')
         world_filler.update_regions_by_distance(*camera_frame.get_rect().center)
 
     if frame % 300 == 0:
         gc.collect()
-        if PRINT_FPS:
-            print('garbage collection')
 
     scr.fill((0, 0, 0))
     camera_frame.update_layers()
@@ -69,13 +66,25 @@ while True:
     ui_mesh.create_ui_mesh(world, player, snake, terr_mesh.mouse_rect)
     ui_mesh.draw_ui(scr)
 
-    events_handler.handle(player, snake, fps)
+    info_screen = events_handler.handle(player, snake, fps)
+    if info_screen is not None:
+        info_screens.append(info_screen)
+
+    new_info_screens = []
+    for info_screen in info_screens:
+        info_screen.render(scr)
+        if not info_screen.is_ends():
+            new_info_screens.append(info_screen)
+    info_screens = new_info_screens
 
     if SET_FPS_CAPTION:
-        pg.display.set_caption(str(camera_frame.get_rect().center) + ' fps: ' + str(fps)  + ' ft: ' + str(frame_time))
-    if PRINT_FPS:
-        print(str(camera_frame.get_rect().center) + ' fps: ' + str(fps) + ' ft: ' + str(frame_time) +
-              ('' if frame_time < 0.03 else ' --- '))
+        caption = str(camera_frame.get_rect().center) + ' fps: ' + str(fps)  + ' ft: ' + str(frame_time)
+    else:
+        caption = str(camera_frame.get_rect().center) + ' FPS: ' + str(fps) + ' level: ' + str(player.level)
+        caption += ' stamina: ' + str(player.max_stamina)
+        caption += ' cooldown: ' + str(round(player.stamina_cooldown, 2))
+    pg.display.set_caption(caption)
+
     last_frame_end = time.time()
 
     pg.display.update()

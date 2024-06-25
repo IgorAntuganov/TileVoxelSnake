@@ -1,4 +1,4 @@
-from gui.tiles import Player, Tile
+from gui.objects import Player, Tile
 
 
 class Snake:
@@ -21,3 +21,11 @@ class Snake:
 
     def add_tile(self, tile: Tile):
         self.body.append(tile)
+
+    def is_ready_for_level_up(self) -> bool:
+        current_level = self.player.level
+        return len(self.body) > current_level
+
+    def level_up(self):
+        self.player.level_up()
+        self.body = []
