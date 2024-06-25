@@ -24,11 +24,6 @@ class Block(ABC):
     def is_transparent(self) -> bool:
         pass
 
-    @property
-    @abstractmethod
-    def have_collision(self) -> bool:
-        pass
-
     def copy_to_x_y(self, x, y):
         return type(self)(x, y, self.z)
 
@@ -64,10 +59,6 @@ class FullBlock(Block, ABC):
     @property
     def is_transparent(self) -> bool:
         return False
-
-    @property
-    def have_collision(self) -> bool:
-        return True
 
 
 class SingleSpriteBlock(FullBlock, ABC):
@@ -133,10 +124,6 @@ class Shadow(SingleSpriteBlock):
     sprite = 'air.png'
 
     @property
-    def have_collision(self) -> bool:
-        return False
-
-    @property
     def is_transparent(self) -> bool:
         return True
 
@@ -154,8 +141,12 @@ class Water(SingleSpriteBlock):
     sprite = 'water.png'
 
     @property
-    def have_collision(self) -> bool:
-        return False
+    def is_transparent(self) -> bool:
+        return True
+
+
+class Glass(SingleSpriteBlock):
+    sprite = 'glass.png'
 
     @property
     def is_transparent(self) -> bool:

@@ -9,7 +9,7 @@ pg.init()
 scr = pg.display.set_mode((1536, 960))
 pg.display.set_caption('Voxels')
 
-from constants import TRAPEZOIDS_CACHE_INFO, SET_FPS_CAPTION
+from constants import TRAPEZOIDS_CACHE_INFO, SET_FPS_CAPTION, BLOCK_INTERACTION_COOLDOWN
 from world import *
 from camera import *
 from terrain_mesh import *
@@ -66,7 +66,7 @@ while True:
     ui_mesh.create_ui_mesh(world, player, snake, terr_mesh.mouse_rect)
     ui_mesh.draw_ui(scr)
 
-    info_screen = events_handler.handle(player, snake, fps)
+    info_screen = events_handler.handle(player, snake, fps, terr_mesh.hovered_block, terr_mesh.directed_block)
     if info_screen is not None:
         info_screens.append(info_screen)
 
@@ -83,6 +83,7 @@ while True:
         caption = str(camera_frame.get_rect().center) + ' FPS: ' + str(fps) + ' level: ' + str(player.level)
         caption += ' stamina: ' + str(player.max_stamina)
         caption += ' cooldown: ' + str(round(player.stamina_cooldown, 2))
+        caption += ' blocks cooldown: ' + str(BLOCK_INTERACTION_COOLDOWN)
     pg.display.set_caption(caption)
 
     last_frame_end = time.time()

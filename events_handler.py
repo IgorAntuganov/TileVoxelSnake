@@ -1,11 +1,12 @@
 import pygame as pg
+import time
 from world import World
 from camera import CameraFrame
 from blocks import *
 from trapezoid import TrapeziodTexturer
 from gui.objects import Player
 from gui.snake import Snake
-from constants import CAMERA_SPEED, BLOCKS_PER_MOVE
+from constants import CAMERA_SPEED, BLOCKS_PER_MOVE, BLOCK_INTERACTION_COOLDOWN
 
 
 class InfoScreen:
@@ -26,11 +27,17 @@ class EventHandler:
         self.world = world
         self.camera = camera
         self.sides_drawer = sides_drawer
+        self.last_block_interaction = time.time()
 
-    def handle(self, player: Player, snake: Snake, fps: float) -> InfoScreen | None:
+    def handle(self, player: Player,
+               snake: Snake,
+               fps: float,
+               hovered_block: tuple[int, int, int],
+               directed_block: tuple[int, int, int]) -> InfoScreen | None:
         events = pg.event.get()
         mouse_left_click = False
         mouse_right_click = False
+        mouse_wheel_click = False
 
         camera_move = [0, 0]
         player_move = [0, 0, 0]
@@ -55,26 +62,10 @@ class EventHandler:
             if event.type == pg.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     mouse_left_click = True
+                if event.button == 2:
+                    mouse_wheel_click = True
                 if event.button == 3:
                     mouse_right_click = True
-
-            if event.type == pg.KEYDOWN:
-                if event.key == pg.K_1:
-                    self.world.DEFAULT_ADDED_BLOCK = Grass
-                if event.key == pg.K_2:
-                    self.world.DEFAULT_ADDED_BLOCK = Dirt
-                if event.key == pg.K_3:
-                    self.world.DEFAULT_ADDED_BLOCK = Stone
-                if event.key == pg.K_4:
-                    self.world.DEFAULT_ADDED_BLOCK = Sand
-                if event.key == pg.K_5:
-                    self.world.DEFAULT_ADDED_BLOCK = OakLog
-                if event.key == pg.K_6:
-                    self.world.DEFAULT_ADDED_BLOCK = Leaves
-                if event.key == pg.K_7:
-                    self.world.DEFAULT_ADDED_BLOCK = Shadow
-                if event.key == pg.K_8:
-                    self.world.DEFAULT_ADDED_BLOCK = DebugBlock
 
         pressed = pg.key.get_pressed()
         if pressed[pg.K_UP]:
@@ -88,6 +79,9 @@ class EventHandler:
         if fps != 0:
             camera_move = camera_move[0] / fps * CAMERA_SPEED, camera_move[1] / fps * CAMERA_SPEED
         self.camera.move(camera_move)
+
+        if mouse_wheel_click:
+            self.camera.set_center((player.x, player.y))
 
         zero_stamina_move = False
         if player.stamina > 0 and any(player_move):
@@ -115,11 +109,25 @@ class EventHandler:
                 player.init_cooldown()
             player.update_cooldown()
 
+        # Lifting in case of loading of the regions
+        column_under_player = self.world.get_column(player.x, player.y)
+        height = column_under_player.full_height - 1
+        if player.z < height:
+            player.fall(height)
+
         all_tiles = self.world.get_all_tiles()
         for tile in all_tiles:
             if player.x == tile.x and player.y == tile.y and player.z == tile.z:
                 snake.add_tile(tile)
                 self.world.set_tile_as_taken(tile)
+
+        if (mouse_right_click or mouse_left_click) and \
+                time.time()-self.last_block_interaction > BLOCK_INTERACTION_COOLDOWN:
+            self.last_block_interaction = time.time()
+            if mouse_right_click:
+                self.world.add_block_and_save_changes(directed_block)
+            else:
+                self.world.remove_block_and_save_changes(hovered_block)
 
         if snake.is_ready_for_level_up():
             snake.level_up()

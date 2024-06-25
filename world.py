@@ -293,7 +293,7 @@ class World:
         self.changed_columns = ChangedColumnsCatalog(path_to_changed_columns)
         self.changed_columns.load_changed_columns()
 
-        self.DEFAULT_ADDED_BLOCK: type = Grass
+        self.DEFAULT_ADDED_BLOCK: type = Glass
 
     def add_region(self, x2, y2):
         region = Region(x2 * WORLD_CHUNK_SIZE, y2 * WORLD_CHUNK_SIZE, WORLD_CHUNK_SIZE)

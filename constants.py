@@ -20,6 +20,8 @@ START_PLAYER_COOLDOWN = 0.6  # in seconds
 END_PLAYER_COOLDOWN = 0.2  # in seconds
 COOLDOWN_LEVEL_UP_STEP = 0.05
 
+BLOCK_INTERACTION_COOLDOWN = 2  # in seconds
+
 BLOCKS_PER_MOVE = 2
 
 CAMERA_SPEED = 8  # in blocks per second
