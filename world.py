@@ -248,8 +248,6 @@ class WorldFiller:
                             tile = tile_type(i, j, len(blocks)-1 + z_offset)
                             if not self.world.taken_tiles.check_if_already_taken(tile):
                                 self.world.add_tile(i, j, tile)
-                            else:
-                                print('already taken tile: ', i, j)
 
                 self.world.set_column(i, j, new_column)
             yield

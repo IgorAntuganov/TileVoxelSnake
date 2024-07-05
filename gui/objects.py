@@ -135,4 +135,8 @@ class VioletTile(ColoredTile):
     sprite = 'violet_tile.png'
 
 
+class EmptyTile(ColoredTile):
+    sprite = 'empty_tile.png'
+
+
 tiles_types = [RedTile, GreenTile, YellowTile, BlueTile, VioletTile]

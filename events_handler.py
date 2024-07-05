@@ -118,8 +118,8 @@ class EventHandler:
         all_tiles = self.world.get_all_tiles()
         for tile in all_tiles:
             if player.x == tile.x and player.y == tile.y and player.z == tile.z:
-                snake.add_tile(tile)
                 self.world.set_tile_as_taken(tile)
+                snake.add_tile(tile)
 
         if (mouse_right_click or mouse_left_click) and \
                 time.time()-self.last_block_interaction > BLOCK_INTERACTION_COOLDOWN:
