@@ -30,7 +30,7 @@ class HaltonSequence:
     def get_n_points(self, n: int) -> list[tuple[int, int]]:
         points = []
         for _ in range(n):
-            for _ in range(1489-1):
+            for _ in range(673-1):
                 next(self.h1)
                 next(self.h2)
             a = next(self.h1)

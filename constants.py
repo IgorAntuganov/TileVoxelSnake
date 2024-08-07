@@ -11,6 +11,9 @@ SHADOW_STRENGTH = 0.2  # 0 <= x <= 1
 
 HEIGHT_RECOLOR_STRENGTH = 0.3
 
+MAX_FPS = 200
+TRAPEZOIDS_IN_CACHE_DURATION = 15  # base value: 0, if more block sides will be rendered every n+1 frames
+
 # gameplay settings
 
 START_PLAYER_STAMINA = 2

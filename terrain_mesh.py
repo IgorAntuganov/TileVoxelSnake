@@ -3,6 +3,7 @@ from camera import CameraFrame
 from world import Column, World
 from render_order import RenderOrder
 from sides_drawer import Figure, SidesDrawer
+from constants import TRAPEZOIDS_IN_CACHE_DURATION
 
 
 class TerrainMech:
@@ -18,10 +19,15 @@ class TerrainMech:
         self.hovered_block = None
         self.directed_block = None
 
-    def create_mesh(self, world: World):
+        self.sides_cache: dict[tuple[int, int]: list[Figure]] = {}
+
+    def create_mesh(self, world: World, frame: int):
         self.elements = []
 
-        for i, j in self.render_order.get_order(self.camera.get_rect()):
+        rend_order = self.render_order.get_order(self.camera.get_rect())
+        counter = 0
+        for i, j in rend_order:
+            counter += 1
             column: Column
             column = world.get_column(i, j)
             figures: list[Figure] = []
@@ -62,18 +68,31 @@ class TerrainMech:
                 figures.append(top_figure)
 
             # sides of blocks
+            d = TRAPEZOIDS_IN_CACHE_DURATION + 1
+            if d > 1:
+                if counter % d != frame % d:
+                    if (i, j) in self.sides_cache:
+                        figures_from_cache = self.sides_cache[(i, j)]
+                        figures += figures_from_cache
+                    self.elements.append(figures)
+                    continue
+                elif (i, j) in self.sides_cache:
+                    self.sides_cache.pop((i, j))
+
+            figures_for_cache = []
+
             column_bottom_rect = self.layers.get_rect(x, y, 0)
 
             values = list(hd.values())+list(hd2.values())
-            for i in range(max(values)):
-                side_z = z - i
+            for k in range(max(values)):
+                side_z = z - k
                 block = column.get_block(side_z)
                 top_rect = self.layers.get_rect(x, y, side_z)
                 bottom_rect = self.layers.get_rect(x, y, side_z - 1)
                 # bottom side
                 if top_block_rect.bottom < column_bottom_rect.bottom:
-                    if (not block.is_transparent and i < hd2['bottom']) or (block.is_transparent and i < hd['bottom']):
-                        if i == hd2['bottom'] - 1:
+                    if (not block.is_transparent and k < hd2['bottom']) or (block.is_transparent and k < hd['bottom']):
+                        if k == hd2['bottom'] - 1:
                             sprite = block.get_side_sprite_shaded('bottom')
                             sprite_name = f"{block.__class__.__name__}_bottom_shaded"
                         else:
@@ -83,11 +102,12 @@ class TerrainMech:
                         figure = self.sides_drawer.create_bottom_figure(x, y, side_z, sprite, sprite_name, top_rect, bottom_rect)
                         if figure is not None:
                             figures.append(figure)
+                            figures_for_cache.append(figure)
 
                 # top side
                 if top_block_rect.top > column_bottom_rect.top:
-                    if (not block.is_transparent and i < hd2['top']) or (block.is_transparent and i < hd['top']):
-                        if i == hd['top'] - 1:
+                    if (not block.is_transparent and k < hd2['top']) or (block.is_transparent and k < hd['top']):
+                        if k == hd['top'] - 1:
                             sprite = block.get_side_sprite_shaded('top')
                             sprite_name = f"{block.__class__.__name__}_top_shaded"
                         else:
@@ -97,11 +117,12 @@ class TerrainMech:
                         figure = self.sides_drawer.create_top_figure(x, y, side_z, sprite, sprite_name, top_rect, bottom_rect)
                         if figure is not None:
                             figures.append(figure)
+                            figures_for_cache.append(figure)
 
                 # right side
                 if top_block_rect.right < column_bottom_rect.right:
-                    if (not block.is_transparent and i < hd2['right']) or (block.is_transparent and i < hd['right']):
-                        if i == hd['right'] - 1:
+                    if (not block.is_transparent and k < hd2['right']) or (block.is_transparent and k < hd['right']):
+                        if k == hd['right'] - 1:
                             sprite = block.get_side_sprite_shaded('right')
                             sprite_name = f"{block.__class__.__name__}_right_shaded"
                         else:
@@ -110,11 +131,12 @@ class TerrainMech:
                         figure = self.sides_drawer.create_right_figure(x, y, side_z, sprite, sprite_name, top_rect, bottom_rect)
                         if figure is not None:
                             figures.append(figure)
+                            figures_for_cache.append(figure)
 
                 # left side
                 if top_block_rect.left > column_bottom_rect.left:
-                    if (not block.is_transparent and i < hd2['left']) or (block.is_transparent and i < hd['left']):
-                        if i == hd['left'] - 1:
+                    if (not block.is_transparent and k < hd2['left']) or (block.is_transparent and k < hd['left']):
+                        if k == hd['left'] - 1:
                             sprite = column.get_block(side_z).get_side_sprite_shaded('left')
                             sprite_name = f"{block.__class__.__name__}_left_shaded"
                         else:
@@ -123,7 +145,10 @@ class TerrainMech:
                         figure = self.sides_drawer.create_left_figure(x, y, side_z, sprite, sprite_name, top_rect, bottom_rect)
                         if figure is not None:
                             figures.append(figure)
+                            figures_for_cache.append(figure)
 
+            if len(figures_for_cache) > 0:
+                self.sides_cache[(i, j)] = figures_for_cache
             self.elements.append(figures)
 
     def get_elements(self) -> list[list[Figure]]:

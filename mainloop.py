@@ -9,7 +9,7 @@ pg.init()
 scr = pg.display.set_mode((1536, 960))
 pg.display.set_caption('Voxels')
 
-from constants import TRAPEZOIDS_CACHE_INFO, SET_FPS_CAPTION, BLOCK_INTERACTION_COOLDOWN
+from constants import TRAPEZOIDS_CACHE_INFO, SET_FPS_CAPTION, BLOCK_INTERACTION_COOLDOWN, MAX_FPS
 from world import *
 from camera import *
 from terrain_mesh import *
@@ -58,9 +58,9 @@ while True:
     if frame % 300 == 0:
         gc.collect()
 
-    scr.fill((0, 0, 0))
+    # scr.fill((0, 0, 0))
     camera_frame.update_layers()
-    terr_mesh.create_mesh(world)
+    terr_mesh.create_mesh(world, frame)
     terr_mesh.draw_terrain(scr)
 
     ui_mesh.create_ui_mesh(world, player, snake, terr_mesh.mouse_rect)
@@ -89,4 +89,4 @@ while True:
     last_frame_end = time.time()
 
     pg.display.update()
-    clock.tick(60)
+    clock.tick(MAX_FPS)
