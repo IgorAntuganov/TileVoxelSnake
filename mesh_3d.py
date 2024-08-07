@@ -1,9 +1,39 @@
 import pygame as pg
-from camera import CameraFrame
+from camera import CameraFrame, Layers
 from world import Column, World
 from render_order import RenderOrder
 from sides_drawer import Figure, SidesDrawer
 from constants import TRAPEZOIDS_IN_CACHE_DURATION
+
+
+class SideCache:
+    def __init__(self):
+        self.cache: dict[tuple[int, int]: Figure] = {}
+
+    def add(self, i: int, j: int, figures_lst: list[Figure], camera_xy: tuple[float, float]):
+        start_rects = list([fig.rect.copy() for fig in figures_lst])
+        item = (figures_lst, camera_xy, start_rects)
+        key = (i, j)
+        self.cache[key] = item
+
+    def isin(self, i: int, j: int) -> bool:
+        return (i, j) in self.cache
+
+    def get(self, i: int, j: int, camera_xy: tuple[float, float], layers: Layers) -> list[Figure]:
+        key = (i, j)
+        figures_lst, old_camera_xy, start_rects = self.cache.get(key)
+        offset = old_camera_xy[0] - camera_xy[0], old_camera_xy[1] - camera_xy[1]
+        for figure, start_rect in zip(figures_lst, start_rects):
+            z = figure.origin_block[2]
+            m = layers.get_n_level_size(z)
+            m_offset = offset[0] * m, offset[1] * m
+            new_rect = start_rect.move(m_offset)
+            figure.reset_rect(new_rect)
+        return figures_lst
+
+    def pop(self,  i: int, j: int):
+        if self.isin(i, j):
+            self.cache.pop((i, j))
 
 
 class TerrainMech:
@@ -19,7 +49,7 @@ class TerrainMech:
         self.hovered_block = None
         self.directed_block = None
 
-        self.sides_cache: dict[tuple[int, int]: list[Figure]] = {}
+        self.sides_cache = SideCache()
 
     def create_mesh(self, world: World, frame: int):
         self.elements = []
@@ -68,16 +98,15 @@ class TerrainMech:
                 figures.append(top_figure)
 
             # sides of blocks
-            d = TRAPEZOIDS_IN_CACHE_DURATION + 1
+            d = TRAPEZOIDS_IN_CACHE_DURATION
             if d > 1:
-                if counter % d != frame % d:
-                    if (i, j) in self.sides_cache:
-                        figures_from_cache = self.sides_cache[(i, j)]
-                        figures += figures_from_cache
+                if counter % d != frame % d and self.sides_cache.isin(i, j):
+                    figures_from_cache = self.sides_cache.get(i, j, self.camera.get_center(), self.layers)
+                    figures += figures_from_cache
                     self.elements.append(figures)
                     continue
-                elif (i, j) in self.sides_cache:
-                    self.sides_cache.pop((i, j))
+
+            self.sides_cache.pop(i, j)
 
             figures_for_cache = []
 
@@ -148,7 +177,7 @@ class TerrainMech:
                             figures_for_cache.append(figure)
 
             if len(figures_for_cache) > 0:
-                self.sides_cache[(i, j)] = figures_for_cache
+                self.sides_cache.add(i, j, figures_for_cache, self.camera.get_center())
             self.elements.append(figures)
 
     def get_elements(self) -> list[list[Figure]]:

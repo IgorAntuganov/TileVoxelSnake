@@ -12,7 +12,9 @@ SHADOW_STRENGTH = 0.2  # 0 <= x <= 1
 HEIGHT_RECOLOR_STRENGTH = 0.3
 
 MAX_FPS = 200
-TRAPEZOIDS_IN_CACHE_DURATION = 15  # base value: 0, if more block sides will be rendered every n+1 frames
+TRAPEZOIDS_IN_CACHE_DURATION = 5  # base value: 1
+# if more block sides will be rendered every n frames (cause artefacts if value is big)
+# 2: +15% FPS, 3: +30% FPS, 5: +67% FPS, 25: +96% FPS
 
 # gameplay settings
 

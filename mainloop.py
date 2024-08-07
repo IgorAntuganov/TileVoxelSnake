@@ -12,10 +12,10 @@ pg.display.set_caption('Voxels')
 from constants import TRAPEZOIDS_CACHE_INFO, SET_FPS_CAPTION, BLOCK_INTERACTION_COOLDOWN, MAX_FPS
 from world import *
 from camera import *
-from terrain_mesh import *
+from mesh_3d import *
 from trapezoid import TrapeziodTexturer
 from sides_drawer import SidesDrawer
-from gui.ui_mesh import UIMesh
+from gui.mesh_2d import UIMesh
 from events_handler import EventHandler, InfoScreen
 from gui.objects import Player
 from gui.snake import Snake

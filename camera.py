@@ -49,6 +49,9 @@ class CameraFrame:
     def set_center(self, center: list[float, float] | tuple[float, float]):
         self.center = list(center)
 
+    def get_center(self) -> tuple[float, float]:
+        return self.center
+
     def get_rect(self) -> pg.Rect:
         left = self.center[0] - self.width // 2
         top = self.center[1] - self.height // 2

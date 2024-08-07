@@ -7,10 +7,13 @@ class Figure:
                  sprite: pg.Surface,
                  origin_block: tuple[int, int, int],
                  directed_block: tuple[int, int, int]):
-        self.rect = rect
+        self.rect: pg.Rect = rect
         self.sprite = sprite
         self.origin_block = origin_block
         self.directed_block = directed_block
+
+    def reset_rect(self, rect: pg.Rect):
+        self.rect = rect
 
 
 class SidesDrawer:
