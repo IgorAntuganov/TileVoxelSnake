@@ -36,7 +36,7 @@ class SideCache:
             self.cache.pop((i, j))
 
 
-class TerrainMech:
+class Mesh3D:
     def __init__(self, sides_drawer: SidesDrawer, camera: CameraFrame, scr_sizes):
         self.sides_drawer = sides_drawer
         self.camera = camera

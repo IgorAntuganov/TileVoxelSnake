@@ -26,6 +26,7 @@ class EventHandler:
     def __init__(self, world: World, camera: CameraFrame, sides_drawer: TrapeziodTexturer):
         self.world = world
         self.camera = camera
+        self.layers = camera.get_layers()
         self.sides_drawer = sides_drawer
         self.last_block_interaction = time.time()
 
@@ -58,6 +59,10 @@ class EventHandler:
                         player_move[0] += 1
                     if event.key == pg.K_SPACE:
                         player_move[2] += 1
+                    if event.key == pg.K_z:
+                        self.camera.zoom_out()
+                    if event.key == pg.K_x:
+                        self.camera.zoom_in()
 
             if event.type == pg.MOUSEBUTTONDOWN:
                 if event.button == 1:

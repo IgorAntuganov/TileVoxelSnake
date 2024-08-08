@@ -168,14 +168,12 @@ class World:
 
 
 class WorldFiller:
-    def __init__(self, world: World, load_distance: int, seed: int = 0, ):
+    def __init__(self, world: World, seed: int = 0, ):
         self.world = world
 
         name = world.name
         self.folder = PATH_TO_SAVES + f'{name}/'
         self.height_map = HeightMap(self.folder, seed)
-        self.load_distance = load_distance
-        self.preload_start_area()
 
         self.biome_map = BiomeMap(self.folder, seed)
 
@@ -275,25 +273,25 @@ class WorldFiller:
         self.world.set_columns_h_diff_in_rect(bigger_rect)
         yield
 
-    def update_regions_by_distance(self, frame_x: int, frame_y: int):
+    def update_regions_by_distance(self, frame_x: int, frame_y: int, load_distance: int):
         # removing too far regions
         for key in list(self.world.regions.keys()):
             r: Region = self.world.regions[key]
-            if not r.check_region_distance(frame_x, frame_y, self.load_distance * 1.5):
+            if not r.check_region_distance(frame_x, frame_y, load_distance * 1.5):
                 if HEIGHT_GENERATING_INFO:
                     print('deleting too far region', key)
                 self.world.regions.pop(key)
         # adding nearby regions
-        left = (frame_x - self.load_distance) // WORLD_CHUNK_SIZE
-        right = (frame_x + self.load_distance) // WORLD_CHUNK_SIZE
-        top = (frame_y - self.load_distance) // WORLD_CHUNK_SIZE
-        bottom = (frame_y + self.load_distance) // WORLD_CHUNK_SIZE
+        left = (frame_x - load_distance) // WORLD_CHUNK_SIZE
+        right = (frame_x + load_distance) // WORLD_CHUNK_SIZE
+        top = (frame_y - load_distance) // WORLD_CHUNK_SIZE
+        bottom = (frame_y + load_distance) // WORLD_CHUNK_SIZE
         for i in range(left, right+1):
             for j in range(top, bottom+1):
                 center_x = i * WORLD_CHUNK_SIZE + WORLD_CHUNK_SIZE // 2
                 center_y = j * WORLD_CHUNK_SIZE + WORLD_CHUNK_SIZE // 2
                 if (i, j) not in self.world.regions and \
-                        Region.check_distance(frame_x, frame_y, center_x, center_y, self.load_distance):
+                        Region.check_distance(frame_x, frame_y, center_x, center_y, load_distance):
                     if HEIGHT_GENERATING_INFO:
                         print('add nearby region', i, j, center_x, center_y)
                     self.world.add_region(i, j)
@@ -303,10 +301,17 @@ class WorldFiller:
                 print(key, end=' ')
             print()
 
-    def load_chucks_by_part(self):
+    def select_loading_region(self, frame_x: int, frame_y: int) -> Region:
+        regions = self.world.loading_regions
+        selected = min(regions, key=lambda r: r.get_distance_to_point(frame_x, frame_y))
+        self.world.loading_regions.remove(selected)
+        return selected
+
+    def load_chucks_by_part(self, frame_x: int, frame_y: int):
         if len(self.world.loading_regions) > 0 and self.current_loading_iterator is None:
             if self.current_loading_iterator is None:
-                self.loading_region = self.world.loading_regions.pop()
+                # self.loading_region = self.world.loading_regions.pop()
+                self.loading_region = self.select_loading_region(frame_x, frame_y)
                 rect = self.loading_region.get_rect().copy()
                 self.current_loading_iterator = self.set_columns_in_rect_generator(rect)
         elif self.current_loading_iterator is not None:
@@ -331,5 +336,5 @@ class WorldFiller:
                         column = self.world.get_column(x, y)
                         self.check_stash_for_column(column, x, y)
 
-    def preload_start_area(self, frame_x=0, frame_y=0):
-        self.update_regions_by_distance(frame_x, frame_y)
+    def preload_start_area(self, frame_x: int, frame_y: int, load_dist: int):
+        pass

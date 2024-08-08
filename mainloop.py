@@ -6,7 +6,8 @@ import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame as pg
 pg.init()
-scr = pg.display.set_mode((1536, 960))
+from constants import SCREEN_SIZE
+scr = pg.display.set_mode(SCREEN_SIZE)
 pg.display.set_caption('Voxels')
 
 from constants import TRAPEZOIDS_CACHE_INFO, SET_FPS_CAPTION, BLOCK_INTERACTION_COOLDOWN, MAX_FPS
@@ -15,7 +16,7 @@ from camera import *
 from mesh_3d import *
 from trapezoid import TrapeziodTexturer
 from sides_drawer import SidesDrawer
-from gui.mesh_2d import UIMesh
+from gui.mesh_2d import Mesh2D
 from events_handler import EventHandler, InfoScreen
 from gui.objects import Player
 from gui.snake import Snake
@@ -26,15 +27,14 @@ trap_drawer.create_cache()
 sides_drawer = SidesDrawer(trap_drawer, scr.get_rect())
 
 clock = pg.time.Clock()
-camera_frame = CameraFrame((0, 0), 1536 // BASE_LEVEL_SIZE, 960 // BASE_LEVEL_SIZE, (0, 0))
+camera_frame = CameraFrame((0, 0))
 layers = camera_frame.get_layers()
 
-load_distance = int(max(camera_frame.get_rect().size) / 2) + WORLD_CHUNK_SIZE
 world = World()
-world_filler = WorldFiller(world, load_distance)
+world_filler = WorldFiller(world, camera_frame.get_loading_chunk_distance())
 
-terr_mesh = TerrainMech(sides_drawer, camera_frame, (1536, 960))
-ui_mesh = UIMesh(camera_frame, (1536, 960))
+terr_mesh = Mesh3D(sides_drawer, camera_frame, SCREEN_SIZE)
+ui_mesh = Mesh2D(camera_frame, SCREEN_SIZE)
 
 events_handler = EventHandler(world, camera_frame, trap_drawer)
 info_screens: list[InfoScreen] = []
@@ -50,15 +50,16 @@ while True:
     frame_time = round(time.time() - last_frame_end, 5)
     fps = round(clock.get_fps(), 2)
 
+    camera_center = camera_frame.get_rect().center
     for _ in range(5):
-        world_filler.load_chucks_by_part()
+        world_filler.load_chucks_by_part(*camera_center)
     if frame % 25 == 0:
-        world_filler.update_regions_by_distance(*camera_frame.get_rect().center)
+        load_dist = camera_frame.get_loading_chunk_distance()
+        world_filler.update_regions_by_distance(*camera_center, load_dist)
 
     if frame % 300 == 0:
         gc.collect()
 
-    # scr.fill((0, 0, 0))
     camera_frame.update_layers()
     terr_mesh.create_mesh(world, frame)
     terr_mesh.draw_terrain(scr)
@@ -83,7 +84,7 @@ while True:
         caption = str(camera_frame.get_rect().center) + ' FPS: ' + str(fps) + ' level: ' + str(player.level)
         caption += ' stamina:' + str(player.max_stamina)
         caption += ' cooldown:' + str(round(player.stamina_cooldown, 2))
-        caption += ' blocks cooldown:' + str(BLOCK_INTERACTION_COOLDOWN)
+        caption += ' block size:' + str(camera_frame.get_base_level_size())
     pg.display.set_caption(caption)
 
     last_frame_end = time.time()

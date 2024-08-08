@@ -45,45 +45,6 @@ class Column:
     def full_height(self):
         return len(self.blocks) + len(self.transparent_blocks)
 
-    @staticmethod
-    def from_pickle(data: dict):
-        x, y = data['x'], data['y']
-        height_diff = data['hd']
-        height_diff_2 = data['hd2']
-        height_diff_are_set = data['hd_are_set']
-        blocks = []
-        for block in data['transparent_blocks']:
-            block_class = blocks_classes_dict[block]
-            blocks.append(block_class)
-        for block in data['blocks']:
-            block_class = blocks_classes_dict[block]
-            blocks.append(block_class)
-
-        pickle_column = Column(x, y, blocks)
-
-        pickle_column.height_difference = height_diff
-        pickle_column.height_difference_2 = height_diff_2
-        pickle_column.height_difference_are_set = height_diff_are_set
-        return pickle_column
-
-    def to_pickle(self) -> dict:
-        disk_data = {
-            'x': self.x,
-            'y': self.y,
-            'hd': self.height_difference,
-            'hd2': self.height_difference_2,
-            'hd_are_set': self.height_difference_are_set,
-            'blocks': [],
-            'transparent_blocks': []
-        }
-        for block in self.blocks:
-            block_name = reversed_blocks_classes_dict[type(block)]
-            disk_data['blocks'].append(block_name)
-        for block in self.transparent_blocks:
-            block_name = reversed_blocks_classes_dict[type(block)]
-            disk_data['transparent_blocks'].append(block_name)
-        return disk_data
-
     def copy_to_x_y(self, x, y, height_difference_are_set=False):
         new_blocks = [block.copy_to_x_y(x, y) for block in self.blocks]
         new_column = Column(x, y, new_blocks)
@@ -162,6 +123,8 @@ class Column:
             print('set diffs', self.x, self.y, self.height_difference, self.height_difference_2)
         self.height_difference_are_set = True
 
+
+
     def get_height_difference(self) -> dict[str: int]:
         assert self.height_difference_are_set is True
         return self.height_difference
@@ -180,6 +143,45 @@ class Column:
                 self.height_difference['top_right'] < 0,
                 self.height_difference['bottom_right'] < 0,
                 self.height_difference['bottom_left'] < 0)
+
+    @staticmethod
+    def from_pickle(data: dict):
+        x, y = data['x'], data['y']
+        height_diff = data['hd']
+        height_diff_2 = data['hd2']
+        height_diff_are_set = data['hd_are_set']
+        blocks = []
+        for block in data['transparent_blocks']:
+            block_class = blocks_classes_dict[block]
+            blocks.append(block_class)
+        for block in data['blocks']:
+            block_class = blocks_classes_dict[block]
+            blocks.append(block_class)
+
+        pickle_column = Column(x, y, blocks)
+
+        pickle_column.height_difference = height_diff
+        pickle_column.height_difference_2 = height_diff_2
+        pickle_column.height_difference_are_set = height_diff_are_set
+        return pickle_column
+
+    def to_pickle(self) -> dict:
+        disk_data = {
+            'x': self.x,
+            'y': self.y,
+            'hd': self.height_difference,
+            'hd2': self.height_difference_2,
+            'hd_are_set': self.height_difference_are_set,
+            'blocks': [],
+            'transparent_blocks': []
+        }
+        for block in self.blocks:
+            block_name = reversed_blocks_classes_dict[type(block)]
+            disk_data['blocks'].append(block_name)
+        for block in self.transparent_blocks:
+            block_name = reversed_blocks_classes_dict[type(block)]
+            disk_data['transparent_blocks'].append(block_name)
+        return disk_data
 
 
 NOT_FOUND_COLUMN = Column(0, 0, [Shadow])

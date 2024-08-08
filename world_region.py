@@ -27,6 +27,10 @@ class Region:
     def check_region_distance(self, frame_x, frame_y, r) -> bool:
         return self.check_distance(self.center_x, self.center_y, frame_x, frame_y, r)
 
+    def get_distance_to_point(self, frame_x, frame_y):
+        distance = max(abs(frame_x - self.center_x), abs(frame_y - self.center_y))
+        return distance
+
     def get_column(self, x, y) -> Column:
         x -= self.x
         y -= self.y

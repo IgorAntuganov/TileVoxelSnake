@@ -1,6 +1,6 @@
 import pygame as pg
 from camera import CameraFrame
-from gui.objects import Player, Tile
+from gui.objects import Player
 from gui.snake import Snake
 from world import World
 
@@ -12,7 +12,7 @@ class UIFigure:
         self.z = z
 
 
-class UIMesh:
+class Mesh2D:
     def __init__(self, camera: CameraFrame, sizes: tuple[int, int]):
         self.camera = camera
         self.sizes = sizes

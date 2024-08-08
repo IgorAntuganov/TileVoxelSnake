@@ -5,7 +5,10 @@
 W, A, S, D, Space
 #### camera moving:
 keyboard arrows
+#### zoom:
+Z: zoom in \
+X: zoom out
 #### return camera to player
 mouse wheel button
-#### placing and breaking blocks:
+#### placing and breaking blocks (have cooldown):
 right mouse button, left mouse button

@@ -1,10 +1,12 @@
 # Settings
 # visual setting
 
+SCREEN_SIZE = 1536, 960
 BASE_LEVEL_SIZE = 32  # size in pixels of top side of block at z = 0
 LAYERS_OFFSET = 1  # only int > 0, difference in pixel between layers top side sprites sizes
-# OPTIMAL VALUES: (32, 1) (48, 2) (64, 3)
-# (32, 1) looks the best but have freezes
+MIN_BASE_LEVEL_SIZE = 12
+MAX_BASE_LEVEL_SIZE = 96
+BASE_LEVEL_STEP = 4
 
 SHADOW_RADIUS = 0.5  # 0 <= x <= 1
 SHADOW_STRENGTH = 0.2  # 0 <= x <= 1
@@ -12,8 +14,8 @@ SHADOW_STRENGTH = 0.2  # 0 <= x <= 1
 HEIGHT_RECOLOR_STRENGTH = 0.3
 
 MAX_FPS = 200
-TRAPEZOIDS_IN_CACHE_DURATION = 5  # base value: 1
-# if more block sides will be rendered every n frames (cause artefacts if value is big)
+TRAPEZOIDS_IN_CACHE_DURATION = 6  # base value: 1
+# if more -> block sides will be rendered every n frames (cause artefacts if value is big)
 # 2: +15% FPS, 3: +30% FPS, 5: +67% FPS, 25: +96% FPS
 
 # gameplay settings
@@ -25,7 +27,7 @@ START_PLAYER_COOLDOWN = 0.6  # in seconds
 END_PLAYER_COOLDOWN = 0.2  # in seconds
 COOLDOWN_LEVEL_UP_STEP = 0.05
 
-BLOCK_INTERACTION_COOLDOWN = 2  # in seconds
+BLOCK_INTERACTION_COOLDOWN = .5  # in seconds
 
 BLOCKS_PER_MOVE = 2
 
