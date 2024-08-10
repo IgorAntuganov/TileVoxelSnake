@@ -60,6 +60,7 @@ while True:
     if frame % 300 == 0:
         gc.collect()
 
+    scr.fill((0, 0, 0))
     camera_frame.update_layers()
     terr_mesh.create_mesh(world, frame)
     terr_mesh.draw_terrain(scr)

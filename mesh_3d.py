@@ -6,6 +6,10 @@ from sides_drawer import Figure, SidesDrawer
 from constants import TRAPEZOIDS_IN_CACHE_DURATION
 
 
+def ceil(n: float) -> int:
+    return int(n+0.99999999999999999999)
+
+
 class SideCache:
     def __init__(self):
         self.cache: dict[tuple[int, int]: Figure] = {}
@@ -63,7 +67,7 @@ class Mesh3D:
             figures: list[Figure] = []
 
             if not column.height_difference_are_set:
-                rect = self.layers.get_rect(column.x, column.y, 0)
+                rect = self.layers.get_rect_for_block(column.x, column.y, 0)
                 red = pg.Surface(rect.size)
                 red.fill((255, 20, 20))
                 self.elements.append([Figure(rect, red, (0, 0, 0), (0, 0, 0))])
@@ -77,8 +81,8 @@ class Mesh3D:
 
             if block.z != top_block.z:
                 x, y, z = column.x, column.y, block.z
-                rect_size = self.layers.get_n_level_size(z)
-                top_block_rect = self.layers.get_rect(x, y, z)
+                rect_size = ceil(self.layers.get_n_level_size(z))
+                top_block_rect = self.layers.get_rect_for_block(x, y, z)
                 if top_block_rect.colliderect(self.scr_rect):
                     if len(column.transparent_blocks) > 0:
                         sprite = block.get_top_sprite_fully_shaded(rect_size, z)
@@ -89,8 +93,8 @@ class Mesh3D:
 
             # top sprites of top blocks at column
             x, y, z = column.x, column.y, top_block.z
-            rect_size = self.layers.get_n_level_size(z)
-            top_block_rect = self.layers.get_rect(x, y, z)
+            rect_size = ceil(self.layers.get_n_level_size(z))
+            top_block_rect = self.layers.get_rect_for_block(x, y, z)
             if top_block_rect.colliderect(self.scr_rect):
                 top_block_neighbors = column.get_top_block_neighbors()
                 sprite = top_block.get_top_sprite_resized_shaded(rect_size, top_block_neighbors, z)
@@ -110,14 +114,14 @@ class Mesh3D:
 
             figures_for_cache = []
 
-            column_bottom_rect = self.layers.get_rect(x, y, 0)
+            column_bottom_rect = self.layers.get_rect_for_block(x, y, 0)
 
             values = list(hd.values())+list(hd2.values())
             for k in range(max(values)):
                 side_z = z - k
                 block = column.get_block(side_z)
-                top_rect = self.layers.get_rect(x, y, side_z)
-                bottom_rect = self.layers.get_rect(x, y, side_z - 1)
+                top_rect = self.layers.get_rect_for_block(x, y, side_z)
+                bottom_rect = self.layers.get_rect_for_block(x, y, side_z - 1)
                 # bottom side
                 if top_block_rect.bottom < column_bottom_rect.bottom:
                     if (not block.is_transparent and k < hd2['bottom']) or (block.is_transparent and k < hd['bottom']):

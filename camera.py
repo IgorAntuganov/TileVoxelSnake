@@ -18,25 +18,30 @@ class Layers:
     def set_center(self, focus: tuple[float, float]):
         self.center = focus
 
-    def get_n_level_size(self, n: int) -> int:
+    def get_n_level_size(self, n: float | int) -> float:
         """:return size of blocks with z=n in pixels of screen"""
-        layers_offset = max(1, (self.base_level_size - 16) // 16)
+        layers_offset = (self.base_level_size / 32) ** 3
         difference = n * layers_offset
-        return int(self.base_level_size + difference)
+        return self.base_level_size + difference
 
-    def get_n_level_x0_y0(self, n: int) -> tuple[int, int]:
+    def get_n_level_x0_y0(self, n: float | int) -> tuple[float, float]:
         """:return topleft coordinates of block with x=0, y=0 in pixels of screen"""
         size = self.get_n_level_size(n)
-        offset_x = (-self.center[0]) * size + self.scr_size[0] // 2
-        offset_y = (-self.center[1]) * size + self.scr_size[1] // 2
+        offset_x = (-self.center[0]) * size + self.scr_size[0] / 2
+        offset_y = (-self.center[1]) * size + self.scr_size[1] / 2
         return offset_x, offset_y
 
-    def get_rect(self, x, y, z) -> pg.Rect:
+    def get_rect_for_block(self, x: int, y: int, z: int) -> pg.Rect:
         rect_size = self.get_n_level_size(z)
         x0, y0 = self.get_n_level_x0_y0(z)
         left = x0 + x * rect_size
+        right = x0 + (x+1) * rect_size
         top = y0 + y * rect_size
-        rect = pg.Rect(left, top, rect_size, rect_size)
+        bottom = y0 + (y+1) * rect_size
+        width = bottom - top
+        height = right - left
+        args = list([int(x) for x in [left, top, width+.999, height+.999]])
+        rect = pg.Rect(*args)
         return rect
 
 

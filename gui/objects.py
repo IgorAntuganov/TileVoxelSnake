@@ -23,7 +23,7 @@ class Tile(ABC):
         if not self.sprites_loaded:
             self.load_sprites()
             self.sprites_loaded = True
-        rect = layers.get_rect(int(self.x), int(self.y), int(self.z))
+        rect = layers.get_rect_for_block(int(self.x), int(self.y), int(self.z))
         if buried:
             sprite = self.sprites['buried']
         else:
@@ -32,7 +32,7 @@ class Tile(ABC):
         return sprite
 
     def get_rect(self, layers: Layers) -> pg.Rect:
-        rect = layers.get_rect(int(self.x), int(self.y), int(self.z))
+        rect = layers.get_rect_for_block(int(self.x), int(self.y), int(self.z))
         return pg.Rect(rect)
 
     def move(self, x, y, z):
@@ -67,7 +67,7 @@ class Player(Tile):
         if not self.sprites_loaded:
             self.load_sprites()
             self.sprites_loaded = True
-        rect = layers.get_rect(int(self.x), int(self.y), int(self.z))
+        rect = layers.get_rect_for_block(int(self.x), int(self.y), int(self.z))
         if self.stamina != 0:
             sprite = self.sprites['ready']
         else:

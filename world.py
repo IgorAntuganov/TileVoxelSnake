@@ -310,7 +310,6 @@ class WorldFiller:
     def load_chucks_by_part(self, frame_x: int, frame_y: int):
         if len(self.world.loading_regions) > 0 and self.current_loading_iterator is None:
             if self.current_loading_iterator is None:
-                # self.loading_region = self.world.loading_regions.pop()
                 self.loading_region = self.select_loading_region(frame_x, frame_y)
                 rect = self.loading_region.get_rect().copy()
                 self.current_loading_iterator = self.set_columns_in_rect_generator(rect)
