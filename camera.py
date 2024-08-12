@@ -34,14 +34,13 @@ class Layers:
     def get_rect_for_block(self, x: int, y: int, z: int) -> pg.Rect:
         rect_size = self.get_n_level_size(z)
         x0, y0 = self.get_n_level_x0_y0(z)
-        left = x0 + x * rect_size
-        right = x0 + (x+1) * rect_size
-        top = y0 + y * rect_size
-        bottom = y0 + (y+1) * rect_size
+        left = int(x0 + x * rect_size)
+        right = int(x0 + (x+1) * rect_size)
+        top = int(y0 + y * rect_size)
+        bottom = int(y0 + (y+1) * rect_size)
         width = bottom - top
         height = right - left
-        args = list([int(x) for x in [left, top, width+.999, height+.999]])
-        rect = pg.Rect(*args)
+        rect = pg.Rect(left, top, width, height)
         return rect
 
 

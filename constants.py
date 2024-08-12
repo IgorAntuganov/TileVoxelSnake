@@ -4,9 +4,9 @@
 SCREEN_SIZE = 1536, 960
 BASE_LEVEL_SIZE = 32  # size in pixels of top side of block at z = 0
 LAYERS_OFFSET = 1  # only int > 0, difference in pixel between layers top side sprites sizes
-MIN_BASE_LEVEL_SIZE = 12
-MAX_BASE_LEVEL_SIZE = 96
-BASE_LEVEL_STEP = 4
+MIN_BASE_LEVEL_SIZE = 16
+MAX_BASE_LEVEL_SIZE = 64
+BASE_LEVEL_STEP = 8
 
 SHADOW_RADIUS = 0.5  # 0 <= x <= 1
 SHADOW_STRENGTH = 0.2  # 0 <= x <= 1
@@ -35,7 +35,7 @@ CAMERA_SPEED = 8  # in blocks per second
 
 # Debug info
 
-TRAPEZOIDS_CACHE_INFO = False
+TRAPEZOIDS_CACHE_INFO = True
 HEIGHT_GENERATING_INFO = False
 SET_FPS_CAPTION = False
 NOT_ABSTRACT_BLOCKS_CLASSES_INFO = False

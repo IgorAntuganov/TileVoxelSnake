@@ -81,8 +81,8 @@ class Mesh3D:
 
             if block.z != top_block.z:
                 x, y, z = column.x, column.y, block.z
-                rect_size = ceil(self.layers.get_n_level_size(z))
                 top_block_rect = self.layers.get_rect_for_block(x, y, z)
+                rect_size = max(top_block_rect.size)
                 if top_block_rect.colliderect(self.scr_rect):
                     if len(column.transparent_blocks) > 0:
                         sprite = block.get_top_sprite_fully_shaded(rect_size, z)
@@ -93,8 +93,8 @@ class Mesh3D:
 
             # top sprites of top blocks at column
             x, y, z = column.x, column.y, top_block.z
-            rect_size = ceil(self.layers.get_n_level_size(z))
             top_block_rect = self.layers.get_rect_for_block(x, y, z)
+            rect_size = max(top_block_rect.size)
             if top_block_rect.colliderect(self.scr_rect):
                 top_block_neighbors = column.get_top_block_neighbors()
                 sprite = top_block.get_top_sprite_resized_shaded(rect_size, top_block_neighbors, z)
