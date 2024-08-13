@@ -1,9 +1,9 @@
 import pygame as pg
 import time
-from world import World
+from world_class import World
 from camera import CameraFrame
 from blocks import *
-from trapezoid import TrapeziodTexturer
+from trapezoid import TrapezoidDrawer
 from gui.objects import Player
 from gui.snake import Snake
 from constants import CAMERA_SPEED, BLOCKS_PER_MOVE, BLOCK_INTERACTION_COOLDOWN
@@ -23,7 +23,7 @@ class InfoScreen:
 
 
 class EventHandler:
-    def __init__(self, world: World, camera: CameraFrame, sides_drawer: TrapeziodTexturer):
+    def __init__(self, world: World, camera: CameraFrame, sides_drawer: TrapezoidDrawer):
         self.world = world
         self.camera = camera
         self.layers = camera.get_layers()

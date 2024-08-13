@@ -2,10 +2,10 @@ import time
 import pygame as pg
 import pickle
 import os
-from constants import PATH_TO_CACHE, CACHE_KEYS_FILENAME
+from constants import PATH_TO_CACHE, CACHE_KEYS_FILENAME, TRAPEZOID_KEYS_PRECISION
 
 
-class TrapeziodTexturer:
+class TrapezoidDrawer:
     def __init__(self):
         folder = PATH_TO_CACHE
         cache_file = folder + '/' + CACHE_KEYS_FILENAME
@@ -119,8 +119,8 @@ class TrapeziodTexturer:
             part = part / (part + (1 - part) / z1)
             next_part = next_part / (next_part + (1 - next_part) / z1)
 
-            part = round(part, 10)
-            next_part = round(next_part, 10)
+            part = round(part, TRAPEZOID_KEYS_PRECISION)
+            next_part = round(next_part, TRAPEZOID_KEYS_PRECISION)
             part = max(0, part)  # Fixing black strings with a small trapezoid height
 
             args = texture, str_width, part, next_part
@@ -130,7 +130,7 @@ class TrapeziodTexturer:
             else:
                 pixel_string = self.get_pixel_string_with_anisotropic(*args)
                 self._lines_cache[key] = pixel_string.copy()
-                if self._print_cache_size:
+                if self._print_cache_size and len(self._lines_cache) % 100 == 0:
                     print('in cache:', len(self._lines_cache))
 
             image.blit(pixel_string, (str_x, str_y))
@@ -212,8 +212,8 @@ class TrapeziodTexturer:
             part = part / (part + (1 - part) / z1)
             next_part = next_part / (next_part + (1 - next_part) / z1)
 
-            part = round(part, 10)
-            next_part = round(next_part, 10)
+            part = round(part, TRAPEZOID_KEYS_PRECISION)
+            next_part = round(next_part, TRAPEZOID_KEYS_PRECISION)
             part = max(0, part)  # Fixing black columns with a small trapezoid width
             args = texture, col_height, part, next_part
             key = (False, texture_name, col_height, part, next_part)
@@ -222,7 +222,7 @@ class TrapeziodTexturer:
             else:
                 pixel_column = self.get_pixel_column_with_anisotropic(*args)
                 self._lines_cache[key] = pixel_column.copy()
-                if self._print_cache_size:
+                if self._print_cache_size and len(self._lines_cache) % 100 == 0:
                     print('in cache:', len(self._lines_cache))
 
             image.blit(pixel_column, (str_x, str_y))

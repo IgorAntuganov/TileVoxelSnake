@@ -18,6 +18,8 @@ TRAPEZOIDS_IN_CACHE_DURATION = 6  # base value: 1
 # if more -> block sides will be rendered every n frames (cause artefacts if value is big)
 # 2: +15% FPS, 3: +30% FPS, 5: +67% FPS, 25: +96% FPS
 
+TRAPEZOID_KEYS_PRECISION = 1  # base value: 1, more -> more accurate trapezoids
+
 # gameplay settings
 
 START_PLAYER_STAMINA = 2

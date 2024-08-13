@@ -1,5 +1,5 @@
 import pygame as pg
-from trapezoid import TrapeziodTexturer
+from trapezoid import TrapezoidDrawer
 
 
 class Figure:
@@ -17,7 +17,7 @@ class Figure:
 
 
 class SidesDrawer:
-    def __init__(self, trap_drawer: TrapeziodTexturer, scr_rect: pg.Rect):
+    def __init__(self, trap_drawer: TrapezoidDrawer, scr_rect: pg.Rect):
         self.trap_drawer = trap_drawer
         self.scr_rect = scr_rect
 

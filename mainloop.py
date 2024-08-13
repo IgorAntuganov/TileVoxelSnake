@@ -10,30 +10,30 @@ from constants import SCREEN_SIZE
 scr = pg.display.set_mode(SCREEN_SIZE)
 pg.display.set_caption('Voxels')
 
-from constants import TRAPEZOIDS_CACHE_INFO, SET_FPS_CAPTION, BLOCK_INTERACTION_COOLDOWN, MAX_FPS
-from world import *
-from camera import *
-from mesh_3d import *
-from trapezoid import TrapeziodTexturer
+from constants import TRAPEZOIDS_CACHE_INFO, SET_FPS_CAPTION, MAX_FPS
+import world_class
+import camera
+import mesh_3d
+from trapezoid import TrapezoidDrawer
 from sides_drawer import SidesDrawer
 from gui.mesh_2d import Mesh2D
 from events_handler import EventHandler, InfoScreen
 from gui.objects import Player
 from gui.snake import Snake
 
-trap_drawer = TrapeziodTexturer()
+trap_drawer = TrapezoidDrawer()
 trap_drawer.set_print_cache_size(TRAPEZOIDS_CACHE_INFO)
 trap_drawer.create_cache()
 sides_drawer = SidesDrawer(trap_drawer, scr.get_rect())
 
 clock = pg.time.Clock()
-camera_frame = CameraFrame((0, 0))
+camera_frame = camera.CameraFrame((0, 0))
 layers = camera_frame.get_layers()
 
-world = World()
-world_filler = WorldFiller(world, camera_frame.get_loading_chunk_distance())
+world = world_class.World()
+world_filler = world_class.WorldFiller(world, camera_frame.get_loading_chunk_distance())
 
-terr_mesh = Mesh3D(sides_drawer, camera_frame, SCREEN_SIZE)
+terr_mesh = mesh_3d.Mesh3D(sides_drawer, camera_frame, SCREEN_SIZE)
 ui_mesh = Mesh2D(camera_frame, SCREEN_SIZE)
 
 events_handler = EventHandler(world, camera_frame, trap_drawer)
@@ -60,7 +60,7 @@ while True:
     if frame % 300 == 0:
         gc.collect()
 
-    scr.fill((0, 0, 0))
+    # scr.fill((0, 0, 0))
     camera_frame.update_layers()
     terr_mesh.create_mesh(world, frame)
     terr_mesh.draw_terrain(scr)

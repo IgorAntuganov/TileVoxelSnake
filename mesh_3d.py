@@ -1,6 +1,6 @@
 import pygame as pg
 from camera import CameraFrame, Layers
-from world import Column, World
+from world_class import Column, World
 from render_order import RenderOrder
 from sides_drawer import Figure, SidesDrawer
 from constants import TRAPEZOIDS_IN_CACHE_DURATION

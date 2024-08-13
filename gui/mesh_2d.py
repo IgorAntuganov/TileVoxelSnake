@@ -2,7 +2,7 @@ import pygame as pg
 from camera import CameraFrame
 from gui.objects import Player
 from gui.snake import Snake
-from world import World
+from world_class import World
 
 
 class UIFigure:
