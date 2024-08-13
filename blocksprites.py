@@ -29,7 +29,7 @@ class ShadowSprites:
         self.shade_radius = shade_radius
         self.shade_power = shade_strength
 
-    def get_shade(self, nearby_block_side: str, size: int, is_side: bool = False) -> pg.Surface:
+    def get_shade(self, nearby_block_side: str, size: tuple[int, int], is_side: bool = False) -> pg.Surface:
         if is_side:
             shade_radius = min(1, self.shade_radius * 2)
         else:
@@ -37,13 +37,14 @@ class ShadowSprites:
 
         key = (size, nearby_block_side, 'nearby')
         if key not in self.cache:
-            shade = pg.Surface((size, size), pg.SRCALPHA)
+            shade = pg.Surface(size, pg.SRCALPHA)
             shade.fill((0, 0, 0, 0))
             start_power = 255 * self.shade_power
-            for i in range(int(size*shade_radius)):
-                part = i / int(size*shade_radius)
+            max_size = max(size)
+            for i in range(int(max_size*shade_radius)):
+                part = i / int(max_size*shade_radius)
                 power = int(start_power*(1-part))
-                shade_string = pg.Surface((size, 1), pg.SRCALPHA)
+                shade_string = pg.Surface((max_size, 1), pg.SRCALPHA)
                 shade_string.fill((0, 0, 0, power))
                 shade.blit(shade_string, (0, i))
 
@@ -52,13 +53,13 @@ class ShadowSprites:
             self.cache[key] = shade
         return self.cache[key]
 
-    def get_diagonal_shade(self, side: str, size: int) -> pg.Surface:
+    def get_diagonal_shade(self, side: str, size: tuple[int, int]) -> pg.Surface:
         key = (size, side, 'diagonal')
         if key not in self.cache:
-            shade = pg.Surface((size, size), pg.SRCALPHA)
+            shade = pg.Surface(size, pg.SRCALPHA)
             shade.fill((0, 0, 0, 0))
             start_power = 255 * self.shade_power
-            radius = int(size * self.shade_radius)
+            radius = int(max(size) * self.shade_radius)
             for i in range(radius):
                 for j in range(radius):
                     part = ((i/radius)**2 + (j/radius)**2)**.5
@@ -73,10 +74,10 @@ class ShadowSprites:
             self.cache[key] = shade
         return self.cache[key]
 
-    def get_full_shade(self, size: int) -> pg.Surface:
+    def get_full_shade(self, size: tuple[int, int]) -> pg.Surface:
         key = (size, 'full')
         if key not in self.cache:
-            shade = pg.Surface((size, size), pg.SRCALPHA)
+            shade = pg.Surface(size, pg.SRCALPHA)
             power = 255 * self.shade_power
             shade.fill((0, 0, 0, power))
             self.cache[key] = shade
@@ -119,12 +120,12 @@ class BlockSpritesDict:
             self.scale_shaded_cache[key] = image.copy()
         return self.scale_shaded_cache[key]
 
-    def get_top_resized_shaded(self, size: int,
+    def get_top_resized_shaded(self, size: tuple[int, int],
                                neighbors: tuple[bool, bool, bool, bool, bool, bool, bool, bool],
                                z: int) -> pg.Surface:
         key = (*neighbors, size, z)
         if key not in self.scale_shaded_cache:
-            image = pg.transform.scale(self._top.image, (size, size))
+            image = pg.transform.scale(self._top.image, size)
             image = height_recolor(image, z)
             for i in range(4):
                 is_shaded = neighbors[i]
@@ -138,10 +139,10 @@ class BlockSpritesDict:
             self.scale_shaded_cache[key] = image.copy()
         return self.scale_shaded_cache[key]
 
-    def get_top_resized_fully_shaded(self, size: int, z: int):
+    def get_top_resized_fully_shaded(self, size: tuple[int, int], z: int):
         key = ('fully shaded', size, z)
         if key not in self.scale_shaded_cache:
-            image = pg.transform.scale(self._top.image, (size, size))
+            image = pg.transform.scale(self._top.image, size)
             image = height_recolor(image, z)
             shade = self.shade_maker.get_full_shade(size)
             image.blit(shade, (0, 0))
@@ -158,7 +159,7 @@ class BlockSpritesDict:
         sprite = self._sides[n].image.copy()
         if key in self.shaded_sides_cache:
             return self.shaded_sides_cache[key]
-        shade = self.shade_maker.get_shade(side, sprite.get_height(), True)
+        shade = self.shade_maker.get_shade(side, sprite.get_size(), True)
         if side in ['top', 'left']:  # Undo the rotation of the top sprite shadow
             shade = pg.transform.rotate(shade, 180)
 

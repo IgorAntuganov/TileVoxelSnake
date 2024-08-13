@@ -36,12 +36,12 @@ class Block(ABC):
     def load_sprites(cls):
         cls.sprites = BlockSpritesDict(*[cls.debug_sprite] * 6)
 
-    def get_top_sprite_resized_shaded(self, size: int,
+    def get_top_sprite_resized_shaded(self, size: tuple[int, int],
                                       neighbors: tuple[bool, bool, bool, bool, bool, bool, bool, bool],
                                       z: int) -> pg.Surface:
         return self.sprites.get_top_resized_shaded(size, neighbors, z)
 
-    def get_top_sprite_fully_shaded(self, size: int, z: int):
+    def get_top_sprite_fully_shaded(self, size: tuple[int, int], z: int):
         return self.sprites.get_top_resized_fully_shaded(size, z)
 
     def get_side_sprite(self, side: str):
