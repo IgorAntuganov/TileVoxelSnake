@@ -10,7 +10,7 @@ from constants import SCREEN_SIZE
 scr = pg.display.set_mode(SCREEN_SIZE)
 pg.display.set_caption('Voxels')
 
-from constants import TRAPEZOIDS_CACHE_INFO, SET_FPS_CAPTION, MAX_FPS
+from constants import *
 import world_class
 import camera
 import mesh_3d
@@ -51,13 +51,13 @@ while True:
     fps = round(clock.get_fps(), 2)
 
     camera_center = camera_frame.get_rect().center
-    for _ in range(5):
+    for _ in range(LOADED_PARTS_PER_FRAME):
         world_filler.load_chucks_by_part(*camera_center)
-    if frame % 25 == 0:
+    if frame % REGIONS_DISTANCE_UPDATE_FREQ == 0:
         load_dist = camera_frame.get_loading_chunk_distance()
         world_filler.update_regions_by_distance(*camera_center, load_dist)
 
-    if frame % 300 == 0:
+    if frame % GARBAGE_COLLECTION_FREQ == 0:
         gc.collect()
 
     # scr.fill((0, 0, 0))

@@ -20,6 +20,12 @@ TRAPEZOIDS_IN_CACHE_DURATION = 6  # base value: 1
 
 TRAPEZOID_KEYS_PRECISION = 1  # base value: 1, more -> more accurate trapezoids
 
+LOADED_PARTS_PER_FRAME = 10
+
+REGIONS_DISTANCE_UPDATE_FREQ = 50
+GARBAGE_COLLECTION_FREQ = 500
+
+
 # gameplay settings
 
 START_PLAYER_STAMINA = 2
