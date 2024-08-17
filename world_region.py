@@ -1,7 +1,5 @@
 import pygame as pg
-from constants import *
 from world_column import Column
-import blocks
 from gui.objects import Tile
 
 
@@ -38,10 +36,6 @@ class Region:
         column = self.columns[y][x]
         if column is not None:
             return column
-        # else:
-        #     if FILLING_COLUMNS_INFO:
-        #         print('copying not fount column')
-        #     return NOT_FOUND_COLUMN.copy_to_x_y(x, y, True)
 
     def set_column(self, x: int, y: int, column: Column):
         x -= self.x

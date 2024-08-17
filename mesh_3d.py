@@ -108,8 +108,8 @@ class Mesh3D:
             column_bottom_rect = self.layers.get_rect_for_block(x, y, 0)
             top_block_rect = self.layers.get_rect_for_block(x, y, z)
 
-            hd = column.height_difference
-            hd2 = column.height_difference_2
+            hd = column.height_difference.full_height_diff
+            hd2 = column.height_difference.nt_height_diff
 
             values = list(hd.values())+list(hd2.values())
             for k in range(max(values)):

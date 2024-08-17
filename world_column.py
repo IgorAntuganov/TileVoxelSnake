@@ -1,5 +1,6 @@
 from constants import *
 import blocks
+from height_difference import HeightDiff
 
 
 class Column:
@@ -19,22 +20,12 @@ class Column:
                 assert len(self.blocks) == 0
                 self.transparent_blocks.append(block)
 
-        self.visible_blocks_are_set = False
+        self.visible_blocks_are_set: bool = False
         self.blocks_with_visible_top_sprite = []
         self.define_blocks_with_visible_top_sprite()
 
-        self.height_difference: dict[str: int] = {
-            'left': 0,
-            'top': 0,
-            'right': 0,
-            'bottom': 0,
-            'top_left': 0,
-            'top_right': 0,
-            'bottom_left': 0,
-            'bottom_right': 0
-        }
-        self.height_difference_2 = self.height_difference.copy()
-        self.height_difference_are_set = False
+        self.height_difference: HeightDiff | None = None
+        self.height_difference_are_set: bool = False
 
         if FILLING_COLUMNS_INFO:
             print('new column created', self.x, self.y)
@@ -79,7 +70,6 @@ class Column:
         return self.blocks_with_visible_top_sprite
 
     def define_blocks_with_visible_top_sprite(self):
-        # print('defing')
         blocks_with_visible_top_sprite = []
         if self.transparent_height > 0:
             top_block = self.transparent_blocks[0]
@@ -129,56 +119,20 @@ class Column:
                 print(block.z, block.__class__.__name__)
 
     # Working with height difference -----
-    def set_height_difference(self, left, top, right, bottom, top_left, top_right, bottom_left, bottom_right):
-        """left, top, right, bottom - adjacent Columns;
-        top_left, top_right, bottom_left, bottom_right - diagonal Columns"""
-
-        columns = {
-            'left': left,
-            'top': top,
-            'right': right,
-            'bottom': bottom,
-            'top_left': top_left,
-            'top_right': top_right,
-            'bottom_left': bottom_left,
-            'bottom_right': bottom_right
-        }
-
-        for key in columns:
-            column = columns[key]
-            if column is not None:
-                self.height_difference[key] = self.full_height - column.full_height
-                self.height_difference_2[key] = self.full_height - column.nt_height
-            else:
-                if DRAW_SIDES_WITH_UNLOADED_REGIONS:
-                    value = self.full_height
-                else:
-                    value = 0
-                self.height_difference[key] = value
-                self.height_difference_2[key] = value
+    def set_height_difference(self, *args):
+        self.height_difference = HeightDiff.from_9_columns(self, *args)
 
         if FILLING_COLUMNS_INFO:
-            print('set diffs', self.x, self.y, self.height_difference, self.height_difference_2)
+            print('set diffs', self.x, self.y, self.height_difference)
         self.height_difference_are_set = True
 
     def get_height_difference(self) -> dict[str: int]:
-        assert self.height_difference_are_set is True
+        assert self.height_difference_are_set
         return self.height_difference
 
-    def get_height_difference_2(self) -> dict[str: int]:
-        assert self.height_difference_are_set is True
-        return self.height_difference_2
-
     def get_top_block_neighbors(self) -> tuple[bool, bool, bool, bool, bool, bool, bool, bool]:
-        assert self.height_difference_are_set is True
-        return (self.height_difference['left'] < 0,
-                self.height_difference['top'] < 0,
-                self.height_difference['right'] < 0,
-                self.height_difference['bottom'] < 0,
-                self.height_difference['top_left'] < 0,
-                self.height_difference['top_right'] < 0,
-                self.height_difference['bottom_right'] < 0,
-                self.height_difference['bottom_left'] < 0)
+        assert self.height_difference_are_set
+        return self.height_difference.get_top_block_neighbors()
 
     def copy_to_x_y(self, x, y, height_difference_are_set=False):
         new_blocks = [block.copy_to_x_y(x, y) for block in self.blocks]
@@ -189,8 +143,7 @@ class Column:
     @staticmethod
     def from_pickle(data: dict):
         x, y = data['x'], data['y']
-        height_diff = data['hd']
-        height_diff_2 = data['hd2']
+        height_diff = HeightDiff.from_pickle(data['hd'])
         height_diff_are_set = data['hd_are_set']
         _blocks = []
         for block in data['transparent_blocks']:
@@ -203,7 +156,6 @@ class Column:
         pickle_column = Column(x, y, _blocks)
 
         pickle_column.height_difference = height_diff
-        pickle_column.height_difference_2 = height_diff_2
         pickle_column.height_difference_are_set = height_diff_are_set
         pickle_column.define_blocks_with_visible_top_sprite()
         return pickle_column
@@ -212,8 +164,7 @@ class Column:
         disk_data = {
             'x': self.x,
             'y': self.y,
-            'hd': self.height_difference,
-            'hd2': self.height_difference_2,
+            'hd': self.height_difference.to_pickle(),
             'hd_are_set': self.height_difference_are_set,
             'blocks': [],
             'transparent_blocks': []

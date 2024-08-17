@@ -107,10 +107,6 @@ class World:
             region = self.get_region(x, y)
             column = region.get_column(x, y)
             return column
-        '''else:
-            if FILLING_COLUMNS_INFO:
-                print('not is region, copying not fount column')
-            return NOT_FOUND_COLUMN2.copy_to_x_y(x, y, True)'''
 
     def set_column(self, x, y, column: Column):
         region = self.get_region(x, y)
