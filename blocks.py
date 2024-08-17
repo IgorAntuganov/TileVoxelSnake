@@ -131,7 +131,7 @@ class Shadow(SingleSpriteBlock):
         assert side in SIDES_NAMES
         return self.sprites.get_side(side)
 
-    def get_top_sprite_resized_shaded(self, size: int,
+    def get_top_sprite_resized_shaded(self, size: tuple[int, int],
                                       neighbors: tuple[bool, bool, bool, bool, bool, bool, bool, bool],
                                       z: int) -> pg.Surface:
         return self.sprites.get_top_resized(size, z)

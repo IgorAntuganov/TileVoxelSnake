@@ -9,8 +9,8 @@ class Column:
         """
         self.x = x
         self.y = y
-        self.blocks: list[Block | FullBlock | SingleSpriteBlock] = []
-        self.transparent_blocks: list[Block] = []
+        self.blocks: list[Block | FullBlock | SingleSpriteBlock] = []  # from top to bottom
+        self.transparent_blocks: list[Block] = []  # from top to bottom
         for i in range(len(blocks)):
             block = blocks[i](x, y, len(blocks)-i-1)
             if not block.is_transparent:
@@ -18,6 +18,10 @@ class Column:
             else:
                 assert len(self.blocks) == 0
                 self.transparent_blocks.append(block)
+
+        self.visible_blocks_are_set = False
+        self.blocks_with_visible_top_sprite = []
+        self.define_blocks_with_visible_top_sprite()
 
         self.height_difference: dict[str: int] = {
             'left': 0,
@@ -45,11 +49,9 @@ class Column:
     def full_height(self):
         return len(self.blocks) + len(self.transparent_blocks)
 
-    def copy_to_x_y(self, x, y, height_difference_are_set=False):
-        new_blocks = [block.copy_to_x_y(x, y) for block in self.blocks]
-        new_column = Column(x, y, new_blocks)
-        new_column.height_difference_are_set = height_difference_are_set
-        return new_column
+    @property
+    def transparent_height(self):
+        return len(self.transparent_blocks)
 
     def get_top_block(self) -> Block:
         if len(self.transparent_blocks) != 0:
@@ -72,12 +74,35 @@ class Column:
             return self.blocks[0]
         return DebugBlock(self.x, self.y, 0)
 
+    def get_blocks_with_visible_top_sprite(self) -> list[Block]:
+        assert self.visible_blocks_are_set
+        return self.blocks_with_visible_top_sprite[::-1]
+
+    def define_blocks_with_visible_top_sprite(self):
+        # print('defing')
+        self.blocks_with_visible_top_sprite = []
+        if self.transparent_height > 0:
+            top_block = self.transparent_blocks[0]
+            self.blocks_with_visible_top_sprite.append(top_block)
+            last = top_block
+            for i in range(1, self.transparent_height):
+                block = self.transparent_blocks[i]
+                if type(block) != type(last):
+                    self.blocks_with_visible_top_sprite.append(block)
+                last = block
+        if len(self.blocks) > 0:
+            self.blocks_with_visible_top_sprite.append(self.blocks[0])
+        self.visible_blocks_are_set = True
+
+    # Adding and removing blocks -------
     def remove_top_block(self):
         if len(self.transparent_blocks) > 0:
             self.transparent_blocks = self.transparent_blocks[1:]
         else:
             self.blocks = self.blocks[1:]
-            self.height_difference_are_set = False
+        self.height_difference_are_set = False
+        self.visible_blocks_are_set = False
+        self.define_blocks_with_visible_top_sprite()
         if FILLING_COLUMNS_INFO:
             print('removing block')
             print(self.x, self.y, len(self.blocks), len(self.transparent_blocks))
@@ -90,9 +115,11 @@ class Column:
                 print(self.x, self.y, self.blocks, self.transparent_blocks, block_type)
             assert len(self.transparent_blocks) == 0
             self.blocks.insert(0, block)
-            self.height_difference_are_set = False
         else:
             self.transparent_blocks.insert(0, block)
+        self.height_difference_are_set = False
+        self.visible_blocks_are_set = False
+        self.define_blocks_with_visible_top_sprite()
         if FILLING_COLUMNS_INFO:
             print('adding block')
             print(self.x, self.y, len(self.blocks), len(self.transparent_blocks))
@@ -100,6 +127,7 @@ class Column:
             for block in self.transparent_blocks + self.blocks:
                 print(block.z, block.__class__.__name__)
 
+    # Working with height difference -----
     def set_height_difference(self, left, top, right, bottom, top_left, top_right, bottom_left, bottom_right):
         """left, top, right, bottom - adjacent Columns;
         top_left, top_right, bottom_left, bottom_right - diagonal Columns"""
@@ -123,8 +151,6 @@ class Column:
             print('set diffs', self.x, self.y, self.height_difference, self.height_difference_2)
         self.height_difference_are_set = True
 
-
-
     def get_height_difference(self) -> dict[str: int]:
         assert self.height_difference_are_set is True
         return self.height_difference
@@ -143,6 +169,12 @@ class Column:
                 self.height_difference['top_right'] < 0,
                 self.height_difference['bottom_right'] < 0,
                 self.height_difference['bottom_left'] < 0)
+
+    def copy_to_x_y(self, x, y, height_difference_are_set=False):
+        new_blocks = [block.copy_to_x_y(x, y) for block in self.blocks]
+        new_column = Column(x, y, new_blocks)
+        new_column.height_difference_are_set = height_difference_are_set
+        return new_column
 
     @staticmethod
     def from_pickle(data: dict):
@@ -163,6 +195,7 @@ class Column:
         pickle_column.height_difference = height_diff
         pickle_column.height_difference_2 = height_diff_2
         pickle_column.height_difference_are_set = height_diff_are_set
+        pickle_column.define_blocks_with_visible_top_sprite()
         return pickle_column
 
     def to_pickle(self) -> dict:

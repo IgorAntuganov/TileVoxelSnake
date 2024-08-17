@@ -112,10 +112,10 @@ class BlockSpritesDict:
         self._side4 = BlockSprite(side4)
         self._sides = [self._side1, self._side2, self._side3, self._side4]
 
-    def get_top_resized(self, size: int, z: int):
+    def get_top_resized(self, size: tuple[int, int], z: int):
         key = ('not shaded', size, z)
         if key not in self.scale_shaded_cache:
-            image = pg.transform.scale(self._top.image, (size, size))
+            image = pg.transform.scale(self._top.image, size)
             image = height_recolor(image, z)
             self.scale_shaded_cache[key] = image.copy()
         return self.scale_shaded_cache[key]

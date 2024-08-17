@@ -6,10 +6,6 @@ from sides_drawer import Figure, SidesDrawer
 from constants import TRAPEZOIDS_IN_CACHE_DURATION
 
 
-def ceil(n: float) -> int:
-    return int(n+0.99999999999999999999)
-
-
 class SideCache:
     def __init__(self):
         self.cache: dict[tuple[int, int]: Figure] = {}
@@ -20,7 +16,7 @@ class SideCache:
         key = (i, j)
         self.cache[key] = item
 
-    def isin(self, i: int, j: int) -> bool:
+    def is_in(self, i: int, j: int) -> bool:
         return (i, j) in self.cache
 
     def get(self, i: int, j: int, camera_xy: tuple[float, float], layers: Layers) -> list[Figure]:
@@ -36,7 +32,7 @@ class SideCache:
         return figures_lst
 
     def pop(self,  i: int, j: int):
-        if self.isin(i, j):
+        if self.is_in(i, j):
             self.cache.pop((i, j))
 
 
@@ -55,8 +51,17 @@ class Mesh3D:
 
         self.sides_cache = SideCache()
 
+    def check_if_in_screen(self, rect: pg.Rect) -> bool:
+        return rect.colliderect(self.scr_rect)
+
+    def get_not_calculated_column_figure(self, column: Column) -> Figure:
+        rect = self.layers.get_rect_for_block(column.x, column.y, 0)
+        red = pg.Surface(rect.size)
+        red.fill((255, 20, 20))
+        return Figure(rect, red, (0, 0, 0), (0, 0, 0))
+
     def create_mesh(self, world: World, frame: int):
-        self.elements = []
+        self.elements: list[list[Figure]] = []
 
         rend_order = self.render_order.get_order(self.camera.get_rect())
         counter = 0
@@ -67,54 +72,42 @@ class Mesh3D:
             figures: list[Figure] = []
 
             if not column.height_difference_are_set:
-                rect = self.layers.get_rect_for_block(column.x, column.y, 0)
-                red = pg.Surface(rect.size)
-                red.fill((255, 20, 20))
-                self.elements.append([Figure(rect, red, (0, 0, 0), (0, 0, 0))])
+                figure = self.get_not_calculated_column_figure(column)
+                self.elements.append([figure, ])
                 continue
 
-            # top sprites of first non-transparent block at column
-            top_block = column.get_top_block()
-            block = column.get_first_non_transparent()
-            hd = column.height_difference
-            hd2 = column.height_difference_2
-
-            if block.z != top_block.z:
-                x, y, z = column.x, column.y, block.z
-                top_block_rect = self.layers.get_rect_for_block(x, y, z)
-                rect_size = top_block_rect.height, top_block_rect.width
-                if top_block_rect.colliderect(self.scr_rect):
-                    if len(column.transparent_blocks) > 0:
-                        sprite = block.get_top_sprite_fully_shaded(rect_size, z)
+            for block in column.get_blocks_with_visible_top_sprite():
+                x, y, z = block.x, block.y, block.z
+                block_rect = self.layers.get_rect_for_block(x, y, z)
+                if self.check_if_in_screen(block_rect):
+                    rect_size = block_rect.height, block_rect.width
+                    top_block_neighbors = column.get_top_block_neighbors()
+                    if not block.is_transparent:
+                        sprite = block.get_top_sprite_resized_shaded(rect_size, top_block_neighbors, z)
                     else:
-                        sprite = block.get_top_sprite_resized_shaded(rect_size, (False,)*8, z)
-                    top_figure = Figure(top_block_rect, sprite, (x, y, z), (x, y, z + 1))
+                        sprite = block.get_top_sprite_fully_shaded(rect_size, z)
+                    top_figure = Figure(block_rect, sprite, (x, y, z), (x, y, z + 1))
                     figures.append(top_figure)
 
-            # top sprites of top blocks at column
-            x, y, z = column.x, column.y, top_block.z
-            top_block_rect = self.layers.get_rect_for_block(x, y, z)
-            rect_size = top_block_rect.height, top_block_rect.width
-            if top_block_rect.colliderect(self.scr_rect):
-                top_block_neighbors = column.get_top_block_neighbors()
-                sprite = top_block.get_top_sprite_resized_shaded(rect_size, top_block_neighbors, z)
-                top_figure = Figure(top_block_rect, sprite, (x, y, z), (x, y, z+1))
-                figures.append(top_figure)
-
-            # sides of blocks
+            # cache for sides of blocks
             d = TRAPEZOIDS_IN_CACHE_DURATION
             if d > 1:
-                if counter % d != frame % d and self.sides_cache.isin(i, j):
+                if counter % d != frame % d and self.sides_cache.is_in(i, j):
                     figures_from_cache = self.sides_cache.get(i, j, self.camera.get_center(), self.layers)
                     figures += figures_from_cache
                     self.elements.append(figures)
                     continue
-
             self.sides_cache.pop(i, j)
-
             figures_for_cache = []
 
+            # sides of blocks
+            top_block = column.get_top_block()
+            x, y, z = column.x, column.y, top_block.z
             column_bottom_rect = self.layers.get_rect_for_block(x, y, 0)
+            top_block_rect = self.layers.get_rect_for_block(x, y, z)
+
+            hd = column.height_difference
+            hd2 = column.height_difference_2
 
             values = list(hd.values())+list(hd2.values())
             for k in range(max(values)):
@@ -170,10 +163,10 @@ class Mesh3D:
                 if top_block_rect.left > column_bottom_rect.left:
                     if (not block.is_transparent and k < hd2['left']) or (block.is_transparent and k < hd['left']):
                         if k == hd['left'] - 1:
-                            sprite = column.get_block(side_z).get_side_sprite_shaded('left')
+                            sprite = block.get_side_sprite_shaded('left')
                             sprite_name = f"{block.__class__.__name__}_left_shaded"
                         else:
-                            sprite = column.get_block(side_z).get_side_sprite('left')
+                            sprite = block.get_side_sprite('left')
                             sprite_name = f"{block.__class__.__name__}_left"
                         figure = self.sides_drawer.create_left_figure(x, y, side_z, sprite, sprite_name, top_rect, bottom_rect)
                         if figure is not None:
