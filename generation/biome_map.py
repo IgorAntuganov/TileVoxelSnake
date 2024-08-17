@@ -4,7 +4,7 @@ import pygame as pg
 from generation.noise_grid import NoiseGrid
 from generation.value_noise import ValueNoise
 from constants import *
-from blocks import *
+import blocks
 
 
 class Biome(ABC):
@@ -17,37 +17,37 @@ class Biome(ABC):
 class Fields(Biome):
     @staticmethod
     def blocks_from_height(height) -> list[type]:
-        blocks = [Grass]
+        _blocks = [blocks.Grass]
         for i in range(height - 1):
             if i < height // 2:
-                blocks.append(Dirt)
+                _blocks.append(blocks.Dirt)
             else:
-                blocks.append(Stone)
-        return blocks
+                _blocks.append(blocks.Stone)
+        return _blocks
 
 
 class Desert(Biome):
     @staticmethod
     def blocks_from_height(height) -> list[type]:
-        blocks = []
+        _blocks = []
         for i in range(height):
             if i < height * 3 // 4:
-                blocks.append(Sand)
+                _blocks.append(blocks.Sand)
             else:
-                blocks.append(Stone)
-        return blocks
+                _blocks.append(blocks.Stone)
+        return _blocks
 
 
 class Forest(Biome):
     @staticmethod
     def blocks_from_height(height) -> list[type]:
-        blocks = [ForestGrass]
+        _blocks = [blocks.ForestGrass]
         for i in range(height-1):
             if i < height // 2:
-                blocks.append(Dirt)
+                _blocks.append(blocks.Dirt)
             else:
-                blocks.append(Stone)
-        return blocks
+                _blocks.append(blocks.Stone)
+        return _blocks
 
 
 class BiomeMap:

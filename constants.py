@@ -14,13 +14,14 @@ SHADOW_STRENGTH = 0.2  # 0 <= x <= 1
 HEIGHT_RECOLOR_STRENGTH = 0.3
 
 MAX_FPS = 200
-TRAPEZOIDS_IN_CACHE_DURATION = 6  # base value: 1
+TRAPEZOIDS_IN_CACHE_DURATION = 8  # base value: 1
 # if more -> block sides will be rendered every n frames (cause artefacts if value is big)
 # 2: +15% FPS, 3: +30% FPS, 5: +67% FPS, 25: +96% FPS
 
-TRAPEZOID_KEYS_PRECISION = 1  # base value: 1, more -> more accurate trapezoids
+TRAPEZOID_KEYS_PRECISION = 1  # base value: 1, more -> more accurate trapezoids, more cache
 
-LOADED_PARTS_PER_FRAME = 10
+LOADED_PARTS_PER_FRAME = 5
+DRAW_SIDES_WITH_UNLOADED_REGIONS: bool = False
 
 REGIONS_DISTANCE_UPDATE_FREQ = 50
 GARBAGE_COLLECTION_FREQ = 500

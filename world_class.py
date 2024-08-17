@@ -1,13 +1,14 @@
 import os
 import pickle
-from blocks import *
+import pygame as pg
+import blocks
 from generation.height_map import HeightMap
 from generation.biome_map import BiomeMap, Forest
 from generation.halton_sequence import HaltonPoints
 from generation.structures import Tree1, Tree2
 from constants import *
 from gui.objects import tiles_types, Tile
-from world_column import Column, NOT_FOUND_COLUMN2
+from world_column import Column
 from world_region import Region
 
 
@@ -84,7 +85,7 @@ class World:
         self.taken_tiles = TakenTilesCatalog(path_to_taken_tiles)
         self.taken_tiles.load()
 
-        self.DEFAULT_ADDED_BLOCK: type = Glass
+        self.DEFAULT_ADDED_BLOCK: type = blocks.Glass
 
     def add_region(self, x2, y2):
         region = Region(x2 * WORLD_CHUNK_SIZE, y2 * WORLD_CHUNK_SIZE, WORLD_CHUNK_SIZE)
@@ -101,15 +102,15 @@ class World:
         y2 = y // WORLD_CHUNK_SIZE
         return (x2, y2) in self.regions
 
-    def get_column(self, x, y) -> Column:
+    def get_column(self, x, y) -> Column | None:
         if self.check_is_region(x, y):
             region = self.get_region(x, y)
             column = region.get_column(x, y)
             return column
-        else:
+        '''else:
             if FILLING_COLUMNS_INFO:
                 print('not is region, copying not fount column')
-            return NOT_FOUND_COLUMN2.copy_to_x_y(x, y, True)
+            return NOT_FOUND_COLUMN2.copy_to_x_y(x, y, True)'''
 
     def set_column(self, x, y, column: Column):
         region = self.get_region(x, y)
@@ -153,7 +154,9 @@ class World:
             print('start setting h diffs -----------------------------------')
         for i in range(rect.left, rect.right):
             for j in range(rect.top, rect.bottom):
-                column = self.get_column(i,   j)
+                column = self.get_column(i, j)
+                if column is None:
+                    continue
                 if FILLING_COLUMNS_INFO:
                     print('setting for column', i, j)
                 left   = self.get_column(i-1, j)
@@ -178,7 +181,7 @@ class WorldFiller:
         self.biome_map = BiomeMap(self.folder, seed)
 
         self.tree_generator = HaltonPoints(self.folder, 'trees', TREES_CHUNK_SIZE, TREES_IN_CHUNK, TREE_AVOIDING_RADIUS)
-        self.blocks_to_add_stash: dict[tuple[int, int]: list[Block]] = {}
+        self.blocks_to_add_stash: dict[tuple[int, int]: list[blocks.Block]] = {}
 
         self.tile_generator = HaltonPoints(self.folder, 'tiles', TILES_CHUNK_SIZE, TILES_IN_CHUNK, TILE_AVOIDING_RADIUS)
 
@@ -193,11 +196,11 @@ class WorldFiller:
 
     def check_stash_for_column(self, column, i, j):
         if (i, j) in self.blocks_to_add_stash:
-            blocks_from_stash: list[Block] = self.blocks_to_add_stash[(i, j)]
+            blocks_from_stash: list[blocks.Block] = self.blocks_to_add_stash[(i, j)]
             blocks_from_stash.sort(key=lambda b: b.z)
             while blocks_from_stash[0].z > column.nt_height + len(column.transparent_blocks):
                 if blocks_from_stash[0].is_transparent:
-                    column.add_block_on_top(Shadow)
+                    column.add_block_on_top(blocks.Shadow)
                 else:
                     column.add_block_on_top(type(column.get_top_block()))
             for block in blocks_from_stash:
@@ -222,15 +225,15 @@ class WorldFiller:
                 else:
                     height = self.height_map.get_height(i, j)
                     biome = self.biome_map.get_biome(i, j)
-                    blocks = biome.blocks_from_height(height)
+                    _blocks = biome.blocks_from_height(height)
 
-                    if len(blocks) < WATER_LEVEL:
-                        for _ in range(WATER_LEVEL - len(blocks)):
-                            blocks = [Water] * (WATER_LEVEL - len(blocks)) + blocks
+                    if len(_blocks) < WATER_LEVEL:
+                        for _ in range(WATER_LEVEL - len(_blocks)):
+                            _blocks = [blocks.Water] * (WATER_LEVEL - len(_blocks)) + _blocks
 
-                    new_column = Column(i, j, blocks)
+                    new_column = Column(i, j, _blocks)
 
-                    if biome is Forest and len(blocks) > WATER_LEVEL:
+                    if biome is Forest and len(_blocks) > WATER_LEVEL:
                         trees = self.tree_generator.get_points_by_point(i, j)
                         if (i, j) in trees:
                             if i + j % 3 == 0:
@@ -238,12 +241,12 @@ class WorldFiller:
                             else:
                                 structures.append(Tree1(i, j, new_column.nt_height))
 
-                    if len(blocks) > WATER_LEVEL:
+                    if len(_blocks) > WATER_LEVEL:
                         tiles = self.tile_generator.get_points_by_point(i, j)
                         if (i, j) in tiles:
                             z_offset = ((i+j) % 3) - 1
                             tile_type = tiles_types[(i+j) % len(tiles_types)]
-                            tile = tile_type(i, j, len(blocks)-1 + z_offset)
+                            tile = tile_type(i, j, len(_blocks)-1 + z_offset)
                             if not self.world.taken_tiles.check_if_already_taken(tile):
                                 self.world.add_tile(i, j, tile)
 
@@ -259,9 +262,9 @@ class WorldFiller:
                 if rect.collidepoint(i, j):
                     editing_column = self.world.get_column(i, j)
                     height_diff = editing_column.nt_height + len(editing_column.transparent_blocks) - structure.z
-                    if type(block) is Shadow:
+                    if type(block) is blocks.Shadow:
                         for i in range(max(0, -height_diff - 1)):
-                            editing_column.add_block_on_top(Shadow)
+                            editing_column.add_block_on_top(blocks.Shadow)
                     if height_diff >= block.z - structure.z:
                         continue
                     editing_column.add_block_on_top(type(block))

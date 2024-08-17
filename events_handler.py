@@ -2,7 +2,6 @@ import pygame as pg
 import time
 from world_class import World
 from camera import CameraFrame
-from blocks import *
 from trapezoid import TrapezoidDrawer
 from gui.objects import Player
 from gui.snake import Snake
@@ -101,14 +100,16 @@ class EventHandler:
                         snake.move_horizontally(*player_move[:2])
 
             column_under_player = self.world.get_column(player.x, player.y)
-            height = column_under_player.full_height - 1
-            if player.z - height < 1:
-                snake.move_player_vertically(player_move[2])
+            if column_under_player is not None:
+                height = column_under_player.full_height - 1
+                if player.z - height < 1:
+                    snake.move_player_vertically(player_move[2])
 
         elif player.stamina == 0:
             column_under_player = self.world.get_column(player.x, player.y)
-            height = column_under_player.full_height - 1
-            player.fall(height)
+            if column_under_player is not None:
+                height = column_under_player.full_height - 1
+                player.fall(height)
             if any(player_move):
                 zero_stamina_move = True
                 player.init_cooldown()
@@ -116,9 +117,10 @@ class EventHandler:
 
         # Lifting in case of loading of the regions
         column_under_player = self.world.get_column(player.x, player.y)
-        height = column_under_player.full_height - 1
-        if player.z < height:
-            player.fall(height)
+        if column_under_player is not None:
+            height = column_under_player.full_height - 1
+            if player.z < height:
+                player.fall(height)
 
         all_tiles = self.world.get_all_tiles()
         for tile in all_tiles:

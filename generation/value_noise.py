@@ -1,7 +1,5 @@
 import random
 
-import pygame as pg
-import time
 from generation.interpolations import *
 from generation.abc_noise import DataNoiseTile
 

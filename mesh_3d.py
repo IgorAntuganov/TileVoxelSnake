@@ -70,6 +70,8 @@ class Mesh3D:
             column: Column
             column = world.get_column(i, j)
             figures: list[Figure] = []
+            if column is None:
+                continue
 
             if not column.height_difference_are_set:
                 figure = self.get_not_calculated_column_figure(column)

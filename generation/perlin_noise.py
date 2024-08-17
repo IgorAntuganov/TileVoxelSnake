@@ -1,7 +1,6 @@
-import pygame as pg
-import time
 import random
-from generation.interpolations import *
+import math
+from generation.interpolations import interpolate_sigmoid
 from generation.abc_noise import DataNoiseTile
 
 

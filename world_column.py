@@ -1,18 +1,18 @@
-from blocks import *
 from constants import *
+import blocks
 
 
 class Column:
-    def __init__(self, x, y, blocks: list[type]):
+    def __init__(self, x, y, _blocks: list[type]):
         """
-        :param blocks: blocks from top to bottom as types !Transparent can't follow non-transparent blocks!
+        :param _blocks: blocks from top to bottom as types !Transparent can't follow non-transparent blocks!
         """
         self.x = x
         self.y = y
-        self.blocks: list[Block | FullBlock | SingleSpriteBlock] = []  # from top to bottom
-        self.transparent_blocks: list[Block] = []  # from top to bottom
-        for i in range(len(blocks)):
-            block = blocks[i](x, y, len(blocks)-i-1)
+        self.blocks: list[blocks.Block | blocks.FullBlock | blocks.SingleSpriteBlock] = []  # from top to bottom
+        self.transparent_blocks: list[blocks.Block] = []  # from top to bottom
+        for i in range(len(_blocks)):
+            block = _blocks[i](x, y, len(_blocks)-i-1)
             if not block.is_transparent:
                 self.blocks.append(block)
             else:
@@ -53,45 +53,46 @@ class Column:
     def transparent_height(self):
         return len(self.transparent_blocks)
 
-    def get_top_block(self) -> Block:
+    def get_top_block(self) -> blocks.Block:
         if len(self.transparent_blocks) != 0:
             return self.transparent_blocks[0]
         if self.nt_height > 0:
             return self.blocks[0]
-        return DebugBlock(self.x, self.y, 0)
+        return blocks.DebugBlock(self.x, self.y, 0)
 
-    def get_block(self, z) -> Block | FullBlock:
+    def get_block(self, z) -> blocks.Block | blocks.FullBlock:
         if self.nt_height > 0:
             if self.nt_height > z:
                 return self.blocks[-z-1]
             elif len(self.transparent_blocks) > 0:
                 ind = - z + self.nt_height - 1
                 return self.transparent_blocks[ind]
-        return DebugBlock(self.x, self.y, z)
+        return blocks.DebugBlock(self.x, self.y, z)
 
-    def get_first_non_transparent(self) -> Block:
+    def get_first_non_transparent(self) -> blocks.Block:
         if self.nt_height > 0:
             return self.blocks[0]
-        return DebugBlock(self.x, self.y, 0)
+        return blocks.DebugBlock(self.x, self.y, 0)
 
-    def get_blocks_with_visible_top_sprite(self) -> list[Block]:
+    def get_blocks_with_visible_top_sprite(self) -> list[blocks.Block]:
         assert self.visible_blocks_are_set
-        return self.blocks_with_visible_top_sprite[::-1]
+        return self.blocks_with_visible_top_sprite
 
     def define_blocks_with_visible_top_sprite(self):
         # print('defing')
-        self.blocks_with_visible_top_sprite = []
+        blocks_with_visible_top_sprite = []
         if self.transparent_height > 0:
             top_block = self.transparent_blocks[0]
-            self.blocks_with_visible_top_sprite.append(top_block)
+            blocks_with_visible_top_sprite.append(top_block)
             last = top_block
             for i in range(1, self.transparent_height):
                 block = self.transparent_blocks[i]
                 if type(block) != type(last):
-                    self.blocks_with_visible_top_sprite.append(block)
+                    blocks_with_visible_top_sprite.append(block)
                 last = block
         if len(self.blocks) > 0:
-            self.blocks_with_visible_top_sprite.append(self.blocks[0])
+            blocks_with_visible_top_sprite.append(self.blocks[0])
+        self.blocks_with_visible_top_sprite = blocks_with_visible_top_sprite[::-1]
         self.visible_blocks_are_set = True
 
     # Adding and removing blocks -------
@@ -144,8 +145,17 @@ class Column:
         }
 
         for key in columns:
-            self.height_difference[key] = self.full_height - columns[key].full_height
-            self.height_difference_2[key] = self.full_height - columns[key].nt_height
+            column = columns[key]
+            if column is not None:
+                self.height_difference[key] = self.full_height - column.full_height
+                self.height_difference_2[key] = self.full_height - column.nt_height
+            else:
+                if DRAW_SIDES_WITH_UNLOADED_REGIONS:
+                    value = self.full_height
+                else:
+                    value = 0
+                self.height_difference[key] = value
+                self.height_difference_2[key] = value
 
         if FILLING_COLUMNS_INFO:
             print('set diffs', self.x, self.y, self.height_difference, self.height_difference_2)
@@ -182,15 +192,15 @@ class Column:
         height_diff = data['hd']
         height_diff_2 = data['hd2']
         height_diff_are_set = data['hd_are_set']
-        blocks = []
+        _blocks = []
         for block in data['transparent_blocks']:
-            block_class = blocks_classes_dict[block]
-            blocks.append(block_class)
+            block_class = blocks.blocks_classes_dict[block]
+            _blocks.append(block_class)
         for block in data['blocks']:
-            block_class = blocks_classes_dict[block]
-            blocks.append(block_class)
+            block_class = blocks.blocks_classes_dict[block]
+            _blocks.append(block_class)
 
-        pickle_column = Column(x, y, blocks)
+        pickle_column = Column(x, y, _blocks)
 
         pickle_column.height_difference = height_diff
         pickle_column.height_difference_2 = height_diff_2
@@ -209,15 +219,9 @@ class Column:
             'transparent_blocks': []
         }
         for block in self.blocks:
-            block_name = reversed_blocks_classes_dict[type(block)]
+            block_name = blocks.reversed_blocks_classes_dict[type(block)]
             disk_data['blocks'].append(block_name)
         for block in self.transparent_blocks:
-            block_name = reversed_blocks_classes_dict[type(block)]
+            block_name = blocks.reversed_blocks_classes_dict[type(block)]
             disk_data['transparent_blocks'].append(block_name)
         return disk_data
-
-
-NOT_FOUND_COLUMN = Column(0, 0, [Shadow])
-NOT_FOUND_COLUMN.set_height_difference(*[NOT_FOUND_COLUMN]*8)
-NOT_FOUND_COLUMN2 = Column(0, 0, [TransparentDebugBlock])
-NOT_FOUND_COLUMN2.set_height_difference(*[NOT_FOUND_COLUMN2]*8)

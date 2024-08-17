@@ -1,6 +1,5 @@
 import pygame as pg
-from constants import BASE_LEVEL_SIZE, MIN_BASE_LEVEL_SIZE, MAX_BASE_LEVEL_SIZE, SCREEN_SIZE, BASE_LEVEL_STEP, \
-    WORLD_CHUNK_SIZE
+from constants import *
 
 
 class Layers:
