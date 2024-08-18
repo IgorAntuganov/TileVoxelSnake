@@ -120,8 +120,8 @@ class Column:
                 print(block.z, block.__class__.__name__)
 
     # Working with height difference -----
-    def set_height_difference(self, *args):
-        self.height_difference = HeightDiff.from_9_columns(self, *args)
+    def set_height_difference(self, columns_3x3: list[...]):
+        self.height_difference = HeightDiff.from_9_columns(columns_3x3)
 
         if FILLING_COLUMNS_INFO:
             print('set diffs', self.x, self.y, self.height_difference)

@@ -123,73 +123,34 @@ class Mesh3D:
             d2 = d * THIN_SIDES_CACHE_DURATION_MULTIPLAYER - 1
             cull_value = TOO_THIN_SIDES_CULLING_VALUE if frame % d2 == counter % d2 else 0
             values = list(hd.values())+list(hd2.values())
+
             for k in range(max(values)):
                 side_z = z - k
                 block = column.get_block(side_z)
                 top_rect = self.layers.get_rect_for_block(x, y, side_z)
                 bottom_rect = self.layers.get_rect_for_block(x, y, side_z - 1)
-                # bottom side
+                keys = []
                 if column_top_rect.bottom + cull_value < column_bottom_rect.bottom:
-                    if (not block.is_transparent and k < hd2['bottom']) or (block.is_transparent and k < hd['bottom']):
-                        if k == hd2['bottom'] - 1:
-                            sprite = block.get_side_sprite_shaded('south')
-                            sprite_name = f"{block.__class__.__name__}_south_shaded"
-                        else:
-                            sprite = block.get_side_sprite('south')
-                            sprite_name = f"{block.__class__.__name__}_south"
-
-                        figure = self.sides_drawer.create_bottom_figure(x, y, side_z,
-                                                                        sprite, sprite_name,
-                                                                        top_rect, bottom_rect)
-                        if figure is not None:
-                            figures.append(figure)
-                            figures_for_cache.append(figure)
-
-                # top side
+                    keys.append('south')
                 if column_top_rect.top > column_bottom_rect.top + cull_value:
-                    if (not block.is_transparent and k < hd2['top']) or (block.is_transparent and k < hd['top']):
-                        if k == hd['top'] - 1:
-                            sprite = block.get_side_sprite_shaded('north')
-                            sprite_name = f"{block.__class__.__name__}_north_shaded"
-                        else:
-                            sprite = block.get_side_sprite('north')
-                            sprite_name = f"{block.__class__.__name__}_north"
-
-                        figure = self.sides_drawer.create_top_figure(x, y, side_z,
-                                                                     sprite, sprite_name,
-                                                                     top_rect, bottom_rect)
-                        if figure is not None:
-                            figures.append(figure)
-                            figures_for_cache.append(figure)
-
-                # right side
+                    keys.append('north')
                 if column_top_rect.right + cull_value < column_bottom_rect.right:
-                    if (not block.is_transparent and k < hd2['right']) or (block.is_transparent and k < hd['right']):
-                        if k == hd['right'] - 1:
-                            sprite = block.get_side_sprite_shaded('east')
-                            sprite_name = f"{block.__class__.__name__}_east_shaded"
-                        else:
-                            sprite = block.get_side_sprite('east')
-                            sprite_name = f"{block.__class__.__name__}_east"
-                        figure = self.sides_drawer.create_right_figure(x, y, side_z,
-                                                                       sprite, sprite_name,
-                                                                       top_rect, bottom_rect)
-                        if figure is not None:
-                            figures.append(figure)
-                            figures_for_cache.append(figure)
-
-                # left side
+                    keys.append('east')
                 if column_top_rect.left > column_bottom_rect.left + cull_value:
-                    if (not block.is_transparent and k < hd2['left']) or (block.is_transparent and k < hd['left']):
-                        if k == hd['left'] - 1:
-                            sprite = block.get_side_sprite_shaded('west')
-                            sprite_name = f"{block.__class__.__name__}_west_shaded"
+                    keys.append('west')
+
+                for key in keys:
+                    if (not block.is_transparent and k < hd2[key]) or (block.is_transparent and k < hd[key]):
+                        if k == hd2[key] - 1:
+                            sprite = block.get_side_sprite_shaded(key)
+                            sprite_name = f"{block.__class__.__name__}_{key}_shaded"
                         else:
-                            sprite = block.get_side_sprite('west')
-                            sprite_name = f"{block.__class__.__name__}_west"
-                        figure = self.sides_drawer.create_left_figure(x, y, side_z,
-                                                                      sprite, sprite_name,
-                                                                      top_rect, bottom_rect)
+                            sprite = block.get_side_sprite(key)
+                            sprite_name = f"{block.__class__.__name__}_{key}"
+
+                        figure = self.sides_drawer.create_figure(x, y, side_z, key,
+                                                                 sprite, sprite_name,
+                                                                 top_rect, bottom_rect)
                         if figure is not None:
                             figures.append(figure)
                             figures_for_cache.append(figure)

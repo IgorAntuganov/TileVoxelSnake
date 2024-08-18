@@ -155,15 +155,17 @@ class World:
                     continue
                 if FILLING_COLUMNS_INFO:
                     print('setting for column', i, j)
-                left   = self.get_column(i-1, j)
-                top    = self.get_column(i,   j-1)
-                right  = self.get_column(i+1, j)
-                bottom = self.get_column(i,   j+1)
-                top_left     = self.get_column(i-1, j-1)
-                top_right    = self.get_column(i+1, j-1)
-                bottom_left  = self.get_column(i-1, j+1)
-                bottom_right = self.get_column(i+1, j+1)
-                column.set_height_difference(left, top, right, bottom, top_left, top_right, bottom_left, bottom_right)
+
+                columns_3x3 = []
+                for j1 in range(-1, 2):
+                    row = []
+                    for i1 in range(-1, 2):
+                        if i1 == j1 == 0:
+                            row.append(column)
+                        else:
+                            row.append(self.get_column(i+i1, j+j1))
+                    columns_3x3.append(row)
+                column.set_height_difference(columns_3x3)
 
 
 class WorldFiller:

@@ -17,8 +17,8 @@ MAX_FPS = 200
 TRAPEZOIDS_IN_CACHE_DURATION = 8  # base value: 1
 # if more -> block sides will be rendered every n frames (cause artefacts if value is big)
 # 2: +15% FPS, 3: +30% FPS, 5: +67% FPS, 25: +96% FPS
-TOO_THIN_SIDES_CULLING_VALUE = 100
-THIN_SIDES_CACHE_DURATION_MULTIPLAYER = 6  # cause artefacts if prefilling frames with black enabled
+TOO_THIN_SIDES_CULLING_VALUE = 0
+THIN_SIDES_CACHE_DURATION_MULTIPLAYER = 1  # cause artefacts if prefilling frames with black enabled
 
 TRAPEZOID_KEYS_PRECISION = 2  # base value: 1, more -> more accurate trapezoids, more cache
 

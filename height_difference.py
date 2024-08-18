@@ -7,32 +7,30 @@ class HeightDiff:
         self.nt_height_diff = nt_height_diff
 
     def get_top_block_neighbors(self) -> tuple[bool, bool, bool, bool, bool, bool, bool, bool]:
-        return (self.full_height_diff['left'] < 0,
-                self.full_height_diff['top'] < 0,
-                self.full_height_diff['right'] < 0,
-                self.full_height_diff['bottom'] < 0,
-                self.full_height_diff['top_left'] < 0,
-                self.full_height_diff['top_right'] < 0,
-                self.full_height_diff['bottom_right'] < 0,
-                self.full_height_diff['bottom_left'] < 0)
+        return (self.full_height_diff['west'] < 0,
+                self.full_height_diff['north'] < 0,
+                self.full_height_diff['east'] < 0,
+                self.full_height_diff['south'] < 0,
+                self.full_height_diff['north_west'] < 0,
+                self.full_height_diff['north_east'] < 0,
+                self.full_height_diff['south_west'] < 0,
+                self.full_height_diff['south_east'] < 0)
 
     @staticmethod
-    def from_9_columns(parent_column,
-                       left, top, right, bottom,
-                       top_left, top_right, bottom_left, bottom_right
-                       ):
+    def from_9_columns(columns_3x3: list[list[...]]):
         """left, top, right, bottom - adjacent Columns;
         top_left, top_right, bottom_left, bottom_right - diagonal Columns"""
 
+        parent_column = columns_3x3[1][1]
         columns = {
-            'left': left,
-            'top': top,
-            'right': right,
-            'bottom': bottom,
-            'top_left': top_left,
-            'top_right': top_right,
-            'bottom_left': bottom_left,
-            'bottom_right': bottom_right
+            'west': columns_3x3[1][0],
+            'north': columns_3x3[0][1],
+            'east': columns_3x3[1][2],
+            'south': columns_3x3[2][1],
+            'north_west': columns_3x3[0][0],
+            'north_east': columns_3x3[0][2],
+            'south_west': columns_3x3[2][0],
+            'south_east': columns_3x3[2][2]
         }
         full_height_diff = {}
         nt_height_diff = {}
