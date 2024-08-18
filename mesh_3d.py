@@ -3,7 +3,7 @@ from camera import CameraFrame, Layers
 from world_class import Column, World
 from render_order import RenderOrder
 from sides_drawer import Figure, SidesDrawer
-from constants import TRAPEZOIDS_IN_CACHE_DURATION
+from constants import *
 
 
 class SideCache:
@@ -78,16 +78,24 @@ class Mesh3D:
                 self.elements.append([figure, ])
                 continue
 
-            for block in column.get_blocks_with_visible_top_sprite():
+            visible_blocks = column.get_blocks_with_visible_top_sprite()
+            for m, block in enumerate(visible_blocks):
                 x, y, z = block.x, block.y, block.z
                 block_rect = self.layers.get_rect_for_block(x, y, z)
                 if self.check_if_in_screen(block_rect):
                     rect_size = block_rect.height, block_rect.width
                     top_block_neighbors = column.get_top_block_neighbors()
-                    if not block.is_transparent:
-                        sprite = block.get_top_sprite_resized_shaded(rect_size, top_block_neighbors, z)
+                    if block.is_transparent:
+                        if m != 0:
+                            sprite = block.get_top_sprite_fully_shaded(rect_size, z)
+                        else:
+                            sprite = block.get_top_sprite_resized_shaded(rect_size, (False, ) * 8, z)
                     else:
-                        sprite = block.get_top_sprite_fully_shaded(rect_size, z)
+                        if m != len(visible_blocks)-1:
+                            sprite = block.get_top_sprite_fully_shaded(rect_size, z)
+                        else:
+                            sprite = block.get_top_sprite_resized_shaded(rect_size, top_block_neighbors, z)
+
                     top_figure = Figure(block_rect, sprite, (x, y, z), (x, y, z + 1))
                     figures.append(top_figure)
 
@@ -106,11 +114,13 @@ class Mesh3D:
             top_block = column.get_top_block()
             x, y, z = column.x, column.y, top_block.z
             column_bottom_rect = self.layers.get_rect_for_block(x, y, 0)
-            top_block_rect = self.layers.get_rect_for_block(x, y, z)
+            column_top_rect = self.layers.get_rect_for_block(x, y, z)
 
             hd = column.height_difference.full_height_diff
             hd2 = column.height_difference.nt_height_diff
 
+            d2 = d * THIN_SIDES_CACHE_DURATION_MULTIPLAYER - 1
+            cull_value = TOO_THIN_SIDES_CULLING_VALUE if frame % d2 == counter % d2 else 0
             values = list(hd.values())+list(hd2.values())
             for k in range(max(values)):
                 side_z = z - k
@@ -118,7 +128,7 @@ class Mesh3D:
                 top_rect = self.layers.get_rect_for_block(x, y, side_z)
                 bottom_rect = self.layers.get_rect_for_block(x, y, side_z - 1)
                 # bottom side
-                if top_block_rect.bottom < column_bottom_rect.bottom:
+                if column_top_rect.bottom + cull_value < column_bottom_rect.bottom:
                     if (not block.is_transparent and k < hd2['bottom']) or (block.is_transparent and k < hd['bottom']):
                         if k == hd2['bottom'] - 1:
                             sprite = block.get_side_sprite_shaded('bottom')
@@ -127,13 +137,15 @@ class Mesh3D:
                             sprite = block.get_side_sprite('bottom')
                             sprite_name = f"{block.__class__.__name__}_bottom"
 
-                        figure = self.sides_drawer.create_bottom_figure(x, y, side_z, sprite, sprite_name, top_rect, bottom_rect)
+                        figure = self.sides_drawer.create_bottom_figure(x, y, side_z,
+                                                                        sprite, sprite_name,
+                                                                        top_rect, bottom_rect)
                         if figure is not None:
                             figures.append(figure)
                             figures_for_cache.append(figure)
 
                 # top side
-                if top_block_rect.top > column_bottom_rect.top:
+                if column_top_rect.top > column_bottom_rect.top + cull_value:
                     if (not block.is_transparent and k < hd2['top']) or (block.is_transparent and k < hd['top']):
                         if k == hd['top'] - 1:
                             sprite = block.get_side_sprite_shaded('top')
@@ -142,13 +154,15 @@ class Mesh3D:
                             sprite = block.get_side_sprite('top')
                             sprite_name = f"{block.__class__.__name__}_top"
 
-                        figure = self.sides_drawer.create_top_figure(x, y, side_z, sprite, sprite_name, top_rect, bottom_rect)
+                        figure = self.sides_drawer.create_top_figure(x, y, side_z,
+                                                                     sprite, sprite_name,
+                                                                     top_rect, bottom_rect)
                         if figure is not None:
                             figures.append(figure)
                             figures_for_cache.append(figure)
 
                 # right side
-                if top_block_rect.right < column_bottom_rect.right:
+                if column_top_rect.right + cull_value < column_bottom_rect.right:
                     if (not block.is_transparent and k < hd2['right']) or (block.is_transparent and k < hd['right']):
                         if k == hd['right'] - 1:
                             sprite = block.get_side_sprite_shaded('right')
@@ -156,13 +170,15 @@ class Mesh3D:
                         else:
                             sprite = block.get_side_sprite('right')
                             sprite_name = f"{block.__class__.__name__}_right"
-                        figure = self.sides_drawer.create_right_figure(x, y, side_z, sprite, sprite_name, top_rect, bottom_rect)
+                        figure = self.sides_drawer.create_right_figure(x, y, side_z,
+                                                                       sprite, sprite_name,
+                                                                       top_rect, bottom_rect)
                         if figure is not None:
                             figures.append(figure)
                             figures_for_cache.append(figure)
 
                 # left side
-                if top_block_rect.left > column_bottom_rect.left:
+                if column_top_rect.left > column_bottom_rect.left + cull_value:
                     if (not block.is_transparent and k < hd2['left']) or (block.is_transparent and k < hd['left']):
                         if k == hd['left'] - 1:
                             sprite = block.get_side_sprite_shaded('left')
@@ -170,7 +186,9 @@ class Mesh3D:
                         else:
                             sprite = block.get_side_sprite('left')
                             sprite_name = f"{block.__class__.__name__}_left"
-                        figure = self.sides_drawer.create_left_figure(x, y, side_z, sprite, sprite_name, top_rect, bottom_rect)
+                        figure = self.sides_drawer.create_left_figure(x, y, side_z,
+                                                                      sprite, sprite_name,
+                                                                      top_rect, bottom_rect)
                         if figure is not None:
                             figures.append(figure)
                             figures_for_cache.append(figure)
@@ -178,9 +196,6 @@ class Mesh3D:
             if len(figures_for_cache) > 0:
                 self.sides_cache.add(i, j, figures_for_cache, self.camera.get_center())
             self.elements.append(figures)
-
-    def get_elements(self) -> list[list[Figure]]:
-        return self.elements
 
     def draw_terrain(self, scr: pg.Surface):
         for column_figures in self.elements:

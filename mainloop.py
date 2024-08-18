@@ -60,7 +60,8 @@ while True:
     if frame % GARBAGE_COLLECTION_FREQ == 0:
         gc.collect()
 
-    # scr.fill((0, 0, 0))
+    if PREFILL_FRAME_WITH_BLACK:
+        scr.fill((0, 0, 0))
     camera_frame.update_layers()
     terr_mesh.create_mesh(world, frame)
     terr_mesh.draw_terrain(scr)

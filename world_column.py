@@ -66,6 +66,7 @@ class Column:
         return blocks.DebugBlock(self.x, self.y, 0)
 
     def get_blocks_with_visible_top_sprite(self) -> list[blocks.Block]:
+        """return blocks from top to bottom"""
         assert self.visible_blocks_are_set
         return self.blocks_with_visible_top_sprite
 

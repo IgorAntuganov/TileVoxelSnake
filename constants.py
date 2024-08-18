@@ -8,7 +8,7 @@ MIN_BASE_LEVEL_SIZE = 16
 MAX_BASE_LEVEL_SIZE = 64
 BASE_LEVEL_STEP = 8
 
-SHADOW_RADIUS = 0.5  # 0 <= x <= 1
+SHADOW_RADIUS = 0.6  # 0 <= x <= 1
 SHADOW_STRENGTH = 0.2  # 0 <= x <= 1
 
 HEIGHT_RECOLOR_STRENGTH = 0.3
@@ -17,6 +17,8 @@ MAX_FPS = 200
 TRAPEZOIDS_IN_CACHE_DURATION = 8  # base value: 1
 # if more -> block sides will be rendered every n frames (cause artefacts if value is big)
 # 2: +15% FPS, 3: +30% FPS, 5: +67% FPS, 25: +96% FPS
+TOO_THIN_SIDES_CULLING_VALUE = 100
+THIN_SIDES_CACHE_DURATION_MULTIPLAYER = 6  # cause artefacts if prefilling frames with black enabled
 
 TRAPEZOID_KEYS_PRECISION = 1  # base value: 1, more -> more accurate trapezoids, more cache
 
@@ -49,6 +51,7 @@ HEIGHT_GENERATING_INFO = False
 SET_FPS_CAPTION = False
 NOT_ABSTRACT_BLOCKS_CLASSES_INFO = False
 FILLING_COLUMNS_INFO = False
+PREFILL_FRAME_WITH_BLACK = False
 
 # Constants
 
