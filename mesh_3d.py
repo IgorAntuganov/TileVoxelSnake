@@ -90,12 +90,12 @@ class Mesh3D:
                         if m == 0:
                             raise AssertionError('Bottom visible block must be non transparent')
                         else:
-                            sprite = block.get_top_sprite_resized_shaded(rect_size, (False, ) * 8, z)
+                            sprite = block.get_top_sprite_resized_shaded(rect_size, column.height_difference, z)  ### return (False, ) * 8
                     else:
                         if m != len(visible_blocks)-1:
                             sprite = block.get_top_sprite_fully_shaded(rect_size, z)
                         else:
-                            sprite = block.get_top_sprite_resized_shaded(rect_size, top_block_neighbors, z)
+                            sprite = block.get_top_sprite_resized_shaded(rect_size, column.height_difference, z)
 
                     figure = Figure(block_rect, sprite, (x, y, z), (x, y, z + 1))
                     figures.append(figure)

@@ -4,6 +4,7 @@ import pygame as pg
 
 from constants import SIDES_NAMES, NOT_ABSTRACT_BLOCKS_CLASSES_INFO
 from blocksprites import BlockSpritesDict
+from height_difference import HeightDiff
 
 # Abstract classes: -----------------------------------
 
@@ -37,9 +38,9 @@ class Block(ABC):
         cls.sprites = BlockSpritesDict(*[cls.debug_sprite] * 6)
 
     def get_top_sprite_resized_shaded(self, size: tuple[int, int],
-                                      neighbors: tuple[bool, bool, bool, bool, bool, bool, bool, bool],
+                                      height_diff: HeightDiff,
                                       z: int) -> pg.Surface:
-        return self.sprites.get_top_resized_shaded(size, neighbors, z)
+        return self.sprites.get_top_resized_shaded(size, height_diff, z)
 
     def get_top_sprite_fully_shaded(self, size: tuple[int, int], z: int):
         return self.sprites.get_top_resized_fully_shaded(size, z)

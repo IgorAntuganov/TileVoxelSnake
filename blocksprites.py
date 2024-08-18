@@ -1,6 +1,7 @@
 import math
 import pygame as pg
 from constants import *
+from height_difference import HeightDiff
 
 
 def recolor(sprite: pg.Surface, coefficient: float) -> pg.Surface:
@@ -96,20 +97,20 @@ class BlockSpritesDict:
 
     def __init__(self, top: str,
                  bottom: str,
-                 side1: str,
-                 side2: str,
-                 side3: str,
-                 side4: str):
+                 west: str,
+                 north: str,
+                 east: str,
+                 south: str):
         self.scale_cache = {}
         self.scale_shaded_cache = {}
         self.shaded_sides_cache = {}
         self._top = BlockSprite(top)
         self._bottom = BlockSprite(bottom)
-        self._side1 = BlockSprite(side1, 90)
-        self._side2 = BlockSprite(side2)
-        self._side3 = BlockSprite(side3, 90)
-        self._side4 = BlockSprite(side4)
-        self._sides = [self._side1, self._side2, self._side3, self._side4]
+        self._west = BlockSprite(west, 90)
+        self._north = BlockSprite(north)
+        self._east = BlockSprite(east, 90)
+        self._south = BlockSprite(south)
+        self._sides = [self._west, self._north, self._east, self._south]
 
     def get_top_resized(self, size: tuple[int, int], z: int):
         key = ('not shaded', size, z)
@@ -120,8 +121,9 @@ class BlockSpritesDict:
         return self.scale_shaded_cache[key]
 
     def get_top_resized_shaded(self, size: tuple[int, int],
-                               neighbors: tuple[bool, bool, bool, bool, bool, bool, bool, bool],
+                               height_diff: HeightDiff,
                                z: int) -> pg.Surface:
+        neighbors = height_diff.get_top_block_neighbors()
         key = (*neighbors, size, z)
         if key not in self.scale_shaded_cache:
             image = pg.transform.scale(self._top.image, size)
@@ -159,7 +161,7 @@ class BlockSpritesDict:
         if key in self.shaded_sides_cache:
             return self.shaded_sides_cache[key]
         shade = self.shade_maker.get_shade(side, sprite.get_size(), True)
-        if side in ['top', 'left']:  # Undo the rotation of the top sprite shadow
+        if side in ['north', 'west']:  # Undo the rotation of the top sprite shadow
             shade = pg.transform.rotate(shade, 180)
 
         sprite.blit(shade, (0, 0))
