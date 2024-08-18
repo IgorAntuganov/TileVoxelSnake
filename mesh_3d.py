@@ -78,6 +78,7 @@ class Mesh3D:
                 self.elements.append([figure, ])
                 continue
 
+            # top sides of blocks
             visible_blocks = column.get_blocks_with_visible_top_sprite()
             for m, block in enumerate(visible_blocks):
                 x, y, z = block.x, block.y, block.z
@@ -86,8 +87,8 @@ class Mesh3D:
                     rect_size = block_rect.height, block_rect.width
                     top_block_neighbors = column.get_top_block_neighbors()
                     if block.is_transparent:
-                        if m != 0:
-                            sprite = block.get_top_sprite_fully_shaded(rect_size, z)
+                        if m == 0:
+                            raise AssertionError('Bottom visible block must be non transparent')
                         else:
                             sprite = block.get_top_sprite_resized_shaded(rect_size, (False, ) * 8, z)
                     else:
@@ -96,8 +97,8 @@ class Mesh3D:
                         else:
                             sprite = block.get_top_sprite_resized_shaded(rect_size, top_block_neighbors, z)
 
-                    top_figure = Figure(block_rect, sprite, (x, y, z), (x, y, z + 1))
-                    figures.append(top_figure)
+                    figure = Figure(block_rect, sprite, (x, y, z), (x, y, z + 1))
+                    figures.append(figure)
 
             # cache for sides of blocks
             d = TRAPEZOIDS_IN_CACHE_DURATION
@@ -131,11 +132,11 @@ class Mesh3D:
                 if column_top_rect.bottom + cull_value < column_bottom_rect.bottom:
                     if (not block.is_transparent and k < hd2['bottom']) or (block.is_transparent and k < hd['bottom']):
                         if k == hd2['bottom'] - 1:
-                            sprite = block.get_side_sprite_shaded('bottom')
-                            sprite_name = f"{block.__class__.__name__}_bottom_shaded"
+                            sprite = block.get_side_sprite_shaded('south')
+                            sprite_name = f"{block.__class__.__name__}_south_shaded"
                         else:
-                            sprite = block.get_side_sprite('bottom')
-                            sprite_name = f"{block.__class__.__name__}_bottom"
+                            sprite = block.get_side_sprite('south')
+                            sprite_name = f"{block.__class__.__name__}_south"
 
                         figure = self.sides_drawer.create_bottom_figure(x, y, side_z,
                                                                         sprite, sprite_name,
@@ -148,11 +149,11 @@ class Mesh3D:
                 if column_top_rect.top > column_bottom_rect.top + cull_value:
                     if (not block.is_transparent and k < hd2['top']) or (block.is_transparent and k < hd['top']):
                         if k == hd['top'] - 1:
-                            sprite = block.get_side_sprite_shaded('top')
-                            sprite_name = f"{block.__class__.__name__}_top_shaded"
+                            sprite = block.get_side_sprite_shaded('north')
+                            sprite_name = f"{block.__class__.__name__}_north_shaded"
                         else:
-                            sprite = block.get_side_sprite('top')
-                            sprite_name = f"{block.__class__.__name__}_top"
+                            sprite = block.get_side_sprite('north')
+                            sprite_name = f"{block.__class__.__name__}_north"
 
                         figure = self.sides_drawer.create_top_figure(x, y, side_z,
                                                                      sprite, sprite_name,
@@ -165,11 +166,11 @@ class Mesh3D:
                 if column_top_rect.right + cull_value < column_bottom_rect.right:
                     if (not block.is_transparent and k < hd2['right']) or (block.is_transparent and k < hd['right']):
                         if k == hd['right'] - 1:
-                            sprite = block.get_side_sprite_shaded('right')
-                            sprite_name = f"{block.__class__.__name__}_right_shaded"
+                            sprite = block.get_side_sprite_shaded('east')
+                            sprite_name = f"{block.__class__.__name__}_east_shaded"
                         else:
-                            sprite = block.get_side_sprite('right')
-                            sprite_name = f"{block.__class__.__name__}_right"
+                            sprite = block.get_side_sprite('east')
+                            sprite_name = f"{block.__class__.__name__}_east"
                         figure = self.sides_drawer.create_right_figure(x, y, side_z,
                                                                        sprite, sprite_name,
                                                                        top_rect, bottom_rect)
@@ -181,11 +182,11 @@ class Mesh3D:
                 if column_top_rect.left > column_bottom_rect.left + cull_value:
                     if (not block.is_transparent and k < hd2['left']) or (block.is_transparent and k < hd['left']):
                         if k == hd['left'] - 1:
-                            sprite = block.get_side_sprite_shaded('left')
-                            sprite_name = f"{block.__class__.__name__}_left_shaded"
+                            sprite = block.get_side_sprite_shaded('west')
+                            sprite_name = f"{block.__class__.__name__}_west_shaded"
                         else:
-                            sprite = block.get_side_sprite('left')
-                            sprite_name = f"{block.__class__.__name__}_left"
+                            sprite = block.get_side_sprite('west')
+                            sprite_name = f"{block.__class__.__name__}_west"
                         figure = self.sides_drawer.create_left_figure(x, y, side_z,
                                                                       sprite, sprite_name,
                                                                       top_rect, bottom_rect)

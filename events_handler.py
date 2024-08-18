@@ -1,5 +1,7 @@
 import pygame as pg
 import time
+
+import blocks
 from world_class import World
 from camera import CameraFrame
 from trapezoid import TrapezoidDrawer
@@ -62,6 +64,12 @@ class EventHandler:
                         self.camera.zoom_out()
                     if event.key == pg.K_x:
                         self.camera.zoom_in()
+                    if event.key == pg.K_1:
+                        self.world.DEFAULT_ADDED_BLOCK = blocks.Glass
+                    if event.key == pg.K_2:
+                        self.world.DEFAULT_ADDED_BLOCK = blocks.Leaves
+                    if event.key == pg.K_3:
+                        self.world.DEFAULT_ADDED_BLOCK = blocks.Sand
 
             if event.type == pg.MOUSEBUTTONDOWN:
                 if event.button == 1:
@@ -130,7 +138,7 @@ class EventHandler:
 
         if (mouse_right_click or mouse_left_click) and \
                 time.time()-self.last_block_interaction > BLOCK_INTERACTION_COOLDOWN:
-            self.last_block_interaction = time.time()
+            # self.last_block_interaction = time.time()
             if mouse_right_click:
                 self.world.add_block_and_save_changes(directed_block)
             else:

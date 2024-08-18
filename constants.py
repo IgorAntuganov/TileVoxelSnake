@@ -20,7 +20,7 @@ TRAPEZOIDS_IN_CACHE_DURATION = 8  # base value: 1
 TOO_THIN_SIDES_CULLING_VALUE = 100
 THIN_SIDES_CACHE_DURATION_MULTIPLAYER = 6  # cause artefacts if prefilling frames with black enabled
 
-TRAPEZOID_KEYS_PRECISION = 1  # base value: 1, more -> more accurate trapezoids, more cache
+TRAPEZOID_KEYS_PRECISION = 2  # base value: 1, more -> more accurate trapezoids, more cache
 
 LOADED_PARTS_PER_FRAME = 5
 DRAW_SIDES_WITH_UNLOADED_REGIONS: bool = False
@@ -63,8 +63,8 @@ CACHE_KEYS_FILENAME = 'keys.pickle'
 
 PATH_TO_SAVES = 'saves/'
 
-SIDES_NAMES = ['left', 'top', 'right', 'bottom']
-DIAGONALS_NAMES = ['top_left', 'top_right', 'bottom_left', 'bottom_right']
+SIDES_NAMES = ['west', 'north', 'east', 'south']
+DIAGONALS_NAMES = ['north_west', 'north_east', 'south_west', 'south_east']
 
 
 # Generation constants
