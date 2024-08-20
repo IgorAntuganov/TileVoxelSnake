@@ -11,7 +11,7 @@ BASE_LEVEL_STEP = 8
 SHADOW_RADIUS = 0.6  # 0 <= x <= 1
 SHADOW_STRENGTH = 0.2  # 0 <= x <= 1
 
-SUN_SUN_RECOLOR = {
+SUN_SIDES_RECOLOR = {
     'west': 1.2,
     'north': 1.05,
     'east': 0.95,
@@ -23,11 +23,11 @@ HEIGHT_RECOLOR_BASE = 1  # base value 1
 HEIGHT_RECOLOR_STRENGTH = 0.35  # base value 0.3
 
 MAX_FPS = 200
-TRAPEZOIDS_IN_CACHE_DURATION = 8  # base value: 1
+TRAPEZOIDS_IN_CACHE_DURATION = 5  # base value: 0
 # if more -> block sides will be rendered every n frames (cause artefacts if value is big)
 # 2: +15% FPS, 3: +30% FPS, 5: +67% FPS, 25: +96% FPS
-TOO_THIN_SIDES_CULLING_VALUE = 25
-THIN_SIDES_CACHE_DURATION_MULTIPLAYER = 8  # cause artefacts if prefilling frames with black enabled
+TOO_THIN_SIDES_CULLING_VALUE = 15
+THIN_SIDES_CACHE_DURATION_MULTIPLAYER = 5  # cause artefacts if prefilling frames with black enabled
 
 TRAPEZOID_KEYS_PRECISION = 2  # base value: 1, more -> more accurate trapezoids, more cache
 
@@ -51,7 +51,7 @@ BLOCK_INTERACTION_COOLDOWN = .5  # in seconds
 
 BLOCKS_PER_MOVE = 2
 
-CAMERA_SPEED = 8  # in blocks per second
+CAMERA_SPEED = 6  # in blocks per second
 
 # Debug info
 

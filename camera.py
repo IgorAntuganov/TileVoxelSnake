@@ -37,8 +37,8 @@ class Layers:
         right = int(x0 + (x+1) * rect_size)
         top = int(y0 + y * rect_size)
         bottom = int(y0 + (y+1) * rect_size)
-        width = bottom - top
-        height = right - left
+        width = right - left
+        height = bottom - top
         rect = pg.Rect(left, top, width, height)
         return rect
 

@@ -35,7 +35,7 @@ class Block(ABC):
     @classmethod
     @abstractmethod
     def load_sprites(cls):
-        cls.sprites = BlockSpritesDict(*[cls.debug_sprite] * 6)
+        cls.sprites = BlockSpritesDict(cls.__name__, *[cls.debug_sprite] * 6)
 
     def get_top_sprite_resized_shaded(self, size: tuple[int, int],
                                       height_diff: HeightDiff,
@@ -45,13 +45,10 @@ class Block(ABC):
     def get_top_sprite_fully_shaded(self, size: tuple[int, int], z: int):
         return self.sprites.get_top_resized_fully_shaded(size, z)
 
-    def get_side_sprite(self, side: str):
+    def get_side_sprite(self, side: str, height_diff: HeightDiff, ind_from_top: int) -> tuple[pg.Surface, str]:
+        """:param ind_from_top: 0 if side of first/top block of column, 1 if second, etc."""
         assert side in SIDES_NAMES
-        return self.sprites.get_side(side)
-
-    def get_side_sprite_shaded(self, side: str) -> pg.Surface:
-        assert side in SIDES_NAMES
-        return self.sprites.get_side_shaded(side)
+        return self.sprites.get_side(side, height_diff, ind_from_top)
 
 
 class FullBlock(Block, ABC):
@@ -70,7 +67,7 @@ class SingleSpriteBlock(FullBlock, ABC):
 
     @classmethod
     def load_sprites(cls):
-        cls.sprites = BlockSpritesDict(*[cls.sprite] * 6)
+        cls.sprites = BlockSpritesDict(cls.__name__, *[cls.sprite] * 6)
 
 
 class SingleSideSpriteBlock(FullBlock, ABC):
@@ -91,7 +88,7 @@ class SingleSideSpriteBlock(FullBlock, ABC):
 
     @classmethod
     def load_sprites(cls):
-        cls.sprites = BlockSpritesDict(cls.top_sprite, cls.bottom_sprite, *[cls.side_sprite] * 4)
+        cls.sprites = BlockSpritesDict(cls.__name__, cls.top_sprite, cls.bottom_sprite, *[cls.side_sprite] * 4)
 
 
 # Block classes: -----------------------------------
@@ -128,9 +125,9 @@ class Shadow(SingleSpriteBlock):
     def is_transparent(self) -> bool:
         return True
 
-    def get_side_sprite_shaded(self, side: str) -> pg.Surface:
+    def get_side_sprite(self, side: str, height_diff: HeightDiff, ind_from_top: int) -> tuple[pg.Surface, str]:
         assert side in SIDES_NAMES
-        return self.sprites.get_side(side)
+        return self.sprites.get_side(side, height_diff, -10000000000)
 
     def get_top_sprite_resized_shaded(self, size: tuple[int, int],
                                       neighbors: tuple[bool, bool, bool, bool, bool, bool, bool, bool],

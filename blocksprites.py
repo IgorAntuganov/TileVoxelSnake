@@ -114,21 +114,23 @@ class BlockSprite:
 class BlockSpritesDict:
     shade_maker = ShadowSprites()
 
-    def __init__(self, top: str,
+    def __init__(self, block_name: str,
+                 top: str,
                  bottom: str,
                  west: str,
                  north: str,
                  east: str,
                  south: str):
-        self.scale_cache = {}
-        self.scale_shaded_cache = {}
-        self.shaded_sides_cache = {}
+        self.block_name = block_name
+        self.scale_cache: dict[str: pg.Surface] = {}
+        self.scale_shaded_cache: dict[str: pg.Surface] = {}
+        self.shaded_sides_cache: dict[str: pg.Surface] = {}
         self._top = BlockSprite(top)
         self._bottom = BlockSprite(bottom)
-        self._west = BlockSprite(west, 90, SUN_SUN_RECOLOR['west'], recolor_func=sun_sides_recolor)
-        self._north = BlockSprite(north, 0, SUN_SUN_RECOLOR['north'], recolor_func=sun_sides_recolor)
-        self._east = BlockSprite(east, 90, SUN_SUN_RECOLOR['east'], recolor_func=sun_sides_recolor)
-        self._south = BlockSprite(south, 0, SUN_SUN_RECOLOR['south'], recolor_func=sun_sides_recolor)
+        self._west = BlockSprite(west, 90, SUN_SIDES_RECOLOR['west'], recolor_func=sun_sides_recolor)
+        self._north = BlockSprite(north, 0, SUN_SIDES_RECOLOR['north'], recolor_func=sun_sides_recolor)
+        self._east = BlockSprite(east, 90, SUN_SIDES_RECOLOR['east'], recolor_func=sun_sides_recolor)
+        self._south = BlockSprite(south, 0, SUN_SIDES_RECOLOR['south'], recolor_func=sun_sides_recolor)
         self._sides = [self._west, self._north, self._east, self._south]
 
     def get_top_resized(self, size: tuple[int, int], z: int):
@@ -169,20 +171,23 @@ class BlockSpritesDict:
             self.scale_shaded_cache[key] = image.copy()
         return self.scale_shaded_cache[key]
 
-    def get_side(self, side: str) -> pg.Surface:
+    def get_side(self, side: str, height_diff: HeightDiff, ind_from_top: int) -> tuple[pg.Surface, str]:
+        """:param ind_from_top: 0 if side of first/top block of column, 1 if second, etc."""
+        hd2 = height_diff.nt_height_diff
         n = SIDES_NAMES.index(side)
-        return self._sides[n].image
+        if ind_from_top == hd2[side] - 1:
 
-    def get_side_shaded(self, side: str) -> pg.Surface:
-        key = side
-        n = SIDES_NAMES.index(side)
-        sprite = self._sides[n].image.copy()
-        if key in self.shaded_sides_cache:
-            return self.shaded_sides_cache[key]
-        shade = self.shade_maker.get_shade(side, sprite.get_size(), True)
-        if side in ['north', 'west']:  # Undo the rotation of the top sprite shadow
-            shade = pg.transform.rotate(shade, 180)
+            key = (side, 'bottom shaded')
+            if key in self.shaded_sides_cache:
+                return self.shaded_sides_cache[key], f'{self.block_name} {side} bottom shaded'
+            sprite = self._sides[n].image.copy()
+            shade = self.shade_maker.get_shade(side, sprite.get_size(), True)
+            if side in ['north', 'west']:  # Undo the rotation of the top sprite shadow
+                shade = pg.transform.rotate(shade, 180)
 
-        sprite.blit(shade, (0, 0))
-        self.shaded_sides_cache[key] = sprite.copy()
-        return sprite
+            sprite.blit(shade, (0, 0))
+            self.shaded_sides_cache[key] = sprite.copy()
+            return sprite, f'{self.block_name} {side} bottom shaded'
+
+        else:
+            return self._sides[n].image, f'{self.block_name} {side}'

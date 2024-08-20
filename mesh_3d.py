@@ -84,13 +84,12 @@ class Mesh3D:
                 x, y, z = block.x, block.y, block.z
                 block_rect = self.layers.get_rect_for_block(x, y, z)
                 if self.check_if_in_screen(block_rect):
-                    rect_size = block_rect.height, block_rect.width
-                    top_block_neighbors = column.get_top_block_neighbors()
+                    rect_size = block_rect.size
                     if block.is_transparent:
                         if m == 0:
                             raise AssertionError('Bottom visible block must be non transparent')
                         else:
-                            sprite = block.get_top_sprite_resized_shaded(rect_size, column.height_difference, z)  ### return (False, ) * 8
+                            sprite = block.get_top_sprite_resized_shaded(rect_size, column.height_difference, z)
                     else:
                         if m != len(visible_blocks)-1:
                             sprite = block.get_top_sprite_fully_shaded(rect_size, z)
@@ -121,7 +120,7 @@ class Mesh3D:
             hd2 = column.height_difference.nt_height_diff
 
             d2 = d * THIN_SIDES_CACHE_DURATION_MULTIPLAYER - 1
-            cull_value = TOO_THIN_SIDES_CULLING_VALUE if frame % d2 == counter % d2 else 0
+            cull_value = TOO_THIN_SIDES_CULLING_VALUE if (d2 > 0 and frame % d2 == counter % d2) else 0
             values = list(hd.values())+list(hd2.values())
 
             for k in range(max(values)):
@@ -141,12 +140,7 @@ class Mesh3D:
 
                 for key in keys:
                     if (not block.is_transparent and k < hd2[key]) or (block.is_transparent and k < hd[key]):
-                        if k == hd2[key] - 1:
-                            sprite = block.get_side_sprite_shaded(key)
-                            sprite_name = f"{block.__class__.__name__}_{key}_shaded"
-                        else:
-                            sprite = block.get_side_sprite(key)
-                            sprite_name = f"{block.__class__.__name__}_{key}"
+                        sprite, sprite_name = block.get_side_sprite(key, column.get_height_difference(), k)
 
                         figure = self.sides_drawer.create_figure(x, y, side_z, key,
                                                                  sprite, sprite_name,
