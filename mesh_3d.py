@@ -8,20 +8,20 @@ from constants import *
 
 class SideCache:
     def __init__(self):
-        self.cache: dict[tuple[int, int]: Figure] = {}
+        self._cache: dict[tuple[int, int]: Figure] = {}
 
     def add(self, i: int, j: int, figures_lst: list[Figure], camera_xy: tuple[float, float]):
         start_rects = list([fig.rect.copy() for fig in figures_lst])
         item = (figures_lst, camera_xy, start_rects)
         key = (i, j)
-        self.cache[key] = item
+        self._cache[key] = item
 
     def is_in(self, i: int, j: int) -> bool:
-        return (i, j) in self.cache
+        return (i, j) in self._cache
 
     def get(self, i: int, j: int, camera_xy: tuple[float, float], layers: Layers) -> list[Figure]:
         key = (i, j)
-        figures_lst, old_camera_xy, start_rects = self.cache.get(key)
+        figures_lst, old_camera_xy, start_rects = self._cache.get(key)
         offset = old_camera_xy[0] - camera_xy[0], old_camera_xy[1] - camera_xy[1]
         for figure, start_rect in zip(figures_lst, start_rects):
             z = figure.origin_block[2]
@@ -33,7 +33,7 @@ class SideCache:
 
     def pop(self,  i: int, j: int):
         if self.is_in(i, j):
-            self.cache.pop((i, j))
+            self._cache.pop((i, j))
 
 
 class Mesh3D:
@@ -54,12 +54,6 @@ class Mesh3D:
     def check_if_in_screen(self, rect: pg.Rect) -> bool:
         return rect.colliderect(self.scr_rect)
 
-    def get_not_calculated_column_figure(self, column: Column) -> Figure:
-        rect = self.layers.get_rect_for_block(column.x, column.y, 0)
-        red = pg.Surface(rect.size)
-        red.fill((255, 20, 20))
-        return Figure(rect, red, (0, 0, 0), (0, 0, 0))
-
     def create_mesh(self, world: World, frame: int):
         self.elements: list[list[Figure]] = []
 
@@ -70,12 +64,7 @@ class Mesh3D:
             column: Column
             column = world.get_column(i, j)
             figures: list[Figure] = []
-            if column is None:
-                continue
-
-            if not column.height_difference_are_set:
-                figure = self.get_not_calculated_column_figure(column)
-                self.elements.append([figure, ])
+            if column is None or not column.height_difference_are_set:
                 continue
 
             # top sides of blocks
@@ -107,8 +96,7 @@ class Mesh3D:
                     figures += figures_from_cache
                     self.elements.append(figures)
                     continue
-            self.sides_cache.pop(i, j)
-            figures_for_cache = []
+                self.sides_cache.pop(i, j)
 
             # sides of blocks
             top_block = column.get_top_block()
@@ -116,30 +104,29 @@ class Mesh3D:
             column_bottom_rect = self.layers.get_rect_for_block(x, y, 0)
             column_top_rect = self.layers.get_rect_for_block(x, y, z)
 
-            hd = column.height_difference.full_height_diff
-            hd2 = column.height_difference.nt_height_diff
+            full_hd = column.height_difference.full_height_diff
+            nt_hd = column.height_difference.nt_height_diff
 
-            d2 = d * THIN_SIDES_CACHE_DURATION_MULTIPLAYER - 1
-            cull_value = TOO_THIN_SIDES_CULLING_VALUE if (d2 > 0 and frame % d2 == counter % d2) else 0
-            values = list(hd.values())+list(hd2.values())
+            figures_for_cache = []
 
+            values = list(full_hd.values())+list(nt_hd.values())
             for k in range(max(values)):
                 side_z = z - k
                 block = column.get_block(side_z)
                 top_rect = self.layers.get_rect_for_block(x, y, side_z)
                 bottom_rect = self.layers.get_rect_for_block(x, y, side_z - 1)
                 keys = []
-                if column_top_rect.bottom + cull_value < column_bottom_rect.bottom:
+                if column_top_rect.bottom < column_bottom_rect.bottom:
                     keys.append('south')
-                if column_top_rect.top > column_bottom_rect.top + cull_value:
+                if column_top_rect.top > column_bottom_rect.top:
                     keys.append('north')
-                if column_top_rect.right + cull_value < column_bottom_rect.right:
+                if column_top_rect.right < column_bottom_rect.right:
                     keys.append('east')
-                if column_top_rect.left > column_bottom_rect.left + cull_value:
+                if column_top_rect.left > column_bottom_rect.left:
                     keys.append('west')
 
                 for key in keys:
-                    if (not block.is_transparent and k < hd2[key]) or (block.is_transparent and k < hd[key]):
+                    if (not block.is_transparent and k < nt_hd[key]) or (block.is_transparent and k < full_hd[key]):
                         sprite, sprite_name = block.get_side_sprite(key, column.get_height_difference(), k)
 
                         figure = self.sides_drawer.create_figure(x, y, side_z, key,

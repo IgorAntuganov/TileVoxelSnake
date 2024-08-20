@@ -23,11 +23,10 @@ HEIGHT_RECOLOR_BASE = 1  # base value 1
 HEIGHT_RECOLOR_STRENGTH = 0.35  # base value 0.3
 
 MAX_FPS = 200
-TRAPEZOIDS_IN_CACHE_DURATION = 5  # base value: 0
-# if more -> block sides will be rendered every n frames (cause artefacts if value is big)
+TRAPEZOIDS_IN_CACHE_DURATION = 5  # base value: 1
+# if more -> block sides will be rendered every n frames
+# cause artefacts if value is big and prefilling frames with black enabled
 # 2: +15% FPS, 3: +30% FPS, 5: +67% FPS, 25: +96% FPS
-TOO_THIN_SIDES_CULLING_VALUE = 15
-THIN_SIDES_CACHE_DURATION_MULTIPLAYER = 5  # cause artefacts if prefilling frames with black enabled
 
 TRAPEZOID_KEYS_PRECISION = 2  # base value: 1, more -> more accurate trapezoids, more cache
 
@@ -60,7 +59,7 @@ HEIGHT_GENERATING_INFO = False
 SET_FPS_CAPTION = False
 NOT_ABSTRACT_BLOCKS_CLASSES_INFO = False
 FILLING_COLUMNS_INFO = False
-PREFILL_FRAME_WITH_BLACK = False
+PREFILL_FRAME_WITH_BLACK = True
 
 # Constants
 
