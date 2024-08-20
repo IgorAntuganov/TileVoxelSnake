@@ -1,7 +1,7 @@
 # Settings
 # visual setting
 
-SCREEN_SIZE = 1536, 960
+SCREEN_SIZE = 1536, 960  # 1344, 756; 1600, 900; 1536, 960;  800, 450
 BASE_LEVEL_SIZE = 32  # size in pixels of top side of block at z = 0
 LAYERS_OFFSET = 1  # only int > 0, difference in pixel between layers top side sprites sizes
 MIN_BASE_LEVEL_SIZE = 16
@@ -11,7 +11,16 @@ BASE_LEVEL_STEP = 8
 SHADOW_RADIUS = 0.6  # 0 <= x <= 1
 SHADOW_STRENGTH = 0.2  # 0 <= x <= 1
 
-HEIGHT_RECOLOR_STRENGTH = 0.3
+SUN_SUN_RECOLOR = {
+    'west': 1.2,
+    'north': 1.05,
+    'east': 0.95,
+    'south': 0.8
+}
+
+HEIGHT_RECOLOR_OFFSET = 3
+HEIGHT_RECOLOR_BASE = 1  # base value 1
+HEIGHT_RECOLOR_STRENGTH = 0.35  # base value 0.3
 
 MAX_FPS = 200
 TRAPEZOIDS_IN_CACHE_DURATION = 8  # base value: 1

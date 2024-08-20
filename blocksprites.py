@@ -14,9 +14,27 @@ def recolor(sprite: pg.Surface, coefficient: float) -> pg.Surface:
     return sprite
 
 
+def sun_sides_recolor(sprite: pg.Surface, coefficient: float) -> pg.Surface:
+    normalized_coef = coefficient - 1
+    for i in range(sprite.get_width()):
+        for j in range(sprite.get_height()):
+            pixel = sprite.get_at((i, j))
+            if coefficient > 1:
+                pixel[0] = min(255, int(pixel[0]*(1+normalized_coef)))
+                pixel[1] = min(255, int(pixel[1]*(1+normalized_coef/2)))
+                pixel[2] = min(255, int(pixel[2]*1))
+            else:
+                pixel[0] = min(255, int(pixel[0]*(1+normalized_coef)))
+                pixel[1] = min(255, int(pixel[1]*(1+normalized_coef)))
+                pixel[2] = min(255, int(pixel[2]*(1+normalized_coef)))
+            sprite.set_at((i, j), pixel)
+    return sprite
+
+
 def height_recolor(sprite: pg.Surface, z: int) -> pg.Surface:
+    z -= HEIGHT_RECOLOR_OFFSET
     c = math.atan(z/(MAX_HEIGHT/2)) * 2 / math.pi
-    c = 1 + c * HEIGHT_RECOLOR_STRENGTH
+    c = HEIGHT_RECOLOR_BASE + c * HEIGHT_RECOLOR_STRENGTH
     return recolor(sprite, c)
 
 
@@ -85,11 +103,12 @@ class ShadowSprites:
 
 
 class BlockSprite:
-    def __init__(self, path, angle=0):
+    def __init__(self, path, angle=0, recolor_value=1.0, recolor_func=recolor):
         self.image = pg.image.load(PATH_TO_BLOCKS+path).convert_alpha()
         assert self.image.get_height() == self.image.get_width()
         self.image = pg.transform.rotate(self.image, angle)
         self.image = pg.transform.scale_by(self.image, 2)  # For more accurate trapezoids, doesn't reduce fps
+        self.image = recolor_func(self.image, recolor_value)
 
 
 class BlockSpritesDict:
@@ -106,10 +125,10 @@ class BlockSpritesDict:
         self.shaded_sides_cache = {}
         self._top = BlockSprite(top)
         self._bottom = BlockSprite(bottom)
-        self._west = BlockSprite(west, 90)
-        self._north = BlockSprite(north)
-        self._east = BlockSprite(east, 90)
-        self._south = BlockSprite(south)
+        self._west = BlockSprite(west, 90, SUN_SUN_RECOLOR['west'], recolor_func=sun_sides_recolor)
+        self._north = BlockSprite(north, 0, SUN_SUN_RECOLOR['north'], recolor_func=sun_sides_recolor)
+        self._east = BlockSprite(east, 90, SUN_SUN_RECOLOR['east'], recolor_func=sun_sides_recolor)
+        self._south = BlockSprite(south, 0, SUN_SUN_RECOLOR['south'], recolor_func=sun_sides_recolor)
         self._sides = [self._west, self._north, self._east, self._south]
 
     def get_top_resized(self, size: tuple[int, int], z: int):
