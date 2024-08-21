@@ -3,6 +3,9 @@ import pygame as pg
 from constants import *
 from height_difference import HeightDiff9
 
+EDGE = pg.Surface((1, 1), pg.SRCALPHA)
+EDGE.fill((220, 210, 200, 120))
+
 
 def recolor(sprite: pg.Surface, coefficient: float) -> pg.Surface:
     for i in range(sprite.get_width()):
@@ -153,7 +156,8 @@ class BlockSpritesDict:
                                height_diff: HeightDiff9,
                                z: int) -> pg.Surface:
         neighbors = height_diff.get_top_block_neighbors()
-        key = (*neighbors, size, z)
+        edges = height_diff.get_top_block_edges()
+        key = (*neighbors, *edges, size, z)
         if key not in self.scale_shaded_cache:
             image = pg.transform.scale(self._top.image, size)
             image = height_recolor(image, z)
@@ -166,6 +170,18 @@ class BlockSpritesDict:
                 if not (is_shaded or next_is_shaded) and neighbors[i+4]:
                     shade = self.shade_maker.get_corner_shade(DIAGONALS_NAMES[i], size)
                     image.blit(shade, (0, 0))
+            if edges[0]:
+                edge = pg.transform.scale(EDGE, (2, size[1]))
+                image.blit(edge, (0, 0))
+            if edges[1]:
+                edge = pg.transform.scale(EDGE, (size[0], 2))
+                image.blit(edge, (0, 0))
+            if edges[2]:
+                edge = pg.transform.scale(EDGE, (2, size[1]))
+                image.blit(edge, (size[1]-2, 0))
+            if edges[3]:
+                edge = pg.transform.scale(EDGE, (size[0], 2))
+                image.blit(edge, (0, size[0]-2))
             self.scale_shaded_cache[key] = image.copy()
         return self.scale_shaded_cache[key]
 

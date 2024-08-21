@@ -16,6 +16,16 @@ class HeightDiff9:
                 self.full_height_diff['south_east'] < 0,
                 self.full_height_diff['south_west'] < 0)
 
+    def get_top_block_edges(self) -> tuple[bool, bool, bool, bool, bool, bool, bool, bool]:
+        return (self.full_height_diff['west'] > 0,
+                self.full_height_diff['north'] > 0,
+                self.full_height_diff['east'] > 0,
+                self.full_height_diff['south'] > 0,
+                self.full_height_diff['north_west'] > 0,
+                self.full_height_diff['north_east'] > 0,
+                self.full_height_diff['south_east'] > 0,
+                self.full_height_diff['south_west'] > 0)
+
     @staticmethod
     def from_9_columns(columns_3x3: list[list[...]]):
         """left, top, right, bottom - adjacent Columns;
