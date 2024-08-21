@@ -71,9 +71,9 @@ class CreaseShadowSprites:
             self.cache[key] = shade
         return self.cache[key]
 
-    def get_diagonal_shade(self, side: str, size: tuple[int, int], is_side: bool = False) -> pg.Surface:
+    def get_corner_shade(self, side: str, size: tuple[int, int], is_side: bool = False) -> pg.Surface:
         if is_side:
-            shade_radius = min(1, self.shade_radius * 3)
+            shade_radius = min(1, self.shade_radius * 2)
         else:
             shade_radius = self.shade_radius
 
@@ -164,7 +164,7 @@ class BlockSpritesDict:
                     image.blit(shade, (0, 0))
                 next_is_shaded = neighbors[(i+1) % 4]
                 if not (is_shaded or next_is_shaded) and neighbors[i+4]:
-                    shade = self.shade_maker.get_diagonal_shade(DIAGONALS_NAMES[i], size)
+                    shade = self.shade_maker.get_corner_shade(DIAGONALS_NAMES[i], size)
                     image.blit(shade, (0, 0))
             self.scale_shaded_cache[key] = image.copy()
         return self.scale_shaded_cache[key]
@@ -181,54 +181,81 @@ class BlockSpritesDict:
 
     def get_side(self, side: str, height_diff: HeightDiff9, ind_from_top: int) -> tuple[pg.Surface, str]:
         """:param ind_from_top: 0 if side of first/top block of column, 1 if second, etc."""
-        hd2 = height_diff.nt_height_diff
+        hd2 = height_diff.full_height_diff
         n = SIDES_NAMES.index(side)
-        next_side = SIDES_NAMES[(n+1) % 4]
-        prev_side = SIDES_NAMES[(n-1) % 4]
+        right_side = SIDES_NAMES[(n+1) % 4]
+        left_side = SIDES_NAMES[(n-1) % 4]
+        left_diagonal = DIAGONALS_NAMES[n % 4]
+        right_diagonal = DIAGONALS_NAMES[(n-1) % 4]
+
         if ind_from_top == hd2[side] - 1:
-            if (ind_from_top != hd2[prev_side] - 1) == (ind_from_top != hd2[next_side] - 1):
-                key = f'{side} bottom shaded'
-                if key in self.shaded_sides_cache:
-                    return self.shaded_sides_cache[key], f'{self.block_name} {key}'
-                sprite = self._sides[n].image.copy()
-                shade = self.shade_maker.get_shade(side, sprite.get_size(), True)
-                if side in ['north', 'west']:  # Undo the rotation of the top sprite shadow
-                    shade = pg.transform.rotate(shade, 180)
-
-                sprite.blit(shade, (0, 0))
-                self.shaded_sides_cache[key] = sprite.copy()
-                return sprite, f'{self.block_name} {key}'
-            elif ind_from_top != hd2[prev_side] - 1 and ind_from_top == hd2[next_side] - 1:
-                key = f'{side} next shaded'
-                if key in self.shaded_sides_cache:
-                    return self.shaded_sides_cache[key], f'{self.block_name} {key}'
-                sprite = self._sides[n].image.copy()
-
-                if side in ['east', 'south']:  # idk
-                    diagonal = DIAGONALS_NAMES[(n-1) % 4]
-                else:
-                    diagonal = DIAGONALS_NAMES[(n-2) % 4]
-
-                shade = self.shade_maker.get_diagonal_shade(diagonal, sprite.get_size(), True)
-
-                sprite.blit(shade, (0, 0))
-                self.shaded_sides_cache[key] = sprite.copy()
-                return sprite, f'{self.block_name} {key}'
+            if ind_from_top == hd2[left_side] - 1 and ind_from_top != hd2[right_side] - 1:
+                key = f'{side} Left'
+            elif ind_from_top != hd2[left_side] - 1 and ind_from_top == hd2[right_side] - 1:
+                key = f'{side} Right'
             else:
-                sprite = self._sides[n].image.copy()
-                key = f'{side} prev shaded'
-                if key in self.shaded_sides_cache:
-                    return self.shaded_sides_cache[key], f'{self.block_name} {key}'
-                if side in ['east', 'south']:  # idk
-                    diagonal = DIAGONALS_NAMES[(n) % 4]
-                else:
-                    diagonal = DIAGONALS_NAMES[(n+1) % 4]
-                shade = self.shade_maker.get_diagonal_shade(diagonal, sprite.get_size(), True)
-
-                sprite.blit(shade, (0, 0))
-                self.shaded_sides_cache[key] = sprite.copy()
-                return sprite, f"{self.block_name} {key}"
+                key = f'{side} bottom'
 
         else:
-            sprite = self._sides[n].image
-        return sprite, f'{self.block_name} {side}'
+            key = f'{side}'
+
+        if ind_from_top >= hd2[left_diagonal]:
+            key += ' left_diagonal'
+        if ind_from_top >= hd2[right_diagonal]:
+            key += ' right_diagonal'
+        if ind_from_top == hd2[left_diagonal] - 1 and ind_from_top < hd2[side] - 1:
+            key += ' left__diagonal_ends'
+        if ind_from_top == hd2[right_diagonal] - 1 and ind_from_top < hd2[side] - 1:
+            key += ' right__diagonal_ends'
+
+        if key in self.shaded_sides_cache:
+            return self.shaded_sides_cache[key], f'{self.block_name} {key}'
+
+        sprite = self._sides[n].image.copy()
+        if 'bottom' in key:
+            shade = self.shade_maker.get_shade(side, sprite.get_size(), True)
+            if side in ['north', 'west']:  # Undo the rotation of the top sprite shadow
+                shade = pg.transform.rotate(shade, 180)
+            sprite.blit(shade, (0, 0))
+
+        if 'Right' in key:
+            if side in ['east', 'south']:  # IDK, crazy rotations, brute forced
+                diagonal = DIAGONALS_NAMES[(n - 1) % 4]
+            else:
+                diagonal = DIAGONALS_NAMES[(n - 2) % 4]
+            shade = self.shade_maker.get_corner_shade(diagonal, sprite.get_size(), True)
+            sprite.blit(shade, (0, 0))
+
+        if 'Left' in key:
+            if side in ['east', 'south']:  # IDK, crazy rotations, brute forced
+                diagonal = DIAGONALS_NAMES[n % 4]
+            else:
+                diagonal = DIAGONALS_NAMES[(n + 1) % 4]
+            shade = self.shade_maker.get_corner_shade(diagonal, sprite.get_size(), True)
+            sprite.blit(shade, (0, 0))
+
+        if 'left_diagonal' in key:
+            shade = self.shade_maker.get_shade(right_side, sprite.get_size(), True)
+            sprite.blit(shade, (0, 0))
+        if 'right_diagonal' in key:
+            shade = self.shade_maker.get_shade(left_side, sprite.get_size(), True)
+            sprite.blit(shade, (0, 0))
+
+        if 'left__diagonal_ends' in key:
+            if side in ['east', 'south']:  # IDK, crazy rotations, brute forced
+                diagonal = DIAGONALS_NAMES[n % 4]
+            else:
+                diagonal = DIAGONALS_NAMES[(n - 3) % 4]
+            shade = self.shade_maker.get_corner_shade(diagonal, sprite.get_size(), True)
+            sprite.blit(shade, (0, 0))
+
+        if 'right__diagonal_ends' in key:
+            if side in ['east', 'south']:  # IDK, crazy rotations, brute forced
+                diagonal = DIAGONALS_NAMES[(n - 1) % 4]
+            else:
+                diagonal = DIAGONALS_NAMES[(n - 2) % 4]
+            shade = self.shade_maker.get_corner_shade(diagonal, sprite.get_size(), True)
+            sprite.blit(shade, (0, 0))
+
+        self.shaded_sides_cache[key] = sprite.copy()
+        return sprite, f'{self.block_name} {key}'

@@ -29,6 +29,7 @@ TRAPEZOIDS_IN_CACHE_DURATION = 5  # base value: 1
 # 2: +15% FPS, 3: +30% FPS, 5: +67% FPS, 25: +96% FPS
 
 TRAPEZOID_KEYS_PRECISION = 2  # base value: 1, more -> more accurate trapezoids, more cache
+SAVE_TRAPEZOID_KEYS: bool = False  # if True save keys on disk and generate cache on next boot
 
 LOADED_PARTS_PER_FRAME = 2
 DRAW_SIDES_WITH_UNLOADED_REGIONS: bool = False

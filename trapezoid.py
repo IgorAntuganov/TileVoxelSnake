@@ -2,7 +2,7 @@ import time
 import pygame as pg
 import pickle
 import os
-from constants import PATH_TO_CACHE, CACHE_KEYS_FILENAME, TRAPEZOID_KEYS_PRECISION
+from constants import *
 
 
 class TrapezoidDrawer:
@@ -48,21 +48,23 @@ class TrapezoidDrawer:
             print('cache created by keys from disk:', len(self._lines_cache.keys()), 'time consuming:', t)
 
     def save_cache(self):
-        folder = PATH_TO_CACHE
-        '''cache_file = folder + '/' + CACHE_KEYS_FILENAME
-        with open(cache_file, 'wb') as file:
-            keys = list(self._lines_cache.keys())
-            pickle.dump(keys, file)
+        if SAVE_TRAPEZOID_KEYS:
+            folder = PATH_TO_CACHE
+            cache_file = folder + '/' + CACHE_KEYS_FILENAME
+            with open(cache_file, 'wb') as file:
+                keys = list(self._lines_cache.keys())
+                pickle.dump(keys, file)
 
-        for key in self._textures_cache:
-            file_path = folder + '/' + key + '.png'
-            image = self._textures_cache[key]
-            pg.image.save(image, file_path)'''
+            for key in self._textures_cache:
+                file_path = folder + '/' + key + '.png'
+                image = self._textures_cache[key]
+                pg.image.save(image, file_path)
 
     def add_texture_to_cache(self, texture: pg.Surface, texture_name: str):
-        '''if texture_name not in self._textures_cache:
-            pg.image.save(texture, f'{PATH_TO_CACHE}/{texture_name}.png')
-            self._textures_cache[texture_name] = texture'''
+        if SAVE_TRAPEZOID_KEYS:
+            if texture_name not in self._textures_cache:
+                pg.image.save(texture, f'{PATH_TO_CACHE}/{texture_name}.png')
+                self._textures_cache[texture_name] = texture
 
     @staticmethod
     def get_hor_trapezoid_sizes(top_width, bot_width, height, offset):
