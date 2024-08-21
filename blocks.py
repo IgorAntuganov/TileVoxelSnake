@@ -4,7 +4,7 @@ import pygame as pg
 
 from constants import SIDES_NAMES, NOT_ABSTRACT_BLOCKS_CLASSES_INFO
 from blocksprites import BlockSpritesDict
-from height_difference import HeightDiff
+from height_difference import HeightDiff9
 
 # Abstract classes: -----------------------------------
 
@@ -38,14 +38,14 @@ class Block(ABC):
         cls.sprites = BlockSpritesDict(cls.__name__, *[cls.debug_sprite] * 6)
 
     def get_top_sprite_resized_shaded(self, size: tuple[int, int],
-                                      height_diff: HeightDiff,
+                                      height_diff: HeightDiff9,
                                       z: int) -> pg.Surface:
         return self.sprites.get_top_resized_shaded(size, height_diff, z)
 
     def get_top_sprite_fully_shaded(self, size: tuple[int, int], z: int):
         return self.sprites.get_top_resized_fully_shaded(size, z)
 
-    def get_side_sprite(self, side: str, height_diff: HeightDiff, ind_from_top: int) -> tuple[pg.Surface, str]:
+    def get_side_sprite(self, side: str, height_diff: HeightDiff9, ind_from_top: int) -> tuple[pg.Surface, str]:
         """:param ind_from_top: 0 if side of first/top block of column, 1 if second, etc."""
         assert side in SIDES_NAMES
         return self.sprites.get_side(side, height_diff, ind_from_top)
@@ -125,7 +125,7 @@ class Shadow(SingleSpriteBlock):
     def is_transparent(self) -> bool:
         return True
 
-    def get_side_sprite(self, side: str, height_diff: HeightDiff, ind_from_top: int) -> tuple[pg.Surface, str]:
+    def get_side_sprite(self, side: str, height_diff: HeightDiff9, ind_from_top: int) -> tuple[pg.Surface, str]:
         assert side in SIDES_NAMES
         return self.sprites.get_side(side, height_diff, -10000000000)
 

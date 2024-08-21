@@ -165,7 +165,18 @@ class World:
                         else:
                             row.append(self.get_column(i+i1, j+j1))
                     columns_3x3.append(row)
-                column.set_height_difference(columns_3x3)
+
+                columns_7x7 = []
+                for j1 in range(-3, 4):
+                    row = []
+                    for i1 in range(-3, 4):
+                        if i1 == j1 == 0:
+                            row.append(column)
+                        else:
+                            row.append(self.get_column(i+i1, j+j1))
+                    columns_7x7.append(row)
+
+                column.set_height_difference(columns_3x3, columns_7x7)
 
 
 class WorldFiller:

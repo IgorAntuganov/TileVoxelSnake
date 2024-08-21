@@ -1,6 +1,6 @@
 from constants import *
 import blocks
-from height_difference import HeightDiff
+from height_difference import HeightDiff9, HeightDiff49
 
 
 class Column:
@@ -24,7 +24,8 @@ class Column:
         self.blocks_with_visible_top_sprite = []
         self.define_blocks_with_visible_top_sprite()
 
-        self.height_difference: HeightDiff | None = None
+        self.height_difference: HeightDiff9 | None = None
+        self.big_height_difference: HeightDiff49 | None = None
         self.height_difference_are_set: bool = False
 
         if FILLING_COLUMNS_INFO:
@@ -120,8 +121,9 @@ class Column:
                 print(block.z, block.__class__.__name__)
 
     # Working with height difference -----
-    def set_height_difference(self, columns_3x3: list[...]):
-        self.height_difference = HeightDiff.from_9_columns(columns_3x3)
+    def set_height_difference(self, columns_3x3: list[...], columns_7x7: list[...]):
+        self.height_difference = HeightDiff9.from_9_columns(columns_3x3)
+        self.big_height_difference = HeightDiff49.from_49_columns(columns_7x7)
 
         if FILLING_COLUMNS_INFO:
             print('set diffs', self.x, self.y, self.height_difference)
@@ -144,7 +146,7 @@ class Column:
     @staticmethod
     def from_pickle(data: dict):
         x, y = data['x'], data['y']
-        height_diff = HeightDiff.from_pickle(data['hd'])
+        height_diff = HeightDiff9.from_pickle(data['hd'])
         height_diff_are_set = data['hd_are_set']
         _blocks = []
         for block in data['transparent_blocks']:

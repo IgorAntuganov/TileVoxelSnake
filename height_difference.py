@@ -1,7 +1,7 @@
 from constants import *
 
 
-class HeightDiff:
+class HeightDiff9:
     def __init__(self, full_height_diff, nt_height_diff):
         self.full_height_diff = full_height_diff
         self.nt_height_diff = nt_height_diff
@@ -47,14 +47,24 @@ class HeightDiff:
                     value = 0
                 full_height_diff[key] = value
                 nt_height_diff[key] = value
-        return HeightDiff(full_height_diff, nt_height_diff)
+        return HeightDiff9(full_height_diff, nt_height_diff)
 
     @staticmethod
     def from_pickle(data):
         full_height_diff, nt_height_diff = data
-        hd = HeightDiff(full_height_diff, nt_height_diff)
+        hd = HeightDiff9(full_height_diff, nt_height_diff)
         return hd
 
     def to_pickle(self):
         data = self.full_height_diff, self.nt_height_diff
         return data
+
+
+class HeightDiff49:
+    def __init__(self, full_height_diff, nt_height_diff):
+        pass
+
+    @staticmethod
+    def from_49_columns(columns_7x7: list[list[...]]):
+        columns = columns_7x7
+        return HeightDiff9('1', '1')

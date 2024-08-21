@@ -8,8 +8,8 @@ MIN_BASE_LEVEL_SIZE = 16
 MAX_BASE_LEVEL_SIZE = 64
 BASE_LEVEL_STEP = 8
 
-SHADOW_RADIUS = 0.6  # 0 <= x <= 1
-SHADOW_STRENGTH = 0.2  # 0 <= x <= 1
+SHADOW_RADIUS = 0.7  # 0 <= x <= 1
+SHADOW_STRENGTH = 0.25  # 0 <= x <= 1
 
 SUN_SIDES_RECOLOR = {
     'west': 1.2,
@@ -30,7 +30,7 @@ TRAPEZOIDS_IN_CACHE_DURATION = 5  # base value: 1
 
 TRAPEZOID_KEYS_PRECISION = 2  # base value: 1, more -> more accurate trapezoids, more cache
 
-LOADED_PARTS_PER_FRAME = 5
+LOADED_PARTS_PER_FRAME = 2
 DRAW_SIDES_WITH_UNLOADED_REGIONS: bool = False
 
 REGIONS_DISTANCE_UPDATE_FREQ = 50
@@ -59,7 +59,7 @@ HEIGHT_GENERATING_INFO = False
 SET_FPS_CAPTION = False
 NOT_ABSTRACT_BLOCKS_CLASSES_INFO = False
 FILLING_COLUMNS_INFO = False
-PREFILL_FRAME_WITH_BLACK = True
+PREFILL_FRAME_WITH_BLACK = False
 
 # Constants
 
@@ -72,8 +72,7 @@ CACHE_KEYS_FILENAME = 'keys.pickle'
 PATH_TO_SAVES = 'saves/'
 
 SIDES_NAMES = ['west', 'north', 'east', 'south']
-DIAGONALS_NAMES = ['north_west', 'north_east', 'south_west', 'south_east']
-
+DIAGONALS_NAMES = ['north_west', 'north_east', 'south_east', 'south_west']
 
 # Generation constants
 PATH_TO_NOISE = 'saves/'

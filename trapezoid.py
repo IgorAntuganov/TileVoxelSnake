@@ -29,8 +29,8 @@ class TrapezoidDrawer:
         self._lines_cache = {}
         self._print_cache_size = False
 
-    def set_print_cache_size(self, using: bool):
-        self._print_cache_size = using
+    def set_print_cache_size(self, enabled: bool):
+        self._print_cache_size = enabled
 
     def create_cache(self):
         start = time.time()
@@ -49,7 +49,7 @@ class TrapezoidDrawer:
 
     def save_cache(self):
         folder = PATH_TO_CACHE
-        cache_file = folder + '/' + CACHE_KEYS_FILENAME
+        '''cache_file = folder + '/' + CACHE_KEYS_FILENAME
         with open(cache_file, 'wb') as file:
             keys = list(self._lines_cache.keys())
             pickle.dump(keys, file)
@@ -57,12 +57,12 @@ class TrapezoidDrawer:
         for key in self._textures_cache:
             file_path = folder + '/' + key + '.png'
             image = self._textures_cache[key]
-            pg.image.save(image, file_path)
+            pg.image.save(image, file_path)'''
 
     def add_texture_to_cache(self, texture: pg.Surface, texture_name: str):
-        if texture_name not in self._textures_cache:
+        '''if texture_name not in self._textures_cache:
             pg.image.save(texture, f'{PATH_TO_CACHE}/{texture_name}.png')
-            self._textures_cache[texture_name] = texture
+            self._textures_cache[texture_name] = texture'''
 
     @staticmethod
     def get_hor_trapezoid_sizes(top_width, bot_width, height, offset):
