@@ -35,7 +35,7 @@ class EventHandler:
                snake: Snake,
                fps: float,
                hovered_block: tuple[int, int, int],
-               directed_block: tuple[int, int, int]) -> InfoScreen | None:
+               directed_block: tuple[int, int, int]) -> tuple[InfoScreen | None, bool]:
         events = pg.event.get()
         mouse_left_click = False
         mouse_right_click = False
@@ -91,6 +91,7 @@ class EventHandler:
         if fps != 0:
             camera_move = camera_move[0] / fps * CAMERA_SPEED, camera_move[1] / fps * CAMERA_SPEED
         self.camera.move(camera_move)
+        creating_mesh = not pressed[pg.K_0]
 
         if mouse_wheel_click:
             self.camera.set_center((player.x, player.y))
@@ -149,12 +150,12 @@ class EventHandler:
             info_image = pg.Surface((1536, 960), pg.SRCALPHA)
             info_image.fill((0, 255, 0))
             info_image.set_alpha(60)
-            return InfoScreen(info_image, 20)
+            return InfoScreen(info_image, 20), True
 
         if zero_stamina_move:
             info_image = pg.Surface((1536, 960), pg.SRCALPHA)
             info_image.fill((255, 0, 0))
             info_image.set_alpha(60)
-            return InfoScreen(info_image, 3)
+            return InfoScreen(info_image, 3), True
 
-        return None
+        return None, creating_mesh

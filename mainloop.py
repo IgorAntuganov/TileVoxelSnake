@@ -1,3 +1,4 @@
+CREATING_MESH = True
 import gc
 gc.disable()
 import time
@@ -63,13 +64,15 @@ while True:
     if PREFILL_FRAME_WITH_BLACK:
         scr.fill((0, 0, 0))
     camera_frame.update_layers()
-    terr_mesh.create_mesh(world, frame)
+
+    if CREATING_MESH:
+        terr_mesh.create_mesh(world, frame)
     terr_mesh.draw_terrain(scr)
 
     ui_mesh.create_ui_mesh(world, player, snake, terr_mesh.mouse_rect)
     ui_mesh.draw_ui(scr)
 
-    info_screen = events_handler.handle(player, snake, fps, terr_mesh.hovered_block, terr_mesh.directed_block)
+    info_screen, CREATING_MESH = events_handler.handle(player, snake, fps, terr_mesh.hovered_block, terr_mesh.directed_block)
     if info_screen is not None:
         info_screens.append(info_screen)
 

@@ -239,7 +239,7 @@ class BlockSpritesDict:
         return self.scale_shaded_cache[key]
 
     def get_side(self, side: str, height_diff: HeightDiff9, ind_from_top: int) -> tuple[pg.Surface, str]:
-        hd2 = height_diff.full_full_height_diff
+        full_nt_hd = height_diff.full_nt_height_diff
         n = SIDES_NAMES.index(side)
         right_side = SIDES_NAMES[(n+1) % 4]
         left_side = SIDES_NAMES[(n-1) % 4]
@@ -247,10 +247,10 @@ class BlockSpritesDict:
         right_diagonal = DIAGONALS_NAMES[(n-1) % 4]
         key = f'{self.block_name}'
 
-        if ind_from_top == hd2[side] - 1:
-            if ind_from_top == hd2[left_side] - 1 and ind_from_top != hd2[right_side] - 1:
+        if ind_from_top == full_nt_hd[side] - 1:
+            if ind_from_top == full_nt_hd[left_side] - 1 and ind_from_top != full_nt_hd[right_side] - 1:
                 key += f'{side} __left__'
-            elif ind_from_top != hd2[left_side] - 1 and ind_from_top == hd2[right_side] - 1:
+            elif ind_from_top != full_nt_hd[left_side] - 1 and ind_from_top == full_nt_hd[right_side] - 1:
                 key += f'{side} __right__'
             else:
                 key += f'{side} __bottom__'
@@ -258,13 +258,13 @@ class BlockSpritesDict:
         else:
             key += f'{side}'
 
-        if ind_from_top >= hd2[left_diagonal]:
+        if ind_from_top >= full_nt_hd[left_diagonal]:
             key += ' __left_diagonal__'
-        if ind_from_top >= hd2[right_diagonal]:
+        if ind_from_top >= full_nt_hd[right_diagonal]:
             key += ' __right_diagonal__'
-        if ind_from_top == hd2[left_diagonal] - 1 and ind_from_top < hd2[side] - 1:
+        if ind_from_top == full_nt_hd[left_diagonal] - 1 and ind_from_top < full_nt_hd[side] - 1:
             key += ' __left_diagonal_ends__'
-        if ind_from_top == hd2[right_diagonal] - 1 and ind_from_top < hd2[side] - 1:
+        if ind_from_top == full_nt_hd[right_diagonal] - 1 and ind_from_top < full_nt_hd[side] - 1:
             key += ' __right_diagonal_ends__'
 
         if key in self.shaded_sides_cache:

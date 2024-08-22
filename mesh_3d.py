@@ -129,7 +129,9 @@ class Mesh3D:
                     keys.append('west')
 
                 for key in keys:
-                    if (not block.is_transparent and k < nt_hd[key]) or (block.is_transparent and k < full_hd[key]):
+                    non_transparent_side = not block.is_transparent and k < nt_hd[key]
+                    transparent_side = block.is_transparent and k < full_hd[key]
+                    if non_transparent_side or transparent_side:
                         sprite, sprite_name = block.get_side_sprite(key, column.get_height_difference(), k)
 
                         figure = self.sides_drawer.create_figure(x, y, side_z, key,
