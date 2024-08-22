@@ -68,6 +68,7 @@ class Mesh3D:
                 continue
 
             # top sides of blocks
+            non_transparent_already_rendered = False
             visible_blocks = column.get_blocks_with_visible_top_sprite()
             for m, block in enumerate(visible_blocks):
                 x, y, z = block.x, block.y, block.z
@@ -80,8 +81,10 @@ class Mesh3D:
                         else:
                             sprite = block.get_top_sprite_resized_shaded(rect_size, column.height_difference, z)
                     else:
-                        if m != len(visible_blocks)-1:
-                            sprite = block.get_top_sprite_fully_shaded(rect_size, z)
+                        assert not non_transparent_already_rendered
+                        non_transparent_already_rendered = True
+                        if len(visible_blocks) > 1:
+                            sprite = block.get_top_sprite_fully_shaded(rect_size, column.height_difference, z)
                         else:
                             sprite = block.get_top_sprite_resized_shaded(rect_size, column.height_difference, z)
 
@@ -104,8 +107,8 @@ class Mesh3D:
             column_bottom_rect = self.layers.get_rect_for_block(x, y, 0)
             column_top_rect = self.layers.get_rect_for_block(x, y, z)
 
-            full_hd = column.height_difference.full_height_diff
-            nt_hd = column.height_difference.nt_height_diff
+            full_hd = column.height_difference.full_full_height_diff
+            nt_hd = column.height_difference.full_nt_height_diff
 
             figures_for_cache = []
 

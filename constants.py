@@ -11,6 +11,11 @@ BASE_LEVEL_STEP = 8
 SHADOW_RADIUS = 0.7  # 0 <= x <= 1
 SHADOW_STRENGTH = 0.25  # 0 <= x <= 1
 
+EXPOSED_EDGE_COLOR = (220, 210, 200)
+HIDDEN_EDGE_COLOR = (200, 191, 182)
+EDGES_ALPHA = 100
+EDGE_THICKNESS = 2
+
 SUN_SIDES_RECOLOR = {
     'west': 1.2,
     'north': 1.05,
@@ -29,14 +34,13 @@ TRAPEZOIDS_IN_CACHE_DURATION = 5  # base value: 1
 # 2: +15% FPS, 3: +30% FPS, 5: +67% FPS, 25: +96% FPS
 
 TRAPEZOID_KEYS_PRECISION = 2  # base value: 1, more -> more accurate trapezoids, more cache
-SAVE_TRAPEZOID_KEYS: bool = False  # if True save keys on disk and generate cache on next boot
+SAVE_TRAPEZOID_KEYS: bool = True  # if True save keys on disk and generate cache on next boot
 
 LOADED_PARTS_PER_FRAME = 2
 DRAW_SIDES_WITH_UNLOADED_REGIONS: bool = False
 
 REGIONS_DISTANCE_UPDATE_FREQ = 50
 GARBAGE_COLLECTION_FREQ = 500
-
 
 # gameplay settings
 
@@ -61,6 +65,7 @@ SET_FPS_CAPTION = False
 NOT_ABSTRACT_BLOCKS_CLASSES_INFO = False
 FILLING_COLUMNS_INFO = False
 PREFILL_FRAME_WITH_BLACK = False
+DRAW_TILES = True
 
 # Constants
 
@@ -82,7 +87,7 @@ MAX_HEIGHT = 20
 HEIGHT_NOISE_TILE_SIZE = 64
 HEIGHT_OCTAVES = [0, 2, 3]
 START_HEIGHT_AREA = (-2, -2, 4, 4)
-WORLD_CHUNK_SIZE = 12
+WORLD_CHUNK_SIZE = 8
 
 BIOME_NOISE_TILE_SIZE = 64
 BIOME_OCTAVES = [0, 1, 2, 3]

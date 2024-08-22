@@ -3,9 +3,9 @@ import pickle
 import pygame as pg
 import blocks
 from generation.height_map import HeightMap
-from generation.biome_map import BiomeMap, Forest
+from generation.biome_map import BiomeMap, Forest, Fields
 from generation.halton_sequence import HaltonPoints
-from generation.structures import Tree1, Tree2
+from generation.structures import Tree1, Tree2, Bush
 from constants import *
 from gui.objects import tiles_types, Tile
 from world_column import Column
@@ -166,17 +166,7 @@ class World:
                             row.append(self.get_column(i+i1, j+j1))
                     columns_3x3.append(row)
 
-                columns_7x7 = []
-                for j1 in range(-3, 4):
-                    row = []
-                    for i1 in range(-3, 4):
-                        if i1 == j1 == 0:
-                            row.append(column)
-                        else:
-                            row.append(self.get_column(i+i1, j+j1))
-                    columns_7x7.append(row)
-
-                column.set_height_difference(columns_3x3, columns_7x7)
+                column.set_height_difference(columns_3x3)
 
 
 class WorldFiller:
@@ -197,7 +187,7 @@ class WorldFiller:
         self.current_loading_iterator = None
         self.loading_region: None | Region = None
 
-    def set_block_to_add_during_generation(self, block):
+    def add_block_to_stash(self, block):
         if (block.x, block.y) not in self.blocks_to_add_stash:
             self.blocks_to_add_stash[(block.x, block.y)] = [block]
         else:
@@ -246,9 +236,14 @@ class WorldFiller:
                         trees = self.tree_generator.get_points_by_point(i, j)
                         if (i, j) in trees:
                             if i + j % 3 == 0:
-                                structures.append(Tree2(i, j, new_column.nt_height))
+                                structures.append(Tree2(i, j, new_column.nt_height+1))
                             else:
-                                structures.append(Tree1(i, j, new_column.nt_height))
+                                structures.append(Tree1(i, j, new_column.nt_height+1))
+
+                    if biome is Fields and len(_blocks) > WATER_LEVEL:
+                        points = self.tree_generator.get_points_by_point(i, j)
+                        if (i, j) in points:
+                            structures.append(Bush(i, j, new_column.nt_height+1))
 
                     if len(_blocks) > WATER_LEVEL:
                         tiles = self.tile_generator.get_points_by_point(i, j)
@@ -278,7 +273,7 @@ class WorldFiller:
                         continue
                     editing_column.add_block_on_top(type(block))
                 else:
-                    self.set_block_to_add_during_generation(block)
+                    self.add_block_to_stash(block)
             yield
 
         bigger_rect = pg.Rect(rect.left - 1, rect.top - 1, rect.width + 2, rect.height + 2)

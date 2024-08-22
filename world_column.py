@@ -1,6 +1,6 @@
 from constants import *
 import blocks
-from height_difference import HeightDiff9, HeightDiff49
+from height_difference import HeightDiff9
 
 
 class Column:
@@ -25,7 +25,6 @@ class Column:
         self.define_blocks_with_visible_top_sprite()
 
         self.height_difference: HeightDiff9 | None = None
-        self.big_height_difference: HeightDiff49 | None = None
         self.height_difference_are_set: bool = False
 
         if FILLING_COLUMNS_INFO:
@@ -67,7 +66,7 @@ class Column:
         return blocks.DebugBlock(self.x, self.y, 0)
 
     def get_blocks_with_visible_top_sprite(self) -> list[blocks.Block]:
-        """return blocks from top to bottom"""
+        """return blocks from bottom to top"""
         assert self.visible_blocks_are_set
         return self.blocks_with_visible_top_sprite
 
@@ -121,9 +120,8 @@ class Column:
                 print(block.z, block.__class__.__name__)
 
     # Working with height difference -----
-    def set_height_difference(self, columns_3x3: list[...], columns_7x7: list[...]):
+    def set_height_difference(self, columns_3x3: list[...]):
         self.height_difference = HeightDiff9.from_9_columns(columns_3x3)
-        self.big_height_difference = HeightDiff49.from_49_columns(columns_7x7)
 
         if FILLING_COLUMNS_INFO:
             print('set diffs', self.x, self.y, self.height_difference)
@@ -133,7 +131,7 @@ class Column:
         assert self.height_difference_are_set
         return self.height_difference
 
-    def get_top_block_neighbors(self) -> tuple[bool, bool, bool, bool, bool, bool, bool, bool]:
+    def get_top_block_neighbors(self) -> tuple[bool]:
         assert self.height_difference_are_set
         return self.height_difference.get_top_block_neighbors()
 

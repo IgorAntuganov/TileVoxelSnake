@@ -4,7 +4,9 @@ from constants import *
 from height_difference import HeightDiff9
 
 EDGE = pg.Surface((1, 1), pg.SRCALPHA)
-EDGE.fill((220, 210, 200, 120))
+EDGE.fill((*EXPOSED_EDGE_COLOR, EDGES_ALPHA))
+EDGE2 = pg.Surface((1, 1), pg.SRCALPHA)
+EDGE2.fill((*HIDDEN_EDGE_COLOR, EDGES_ALPHA))
 
 
 def recolor(sprite: pg.Surface, coefficient: float) -> pg.Surface:
@@ -56,7 +58,7 @@ class CreaseShadowSprites:
         else:
             shade_radius = self.shade_radius
 
-        key = (size, nearby_block_side, 'nearby')
+        key = (*size, nearby_block_side, 'nearby')
         if key not in self.cache:
             shade = pg.Surface(size, pg.SRCALPHA)
             shade.fill((0, 0, 0, 0))
@@ -80,7 +82,7 @@ class CreaseShadowSprites:
         else:
             shade_radius = self.shade_radius
 
-        key = (size, side, is_side, 'diagonal')
+        key = (size, side, is_side, 'corner')
         if key not in self.cache:
             shade = pg.Surface(size, pg.SRCALPHA)
             shade.fill((0, 0, 0, 0))
@@ -124,6 +126,9 @@ class BlockSprite:
 
 class BlockSpritesDict:
     shade_maker = CreaseShadowSprites()
+    scale_cache: dict[str: pg.Surface] = {}
+    scale_shaded_cache: dict[str: pg.Surface] = {}
+    shaded_sides_cache: dict[str: pg.Surface] = {}
 
     def __init__(self, block_name: str,
                  top: str,
@@ -133,9 +138,6 @@ class BlockSpritesDict:
                  east: str,
                  south: str):
         self.block_name = block_name
-        self.scale_cache: dict[str: pg.Surface] = {}
-        self.scale_shaded_cache: dict[str: pg.Surface] = {}
-        self.shaded_sides_cache: dict[str: pg.Surface] = {}
         self._top = BlockSprite(top)
         self._bottom = BlockSprite(bottom)
         self._west = BlockSprite(west, 90, SUN_SIDES_RECOLOR['west'], sun_sides_recolor)
@@ -145,7 +147,7 @@ class BlockSpritesDict:
         self._sides = [self._west, self._north, self._east, self._south]
 
     def get_top_resized(self, size: tuple[int, int], z: int):
-        key = ('not shaded', size, z)
+        key = (self.block_name, 'not shaded', size, z)
         if key not in self.scale_shaded_cache:
             image = pg.transform.scale(self._top.image, size)
             image = height_recolor(image, z)
@@ -154,12 +156,45 @@ class BlockSpritesDict:
 
     def get_top_resized_shaded(self, size: tuple[int, int],
                                height_diff: HeightDiff9,
-                               z: int) -> pg.Surface:
+                               z: int,
+                               is_transparent: bool) -> pg.Surface:
         neighbors = height_diff.get_top_block_neighbors()
-        edges = height_diff.get_top_block_edges()
-        key = (*neighbors, *edges, size, z)
+        full_full_edges = height_diff.get_full_full_edges()
+        nt_full_edges = height_diff.get_nt_full_edges()
+        key = (self.block_name, *neighbors, *full_full_edges, *nt_full_edges, size, z)
         if key not in self.scale_shaded_cache:
-            image = pg.transform.scale(self._top.image, size)
+            image = self._top.image.copy()
+            w, h = image.get_size()
+            t = EDGE_THICKNESS
+
+            if is_transparent:
+                if full_full_edges[0]:
+                    edge = pg.transform.scale(EDGE, (t, h))
+                    image.blit(edge, (0, 0))
+                if full_full_edges[1]:
+                    edge = pg.transform.scale(EDGE, (w, t))
+                    image.blit(edge, (0, 0))
+                if full_full_edges[2]:
+                    edge = pg.transform.scale(EDGE, (t, h))
+                    image.blit(edge, (w - t, 0))
+                if full_full_edges[3]:
+                    edge = pg.transform.scale(EDGE, (w, t))
+                    image.blit(edge, (0, h - t))
+            else:
+                if nt_full_edges[0]:
+                    edge = pg.transform.scale(EDGE, (t, h))
+                    image.blit(edge, (0, 0))
+                if nt_full_edges[1]:
+                    edge = pg.transform.scale(EDGE, (w, t))
+                    image.blit(edge, (0, 0))
+                if nt_full_edges[2]:
+                    edge = pg.transform.scale(EDGE, (t, h))
+                    image.blit(edge, (w - t, 0))
+                if nt_full_edges[3]:
+                    edge = pg.transform.scale(EDGE, (w, t))
+                    image.blit(edge, (0, h - t))
+
+            image = pg.transform.scale(image, size)
             image = height_recolor(image, z)
             for i in range(4):
                 is_shaded = neighbors[i]
@@ -170,25 +205,33 @@ class BlockSpritesDict:
                 if not (is_shaded or next_is_shaded) and neighbors[i+4]:
                     shade = self.shade_maker.get_corner_shade(DIAGONALS_NAMES[i], size)
                     image.blit(shade, (0, 0))
-            if edges[0]:
-                edge = pg.transform.scale(EDGE, (2, size[1]))
-                image.blit(edge, (0, 0))
-            if edges[1]:
-                edge = pg.transform.scale(EDGE, (size[0], 2))
-                image.blit(edge, (0, 0))
-            if edges[2]:
-                edge = pg.transform.scale(EDGE, (2, size[1]))
-                image.blit(edge, (size[1]-2, 0))
-            if edges[3]:
-                edge = pg.transform.scale(EDGE, (size[0], 2))
-                image.blit(edge, (0, size[0]-2))
+
             self.scale_shaded_cache[key] = image.copy()
         return self.scale_shaded_cache[key]
 
-    def get_top_resized_fully_shaded(self, size: tuple[int, int], z: int):
-        key = ('fully shaded', size, z)
+    def get_top_resized_fully_shaded(self, size: tuple[int, int], height_diff: HeightDiff9, z: int):
+        nt_full_edges = height_diff.get_nt_full_edges()
+        key = (self.block_name, *nt_full_edges, 'fully shaded', size, z)
+
         if key not in self.scale_shaded_cache:
-            image = pg.transform.scale(self._top.image, size)
+            image = self._top.image.copy()
+            w, h = image.get_size()
+            t = EDGE_THICKNESS
+
+            if nt_full_edges[0]:
+                edge = pg.transform.scale(EDGE2, (t, h))
+                image.blit(edge, (0, 0))
+            if nt_full_edges[1]:
+                edge = pg.transform.scale(EDGE2, (w, t))
+                image.blit(edge, (0, 0))
+            if nt_full_edges[2]:
+                edge = pg.transform.scale(EDGE2, (t, h))
+                image.blit(edge, (w - t, 0))
+            if nt_full_edges[3]:
+                edge = pg.transform.scale(EDGE2, (w, t))
+                image.blit(edge, (0, h - t))
+
+            image = pg.transform.scale(image, size)
             image = height_recolor(image, z)
             shade = self.shade_maker.get_full_shade(size)
             image.blit(shade, (0, 0))
@@ -196,45 +239,45 @@ class BlockSpritesDict:
         return self.scale_shaded_cache[key]
 
     def get_side(self, side: str, height_diff: HeightDiff9, ind_from_top: int) -> tuple[pg.Surface, str]:
-        """:param ind_from_top: 0 if side of first/top block of column, 1 if second, etc."""
-        hd2 = height_diff.full_height_diff
+        hd2 = height_diff.full_full_height_diff
         n = SIDES_NAMES.index(side)
         right_side = SIDES_NAMES[(n+1) % 4]
         left_side = SIDES_NAMES[(n-1) % 4]
         left_diagonal = DIAGONALS_NAMES[n % 4]
         right_diagonal = DIAGONALS_NAMES[(n-1) % 4]
+        key = f'{self.block_name}'
 
         if ind_from_top == hd2[side] - 1:
             if ind_from_top == hd2[left_side] - 1 and ind_from_top != hd2[right_side] - 1:
-                key = f'{side} Left'
+                key += f'{side} __left__'
             elif ind_from_top != hd2[left_side] - 1 and ind_from_top == hd2[right_side] - 1:
-                key = f'{side} Right'
+                key += f'{side} __right__'
             else:
-                key = f'{side} bottom'
+                key += f'{side} __bottom__'
 
         else:
-            key = f'{side}'
+            key += f'{side}'
 
         if ind_from_top >= hd2[left_diagonal]:
-            key += ' left_diagonal'
+            key += ' __left_diagonal__'
         if ind_from_top >= hd2[right_diagonal]:
-            key += ' right_diagonal'
+            key += ' __right_diagonal__'
         if ind_from_top == hd2[left_diagonal] - 1 and ind_from_top < hd2[side] - 1:
-            key += ' left__diagonal_ends'
+            key += ' __left_diagonal_ends__'
         if ind_from_top == hd2[right_diagonal] - 1 and ind_from_top < hd2[side] - 1:
-            key += ' right__diagonal_ends'
+            key += ' __right_diagonal_ends__'
 
         if key in self.shaded_sides_cache:
             return self.shaded_sides_cache[key], f'{self.block_name} {key}'
 
         sprite = self._sides[n].image.copy()
-        if 'bottom' in key:
+        if '__bottom__' in key:
             shade = self.shade_maker.get_shade(side, sprite.get_size(), True)
             if side in ['north', 'west']:  # Undo the rotation of the top sprite shadow
                 shade = pg.transform.rotate(shade, 180)
             sprite.blit(shade, (0, 0))
 
-        if 'Right' in key:
+        if '__right__' in key:
             if side in ['east', 'south']:  # IDK, crazy rotations, brute forced
                 diagonal = DIAGONALS_NAMES[(n - 1) % 4]
             else:
@@ -242,7 +285,7 @@ class BlockSpritesDict:
             shade = self.shade_maker.get_corner_shade(diagonal, sprite.get_size(), True)
             sprite.blit(shade, (0, 0))
 
-        if 'Left' in key:
+        if '__left__' in key:
             if side in ['east', 'south']:  # IDK, crazy rotations, brute forced
                 diagonal = DIAGONALS_NAMES[n % 4]
             else:
@@ -250,14 +293,14 @@ class BlockSpritesDict:
             shade = self.shade_maker.get_corner_shade(diagonal, sprite.get_size(), True)
             sprite.blit(shade, (0, 0))
 
-        if 'left_diagonal' in key:
+        if '__left_diagonal__' in key:
             shade = self.shade_maker.get_shade(right_side, sprite.get_size(), True)
             sprite.blit(shade, (0, 0))
-        if 'right_diagonal' in key:
+        if '__right_diagonal__' in key:
             shade = self.shade_maker.get_shade(left_side, sprite.get_size(), True)
             sprite.blit(shade, (0, 0))
 
-        if 'left__diagonal_ends' in key:
+        if '__left_diagonal_ends__' in key:
             if side in ['east', 'south']:  # IDK, crazy rotations, brute forced
                 diagonal = DIAGONALS_NAMES[n % 4]
             else:
@@ -265,7 +308,7 @@ class BlockSpritesDict:
             shade = self.shade_maker.get_corner_shade(diagonal, sprite.get_size(), True)
             sprite.blit(shade, (0, 0))
 
-        if 'right__diagonal_ends' in key:
+        if '__right_diagonal_ends__' in key:
             if side in ['east', 'south']:  # IDK, crazy rotations, brute forced
                 diagonal = DIAGONALS_NAMES[(n - 1) % 4]
             else:
@@ -274,4 +317,4 @@ class BlockSpritesDict:
             sprite.blit(shade, (0, 0))
 
         self.shaded_sides_cache[key] = sprite.copy()
-        return sprite, f'{self.block_name} {key}'
+        return sprite, f'{key}'

@@ -3,6 +3,7 @@ from camera import CameraFrame
 from gui.objects import Player
 from gui.snake import Snake
 from world_class import World
+from constants import *
 
 
 class UIFigure:
@@ -25,7 +26,7 @@ class Mesh2D:
         if hovered_block_rect is not None:
             hovered_block_sprite = pg.Surface(hovered_block_rect.size, pg.SRCALPHA)
             hovered_block_sprite.fill((255, 255, 255, 120))
-            hovered_block_figure = UIFigure(hovered_block_sprite, hovered_block_rect, 100)
+            hovered_block_figure = UIFigure(hovered_block_sprite, hovered_block_rect, 100000)
             self.elements.append(hovered_block_figure)
 
         player_sprite = player.get_sprite(layers)
@@ -42,7 +43,8 @@ class Mesh2D:
             column_under_tile = world.get_column(tile.x, tile.y)
             buried = tile.z+1 < column_under_tile.full_height
             tile_figure = UIFigure(tile.get_sprite(layers, buried), tile.get_rect(layers), tile.z)
-            self.elements.append(tile_figure)
+            if DRAW_TILES:
+                self.elements.append(tile_figure)
 
         self.elements.append(player_figure)
         self.elements.sort(key=lambda fig: fig.z)
