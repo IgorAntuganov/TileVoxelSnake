@@ -6,7 +6,7 @@ from sides_drawer import Figure, SidesDrawer
 from constants import *
 
 
-class SideCache:
+class ColumnFiguresCache:
     def __init__(self):
         self._cache: dict[tuple[int, int]: Figure] = {}
 
@@ -19,21 +19,26 @@ class SideCache:
     def is_in(self, i: int, j: int) -> bool:
         return (i, j) in self._cache
 
-    def get(self, i: int, j: int, camera_xy: tuple[float, float], layers: Layers) -> list[Figure]:
+    def get(self, i: int, j: int, layers: Layers) -> list[Figure]:
         key = (i, j)
         figures_lst, old_camera_xy, start_rects = self._cache.get(key)
-        offset = old_camera_xy[0] - camera_xy[0], old_camera_xy[1] - camera_xy[1]
         for figure, start_rect in zip(figures_lst, start_rects):
-            z = figure.origin_block[2]
-            m = layers.get_n_level_size(z)
-            m_offset = offset[0] * m, offset[1] * m
-            new_rect = start_rect.move(m_offset)
+            if figure.is_side:
+                new_rect = layers.get_rect_for_side(figure.origin_block, figure.directed_block)
+            elif figure.is_not_side:
+                x, y, z = figure.origin_block
+                new_rect = layers.get_rect_for_block(x, y, z)
+            else:
+                raise AssertionError('figure must be side or not side (check directed and origin blocks)')
             figure.reset_rect(new_rect)
         return figures_lst
 
     def pop(self,  i: int, j: int):
         if self.is_in(i, j):
             self._cache.pop((i, j))
+
+    def clear(self):
+        self._cache.clear()
 
 
 class Mesh3D:
@@ -49,10 +54,13 @@ class Mesh3D:
         self.hovered_block = None
         self.directed_block = None
 
-        self.sides_cache = SideCache()
+        self.column_figures_cache = ColumnFiguresCache()
 
     def check_if_in_screen(self, rect: pg.Rect) -> bool:
         return rect.colliderect(self.scr_rect)
+
+    def clear_cache(self):
+        self.column_figures_cache.clear()
 
     def create_mesh(self, world: World, frame: int):
         self.elements: list[list[Figure]] = []
@@ -60,10 +68,21 @@ class Mesh3D:
         rend_order = self.render_order.get_order(self.camera.get_rect())
         counter = 0
         for i, j in rend_order:
+            figures: list[Figure] = []
             counter += 1
+            d = COLUMN_FIGURES_IN_CACHE_DURATION
+            if d > 1:
+                if counter % d == frame % d and self.column_figures_cache.is_in(i, j):
+                    self.column_figures_cache.pop(i, j)
+                elif self.column_figures_cache.is_in(i, j):
+                    figures_from_cache = self.column_figures_cache.get(i, j, self.layers)
+                    figures += figures_from_cache
+                    self.elements.append(figures)
+                    continue
+
             column: Column
             column = world.get_column(i, j)
-            figures: list[Figure] = []
+
             if column is None or not column.height_difference_are_set:
                 continue
 
@@ -91,16 +110,6 @@ class Mesh3D:
                     figure = Figure(block_rect, sprite, (x, y, z), (x, y, z + 1))
                     figures.append(figure)
 
-            # cache for sides of blocks
-            d = TRAPEZOIDS_IN_CACHE_DURATION
-            if d > 1:
-                if counter % d != frame % d and self.sides_cache.is_in(i, j):
-                    figures_from_cache = self.sides_cache.get(i, j, self.camera.get_center(), self.layers)
-                    figures += figures_from_cache
-                    self.elements.append(figures)
-                    continue
-                self.sides_cache.pop(i, j)
-
             # sides of blocks
             top_block = column.get_top_block()
             x, y, z = column.x, column.y, top_block.z
@@ -109,8 +118,6 @@ class Mesh3D:
 
             full_hd = column.height_difference.full_full_height_diff
             nt_hd = column.height_difference.full_nt_height_diff
-
-            figures_for_cache = []
 
             values = list(full_hd.values())+list(nt_hd.values())
             for k in range(max(values)):
@@ -139,18 +146,16 @@ class Mesh3D:
                                                                  top_rect, bottom_rect)
                         if figure is not None:
                             figures.append(figure)
-                            figures_for_cache.append(figure)
 
-            if len(figures_for_cache) > 0:
-                self.sides_cache.add(i, j, figures_for_cache, self.camera.get_center())
+            if len(figures) > 0:
+                self.column_figures_cache.add(i, j, figures, self.camera.get_center())
             self.elements.append(figures)
 
     def draw_terrain(self, scr: pg.Surface):
         for column_figures in self.elements:
             for figure in column_figures:
                 rect, sprite = figure.rect, figure.sprite
-                if self.camera.screen_rect.colliderect(rect):
-                    scr.blit(sprite, rect)
+                scr.blit(sprite, rect)
 
                 if rect.collidepoint(pg.mouse.get_pos()):
                     self.mouse_rect = rect.copy()

@@ -28,13 +28,13 @@ HEIGHT_RECOLOR_BASE = 1  # base value 1
 HEIGHT_RECOLOR_STRENGTH = 0.35  # base value 0.3
 
 MAX_FPS = 200
-TRAPEZOIDS_IN_CACHE_DURATION = 5  # base value: 1
+COLUMN_FIGURES_IN_CACHE_DURATION = 20  # base value: 1
 # if more -> block sides will be rendered every n frames
-# cause artefacts if value is big and prefilling frames with black enabled
-# 2: +15% FPS, 3: +30% FPS, 5: +67% FPS, 25: +96% FPS
+# cause artefacts with water (all transparent blocks)
+# cause artefacts with all blocks if enabled and prefilling frames with black enabled
 
 TRAPEZOID_KEYS_PRECISION = 2  # base value: 1, more -> more accurate trapezoids, more cache
-SAVE_TRAPEZOID_KEYS: bool = False  # if True save keys on disk and generate cache on next boot
+SAVE_TRAPEZOID_KEYS: bool = True  # if True save keys on disk and generate cache on next boot
 
 LOADED_PARTS_PER_FRAME = 2
 DRAW_SIDES_WITH_UNLOADED_REGIONS: bool = False

@@ -37,7 +37,7 @@ world_filler = world_class.WorldFiller(world, camera_frame.get_loading_chunk_dis
 terr_mesh = mesh_3d.Mesh3D(sides_drawer, camera_frame, SCREEN_SIZE)
 ui_mesh = Mesh2D(camera_frame, SCREEN_SIZE)
 
-events_handler = EventHandler(world, camera_frame, trap_drawer)
+events_handler = EventHandler(world, camera_frame, trap_drawer, terr_mesh)
 info_screens: list[InfoScreen] = []
 
 player = Player(0, 0, 0)
@@ -65,16 +65,17 @@ while True:
         scr.fill((0, 0, 0))
     camera_frame.update_layers()
 
+    info_screen, CREATING_MESH = events_handler.handle(player, snake, fps, terr_mesh.hovered_block,
+                                                       terr_mesh.directed_block)
+    if info_screen is not None:
+        info_screens.append(info_screen)
+
     if CREATING_MESH:
         terr_mesh.create_mesh(world, frame)
     terr_mesh.draw_terrain(scr)
 
     ui_mesh.create_ui_mesh(world, player, snake, terr_mesh.mouse_rect)
     ui_mesh.draw_ui(scr)
-
-    info_screen, CREATING_MESH = events_handler.handle(player, snake, fps, terr_mesh.hovered_block, terr_mesh.directed_block)
-    if info_screen is not None:
-        info_screens.append(info_screen)
 
     new_info_screens = []
     for info_screen in info_screens:

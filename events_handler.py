@@ -6,6 +6,7 @@ from world_class import World
 from camera import CameraFrame
 from trapezoid import TrapezoidDrawer
 from gui.objects import Player
+from mesh_3d import Mesh3D
 from gui.snake import Snake
 from constants import CAMERA_SPEED, BLOCKS_PER_MOVE, BLOCK_INTERACTION_COOLDOWN
 
@@ -24,11 +25,12 @@ class InfoScreen:
 
 
 class EventHandler:
-    def __init__(self, world: World, camera: CameraFrame, sides_drawer: TrapezoidDrawer):
+    def __init__(self, world: World, camera: CameraFrame, sides_drawer: TrapezoidDrawer, mesh_3d: Mesh3D):
         self.world = world
         self.camera = camera
         self.layers = camera.get_layers()
         self.sides_drawer = sides_drawer
+        self.mesh_3d = mesh_3d
         self.last_block_interaction = time.time()
 
     def handle(self, player: Player,
@@ -62,8 +64,10 @@ class EventHandler:
                         player_move[2] += 1
                     if event.key == pg.K_z:
                         self.camera.zoom_out()
+                        self.mesh_3d.clear_cache()
                     if event.key == pg.K_x:
                         self.camera.zoom_in()
+                        self.mesh_3d.clear_cache()
                     if event.key == pg.K_1:
                         self.world.DEFAULT_ADDED_BLOCK = blocks.Glass
                     if event.key == pg.K_2:

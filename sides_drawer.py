@@ -16,6 +16,14 @@ class Figure:
     def reset_rect(self, rect: pg.Rect):
         self.rect = rect
 
+    @property
+    def is_side(self):
+        return self.origin_block[0] != self.directed_block[0] or self.origin_block[1] != self.directed_block[1]
+
+    @property
+    def is_not_side(self):
+        return self.origin_block[0] == self.directed_block[0] and self.origin_block[1] == self.directed_block[1]
+
 
 class SidesDrawer:
     def __init__(self, trap_drawer: TrapezoidDrawer, scr_rect: pg.Rect):
