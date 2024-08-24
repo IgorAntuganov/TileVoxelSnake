@@ -28,7 +28,7 @@ HEIGHT_RECOLOR_BASE = 1  # base value 1
 HEIGHT_RECOLOR_STRENGTH = 0.35  # base value 0.3
 
 MAX_FPS = 200
-COLUMN_FIGURES_IN_CACHE_DURATION = 20  # base value: 1
+COLUMN_FIGURES_IN_CACHE_DURATION = 8  # base value: 1
 # if more -> block sides will be rendered every n frames
 # cause artefacts with water (all transparent blocks)
 # cause artefacts with all blocks if enabled and prefilling frames with black enabled

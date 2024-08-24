@@ -10,7 +10,7 @@ class Region:
         self.center_x = x + size//2
         self.center_y = y + size//2
         self.size = size
-        self.columns: list[list[None | Column]] = [[None] * size for _ in range(size)]
+        self.columns_dict: dict[tuple[int, int]: Column] = {}
         self.tiles: dict[tuple[int, int]: Tile] = {}
 
         self.filled = False
@@ -33,14 +33,15 @@ class Region:
     def get_column(self, x, y) -> Column | None:
         x -= self.x
         y -= self.y
-        column = self.columns[y][x]
-        if column is not None:
-            return column
+        if (x, y) in self.columns_dict:
+            return self.columns_dict[(x, y)]
 
     def set_column(self, x: int, y: int, column: Column):
         x -= self.x
         y -= self.y
-        self.columns[y][x] = column
+        assert (x, y) not in self.columns_dict
+        assert len(self.columns_dict) < self.size**2
+        self.columns_dict[(x, y)] = column
 
     def set_tile(self, x, y, tile: Tile):
         self.tiles[(x, y)] = tile
