@@ -1,4 +1,4 @@
-# import cProfile
+import cProfile
 import pygame as pg
 from camera import CameraFrame, Layers
 from world_class import Column, World
@@ -23,9 +23,10 @@ class ColumnFiguresCache:
         for k in range(len(figures_lst)):
             fig = figures_lst[k]
             start_rect = start_rects[k]
-            if fig.is_not_side:
+            if fig.is_not_side():
                 only_top_figures_lst.append(fig)
                 only_top_start_rects.append(start_rect)
+
         only_tops_item = (only_top_figures_lst, camera_xy, only_top_start_rects)
         self._top_cache[key] = only_tops_item
 
@@ -39,9 +40,9 @@ class ColumnFiguresCache:
         key = (i, j)
         figures_lst, old_camera_xy, start_rects = self._cache.get(key)
         for figure, start_rect in zip(figures_lst, start_rects):
-            if figure.is_side:
+            if figure.is_side():
                 new_rect = layers.get_rect_for_side(figure.origin_block, figure.directed_block)
-            elif figure.is_not_side:
+            elif figure.is_not_side():
                 x, y, z = figure.origin_block
                 new_rect = layers.get_rect_for_block(x, y, z)
             else:
@@ -85,16 +86,29 @@ class Mesh3D:
 
         self.column_figures_cache = ColumnFiguresCache()
 
+        self.pr = cProfile.Profile()
+
     def check_if_in_screen(self, rect: pg.Rect) -> bool:
         return rect.colliderect(self.scr_rect)
 
     def clear_cache(self):
         self.column_figures_cache.clear()
 
+    def top_cache_counter(self):
+        return 2**8
+
+    def top_calculate_counter(self):
+        return 8**8
+
+    def pop_top_counter(self):
+        return 2**8
+
+    def not_pop_top_counter(self):
+        return 8**8
+
     def create_mesh(self, world: World, frame: int, scr: pg.Surface):
-        # if frame % 300 == 0:
-        #     pr = cProfile.Profile()
-        #     pr.enable()
+        if frame == 500 and PRINT_3D_MESH_CPROFILE:
+            self.pr.enable()
         newly_set_height_columns = world.pop_newly_set_height_columns()
         recently_deleted_columns = world.pop_recently_deleted_columns()
         for i, j in recently_deleted_columns:
@@ -114,20 +128,22 @@ class Mesh3D:
             d = COLUMN_FIGURES_IN_CACHE_DURATION
             top_d = d * TOP_FIGURES_DURATION_MULTIPLAYER
             if d > 1:
+                if self.column_figures_cache.is_in_cache(i, j):
+                    if counter % d != frame % d:
+                        figures_from_cache = self.column_figures_cache.get(i, j, self.layers)
+                        figures += figures_from_cache
+                        self.blit_column_figures(figures, scr)
+                        continue
+                    else:
+                        self.column_figures_cache.pop(i, j)
+
                 if self.column_figures_cache.is_in_top_cache(i, j):
                     if counter % top_d == frame % top_d:
                         self.column_figures_cache.pop_top(i, j)
+                        self.pop_top_counter()
                     else:
                         top_figures_from_cache = self.column_figures_cache.get_top_figures(i, j, self.layers)
-
-                if counter % d == frame % d:
-                    if self.column_figures_cache.is_in_cache(i, j):
-                        self.column_figures_cache.pop(i, j)
-                elif self.column_figures_cache.is_in_cache(i, j):
-                    figures_from_cache = self.column_figures_cache.get(i, j, self.layers)
-                    figures += figures_from_cache
-                    self.blit_column_figures(figures, scr)
-                    continue
+                        self.not_pop_top_counter()
 
             column: Column
             column = world.get_column(i, j)
@@ -138,7 +154,9 @@ class Mesh3D:
             # top sides of blocks
             if len(top_figures_from_cache) != 0:
                 figures += top_figures_from_cache
+                self.top_cache_counter()
             else:
+                self.top_calculate_counter()
                 non_transparent_already_rendered = False
                 visible_blocks = column.get_blocks_with_visible_top_sprite()
                 for m, block in enumerate(visible_blocks):
@@ -164,55 +182,62 @@ class Mesh3D:
             # sides of blocks
             top_block = column.get_top_block()
             x, y, z = column.x, column.y, top_block.z
-            column_bottom_rect = self.layers.get_rect_for_block(x, y, 0)
-            column_top_rect = self.layers.get_rect_for_block(x, y, z)
 
             full_hd = column.height_difference.full_full_height_diff
             nt_hd = column.height_difference.full_nt_height_diff
 
             values = list(full_hd.values())+list(nt_hd.values())
-            for k in range(max(values)):
-                side_z = z - k
-                block = column.get_block(side_z)
-                top_rect = self.layers.get_rect_for_block(x, y, side_z)
-                bottom_rect = self.layers.get_rect_for_block(x, y, side_z - 1)
-                keys = []
-                if column_top_rect.bottom < column_bottom_rect.bottom:
-                    keys.append('south')
-                if column_top_rect.top > column_bottom_rect.top:
-                    keys.append('north')
-                if column_top_rect.right < column_bottom_rect.right:
-                    keys.append('east')
-                if column_top_rect.left > column_bottom_rect.left:
-                    keys.append('west')
 
-                for key in keys:
-                    non_transparent_side = not block.is_transparent and k < nt_hd[key]
-                    transparent_side = block.is_transparent and k < full_hd[key]
-                    if non_transparent_side or transparent_side:
-                        sprite, sprite_name = block.get_side_sprite(key, column.get_height_difference(), k)
+            max_value = max(values)
+            if max_value > 0:
+                column_bottom_rect = self.layers.get_rect_for_block(x, y, 0)
+                column_top_rect = self.layers.get_rect_for_block(x, y, z)
 
-                        figure = self.sides_drawer.create_figure(x, y, side_z, key,
-                                                                 sprite, sprite_name,
-                                                                 top_rect, bottom_rect)
-                        if figure is not None:
-                            figures.append(figure)
+                for k in range(max_value):
+                    side_z = z - k
+                    block = column.get_block(side_z)
+                    top_rect = self.layers.get_rect_for_block(x, y, side_z)
+                    bottom_rect = self.layers.get_rect_for_block(x, y, side_z - 1)
+                    keys = []
+                    if column_top_rect.bottom < column_bottom_rect.bottom:
+                        keys.append('south')
+                    if column_top_rect.top > column_bottom_rect.top:
+                        keys.append('north')
+                    if column_top_rect.right < column_bottom_rect.right:
+                        keys.append('east')
+                    if column_top_rect.left > column_bottom_rect.left:
+                        keys.append('west')
 
-            if len(figures) > 0:
-                self.column_figures_cache.add(i, j, figures, self.camera.get_center())
+                    for key in keys:
+                        non_transparent_side = not block.is_transparent and k < nt_hd[key]
+                        transparent_side = block.is_transparent and k < full_hd[key]
+                        if non_transparent_side or transparent_side:
+                            sprite, sprite_name = block.get_side_sprite(key, column.get_height_difference(), k)
+
+                            figure = self.sides_drawer.create_figure(x, y, side_z, key,
+                                                                     sprite, sprite_name,
+                                                                     top_rect, bottom_rect)
+                            if figure is not None:
+                                figures.append(figure)
+
+                if len(figures) > 0:
+                    self.column_figures_cache.add(i, j, figures, self.camera.get_center())
 
             self.blit_column_figures(figures, scr)
 
-            # if frame % 300 == 0:
-            #     pr.create_stats()
-            #     pr.print_stats(sort='tottime')
+        if frame == 2000 and PRINT_3D_MESH_CPROFILE:
+            self.pr.create_stats()
+            self.pr.print_stats(sort='cumtime')
+            self.pr.print_stats(sort='tottime')
+            self.pr.print_stats(sort='ncalls')
 
     def blit_column_figures(self, figures: list[Figure], scr: pg.Surface):
+        mouse_pos = pg.mouse.get_pos()
         for figure in figures:
             rect, sprite = figure.rect, figure.sprite
             scr.blit(sprite, rect)
 
-            if rect.collidepoint(pg.mouse.get_pos()):
+            if rect.collidepoint(mouse_pos):
                 self.mouse_rect = rect.copy()
                 self.hovered_block = figure.origin_block
                 self.directed_block = figure.directed_block

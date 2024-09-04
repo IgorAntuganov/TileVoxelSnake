@@ -7,14 +7,18 @@ class HeightDiff9:
         self.full_nt_height_diff = full_nt_height_diff
         self.nt_nt_height_diff = nt_nt_height_diff
 
+        self.top_block_neighbors = tuple(bool(self.full_full_height_diff[key] < 0) for key in SIDES_NAMES+DIAGONALS_NAMES)
+        self.full_full_edges = tuple(bool(self.full_full_height_diff[key] > 0) for key in SIDES_NAMES+DIAGONALS_NAMES)
+        self.nt_full_edges = tuple(bool(self.nt_nt_height_diff[key] > 0) for key in SIDES_NAMES + DIAGONALS_NAMES)
+
     def get_top_block_neighbors(self) -> tuple[bool]:
-        return tuple(bool(self.full_full_height_diff[key] < 0) for key in SIDES_NAMES+DIAGONALS_NAMES)
+        return self.top_block_neighbors
 
     def get_full_full_edges(self) -> tuple[bool]:
-        return tuple(bool(self.full_full_height_diff[key] > 0) for key in SIDES_NAMES+DIAGONALS_NAMES)
+        return self.full_full_edges
 
     def get_nt_full_edges(self) -> tuple[bool]:
-        return tuple(bool(self.nt_nt_height_diff[key] > 0) for key in SIDES_NAMES + DIAGONALS_NAMES)
+        return self.nt_full_edges
 
     @staticmethod
     def from_9_columns(columns_3x3: list[list[...]]):
