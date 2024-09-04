@@ -4,6 +4,7 @@ import pygame as pg
 class RenderOrder:
     def __init__(self):
         self._size_cache = {}
+        self._order_cache = {}
 
     def create_order(self, rect: pg.Rect) -> list[tuple[int, int]]:
         ordered: list[tuple[int, int]] = []
@@ -62,6 +63,13 @@ class RenderOrder:
         return ordered
 
     def get_order(self, rect: pg.Rect) -> list[tuple[int, int]]:
+        if len(self._order_cache) > 100:
+            self._order_cache.clear()
+
+        key2 = *rect.topleft, *rect.bottomright
+        if key2 in self._order_cache:
+            return self._order_cache[key2]
+
         offset = rect.topleft
         offset_x, offset_y = offset
         width = rect.width
@@ -72,5 +80,9 @@ class RenderOrder:
         else:
             order = self.create_order(rect)
 
+        order_with_offset = []
         for i, j in order:
-            yield i + offset_x, j + offset_y
+            coords = i + offset_x, j + offset_y
+            order_with_offset.append(coords)
+        self._order_cache[key2] = order_with_offset
+        return order_with_offset

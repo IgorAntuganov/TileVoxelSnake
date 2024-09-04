@@ -41,10 +41,11 @@ class Mesh2D:
 
         for tile in world.get_all_tiles():
             column_under_tile = world.get_column(tile.x, tile.y)
-            buried = tile.z+1 < column_under_tile.full_height
-            tile_figure = UIFigure(tile.get_sprite(layers, buried), tile.get_rect(layers), tile.z)
-            if DRAW_TILES:
-                self.elements.append(tile_figure)
+            if column_under_tile is not None:
+                buried = tile.z+1 < column_under_tile.full_height
+                tile_figure = UIFigure(tile.get_sprite(layers, buried), tile.get_rect(layers), tile.z)
+                if DRAW_TILES:
+                    self.elements.append(tile_figure)
 
         self.elements.append(player_figure)
         self.elements.sort(key=lambda fig: fig.z)

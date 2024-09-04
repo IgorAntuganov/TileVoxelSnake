@@ -13,15 +13,18 @@ class Region:
         self.columns_dict: dict[tuple[int, int]: Column] = {}
         self.tiles: dict[tuple[int, int]: Tile] = {}
 
-        self.filled = False
+        self._is_ready = False
 
     @staticmethod
     def check_distance(center_x, center_y, frame_x, frame_y, r) -> bool:
         distance = max(abs(frame_x - center_x), abs(frame_y - center_y))
         return distance < r
 
-    def check_if_fully_filled(self) -> bool:
-        return self.filled
+    def set_ready(self):
+        self._is_ready = True
+
+    def is_ready(self) -> bool:
+        return self._is_ready
 
     def check_region_distance(self, frame_x, frame_y, r) -> bool:
         return self.check_distance(self.center_x, self.center_y, frame_x, frame_y, r)
@@ -42,6 +45,9 @@ class Region:
         assert (x, y) not in self.columns_dict
         assert len(self.columns_dict) < self.size**2
         self.columns_dict[(x, y)] = column
+
+    def get_all_columns(self) -> list[Column]:
+        return list(self.columns_dict.values())
 
     def set_tile(self, x, y, tile: Tile):
         self.tiles[(x, y)] = tile
