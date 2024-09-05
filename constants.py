@@ -31,12 +31,12 @@ MAX_FPS = 200
 COLUMN_FIGURES_IN_CACHE_DURATION = 8  # base value: 1
 # if more -> block sides will be rendered every n frames
 # Cause artefacts if enabled and prefilling frames with black enabled
-TOP_FIGURES_DURATION_MULTIPLAYER = 8
+TOP_FIGURES_DURATION_MULTIPLAYER = 160  # maybe it can be turned off altogether
 
 TRAPEZOID_KEYS_PRECISION = 2  # base value: 1, more -> more accurate trapezoids, more cache
 SAVE_TRAPEZOID_KEYS: bool = True  # if True save keys on disk and generate cache on next boot
 
-LOADED_PARTS_PER_FRAME = 2
+LOADED_PARTS_PER_FRAME = 4
 DRAW_SIDES_WITH_UNLOADED_REGIONS: bool = False
 
 REGIONS_DISTANCE_UPDATE_FREQ = 50
@@ -65,8 +65,8 @@ SET_FPS_CAPTION = False
 NOT_ABSTRACT_BLOCKS_CLASSES_INFO = False
 FILLING_COLUMNS_INFO = False
 PREFILL_FRAME_WITH_BLACK = False
-DRAW_TILES = True
 PRINT_3D_MESH_CPROFILE = False
+DRAW_TILES = True
 
 # Constants
 
@@ -97,7 +97,7 @@ BIOME_OCTAVES = [0, 1, 2, 3]
 
 TREES_CHUNK_SIZE = 128
 TREES_IN_CHUNK = 450
-TREE_AVOIDING_RADIUS = 6
+TREE_AVOIDING_RADIUS = 4
 
 TILES_CHUNK_SIZE = 32
 TILES_IN_CHUNK = 6

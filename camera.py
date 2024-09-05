@@ -2,23 +2,6 @@ import pygame as pg
 from constants import *
 
 
-def get_rect_for_block_info(base_level_size, center_x, center_y, scr_size_x, scr_size_y, x, y, z):
-    layers_offset = (base_level_size / 32) ** 3
-    difference = z * layers_offset
-    rect_size = base_level_size + difference
-
-    x0 = (-center_x) * rect_size + scr_size_x / 2
-    y0 = (-center_y) * rect_size + scr_size_y / 2
-
-    left = (x0 + x * rect_size) // 1
-    right = (x0 + (x + 1) * rect_size) // 1
-    top = (y0 + y * rect_size) // 1
-    bottom = (y0 + (y + 1) * rect_size) // 1
-    width = right - left
-    height = bottom - top
-    return left, top, width, height
-
-
 class Layers:
     def __init__(self, base_level_size: int):
         self.base_level_size = base_level_size
@@ -29,9 +12,6 @@ class Layers:
         self.define_n_level_size()
         self.x0_y0_dict: dict = {}
         self.define_n_level_x0_y0()
-
-    def get_base_level_size(self) -> int:
-        return self.base_level_size
 
     def set_base_level_size(self, size: int):
         self.base_level_size = size
@@ -60,9 +40,9 @@ class Layers:
     def get_n_level_x0_y0(self, n: float | int) -> tuple[float, float]:
         """:return topleft coordinates of block with x=0, y=0 in pixels of screen"""
         size = self.getdict_n_level_size(n)
-        offset_x = (-self.center[0]) * size + self.scr_size[0] // 2
-        offset_y = (-self.center[1]) * size + self.scr_size[1] // 2
-        return offset_x, offset_y
+        offset_x = (-self.center[0]) * size + self.scr_size[0] / 2
+        offset_y = (-self.center[1]) * size + self.scr_size[1] / 2
+        return offset_x//1, offset_y//1
 
     def define_n_level_x0_y0(self):
         self.x0_y0_dict = {}
@@ -75,7 +55,7 @@ class Layers:
             return self.x0_y0_dict[n]
         return self.get_n_level_x0_y0(n)
 
-    def get_rect_for_block(self, x, y, z):
+    def get_rect_for_block(self, x, y, z) -> pg.Rect:
         rect_size = self.getdict_n_level_size(z)
         x0, y0 = self.getdict_n_level_x0_y0(z)
 
@@ -87,6 +67,14 @@ class Layers:
         height = bottom - top
         rect = pg.Rect(left, top, width, height)
         return rect
+
+    def get_top_left_for_block(self, x, y, z) -> tuple[int, int]:
+        rect_size = self.getdict_n_level_size(z)
+        x0, y0 = self.getdict_n_level_x0_y0(z)
+
+        left = (x0 + x * rect_size) // 1
+        top = (y0 + y * rect_size) // 1
+        return left, top
 
     def get_rect_for_side(self, origin_block: tuple[int, int, int], directed_block: tuple[int, int, int]) -> pg.Rect:
         orig_rect = self.get_rect_for_block(*origin_block)

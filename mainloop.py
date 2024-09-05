@@ -72,7 +72,6 @@ while True:
 
     if CREATING_MESH:
         terr_mesh.create_mesh(world, frame, scr)
-    # terr_mesh.draw_terrain(scr)
 
     ui_mesh.create_ui_mesh(world, player, snake, terr_mesh.mouse_rect)
     ui_mesh.draw_ui(scr)
@@ -91,7 +90,9 @@ while True:
         caption += ' stamina:' + str(player.max_stamina)
         caption += ' cooldown:' + str(round(player.stamina_cooldown, 2))
         caption += ' block size:' + str(camera_frame.get_base_level_size())
-    pg.display.set_caption(caption)
+
+    if not frame % 10:
+        pg.display.set_caption(caption)
 
     last_frame_end = time.time()
 

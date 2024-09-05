@@ -18,6 +18,9 @@ class Figure:
     def reset_rect(self, rect: pg.Rect):
         self.rect = rect
 
+    def set_top_left(self, topleft: tuple[int, int]):
+        self.rect.topleft = topleft
+
     def is_side(self):
         return self._is_side
 

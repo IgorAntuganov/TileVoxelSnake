@@ -42,12 +42,14 @@ class ColumnFiguresCache:
         for figure, start_rect in zip(figures_lst, start_rects):
             if figure.is_side():
                 new_rect = layers.get_rect_for_side(figure.origin_block, figure.directed_block)
+                figure.reset_rect(new_rect)
             elif figure.is_not_side():
                 x, y, z = figure.origin_block
-                new_rect = layers.get_rect_for_block(x, y, z)
+                top_left = layers.get_top_left_for_block(x, y, z)
+                figure.set_top_left(top_left)
             else:
                 raise AssertionError('figure must be side or not side (check directed and origin blocks)')
-            figure.reset_rect(new_rect)
+
         return figures_lst
 
     def get_top_figures(self, i: int, j: int, layers: Layers) -> list[Figure]:
@@ -55,8 +57,8 @@ class ColumnFiguresCache:
         figures_lst, old_camera_xy, start_rects = self._top_cache.get(key)
         for figure, start_rect in zip(figures_lst, start_rects):
             x, y, z = figure.origin_block
-            new_rect = layers.get_rect_for_block(x, y, z)
-            figure.reset_rect(new_rect)
+            top_left = layers.get_top_left_for_block(x, y, z)
+            figure.set_top_left(top_left)
         return figures_lst
 
     def pop(self, i: int, j: int):
@@ -94,18 +96,6 @@ class Mesh3D:
     def clear_cache(self):
         self.column_figures_cache.clear()
 
-    def top_cache_counter(self):
-        return 2**8
-
-    def top_calculate_counter(self):
-        return 8**8
-
-    def pop_top_counter(self):
-        return 2**8
-
-    def not_pop_top_counter(self):
-        return 8**8
-
     def create_mesh(self, world: World, frame: int, scr: pg.Surface):
         if frame == 500 and PRINT_3D_MESH_CPROFILE:
             self.pr.enable()
@@ -140,10 +130,8 @@ class Mesh3D:
                 if self.column_figures_cache.is_in_top_cache(i, j):
                     if counter % top_d == frame % top_d:
                         self.column_figures_cache.pop_top(i, j)
-                        self.pop_top_counter()
                     else:
                         top_figures_from_cache = self.column_figures_cache.get_top_figures(i, j, self.layers)
-                        self.not_pop_top_counter()
 
             column: Column
             column = world.get_column(i, j)
@@ -154,9 +142,7 @@ class Mesh3D:
             # top sides of blocks
             if len(top_figures_from_cache) != 0:
                 figures += top_figures_from_cache
-                self.top_cache_counter()
             else:
-                self.top_calculate_counter()
                 non_transparent_already_rendered = False
                 visible_blocks = column.get_blocks_with_visible_top_sprite()
                 for m, block in enumerate(visible_blocks):
@@ -193,20 +179,22 @@ class Mesh3D:
                 column_bottom_rect = self.layers.get_rect_for_block(x, y, 0)
                 column_top_rect = self.layers.get_rect_for_block(x, y, z)
 
+                keys = []
+                if column_top_rect.bottom < column_bottom_rect.bottom:
+                    keys.append('south')
+                if column_top_rect.top > column_bottom_rect.top:
+                    keys.append('north')
+                if column_top_rect.right < column_bottom_rect.right:
+                    keys.append('east')
+                if column_top_rect.left > column_bottom_rect.left:
+                    keys.append('west')
+
+                last_bottom_rect = column_top_rect
                 for k in range(max_value):
                     side_z = z - k
                     block = column.get_block(side_z)
-                    top_rect = self.layers.get_rect_for_block(x, y, side_z)
+                    top_rect = last_bottom_rect
                     bottom_rect = self.layers.get_rect_for_block(x, y, side_z - 1)
-                    keys = []
-                    if column_top_rect.bottom < column_bottom_rect.bottom:
-                        keys.append('south')
-                    if column_top_rect.top > column_bottom_rect.top:
-                        keys.append('north')
-                    if column_top_rect.right < column_bottom_rect.right:
-                        keys.append('east')
-                    if column_top_rect.left > column_bottom_rect.left:
-                        keys.append('west')
 
                     for key in keys:
                         non_transparent_side = not block.is_transparent and k < nt_hd[key]
@@ -219,6 +207,7 @@ class Mesh3D:
                                                                      top_rect, bottom_rect)
                             if figure is not None:
                                 figures.append(figure)
+                    last_bottom_rect = bottom_rect
 
                 if len(figures) > 0:
                     self.column_figures_cache.add(i, j, figures, self.camera.get_center())

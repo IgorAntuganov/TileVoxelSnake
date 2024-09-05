@@ -176,12 +176,11 @@ class World:
             print('start setting h diffs -----------------------------------')
         for i in range(rect.left, rect.right):
             for j in range(rect.top, rect.bottom):
-                self.newly_set_height_columns.add((i, j))
                 column = self.get_column_from_unfilled_regions(i, j)
                 if column is None:
                     continue
-                if FILLING_COLUMNS_INFO:
-                    print('setting for column', i, j)
+
+                self.newly_set_height_columns.add((i, j))
 
                 columns_3x3 = []
                 for j1 in range(-1, 2):
@@ -194,6 +193,9 @@ class World:
                     columns_3x3.append(row)
 
                 column.set_height_difference(columns_3x3)
+
+                if FILLING_COLUMNS_INFO:
+                    print('setting for column', i, j)
 
 
 class WorldFiller:

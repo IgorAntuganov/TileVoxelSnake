@@ -34,7 +34,11 @@ class TrapezoidDrawer:
 
     def create_cache(self):
         start = time.time()
-        for key in self.keys:
+        for i, key in enumerate(self.keys):
+            if not i % 1000:
+                percent = round(i/len(self.keys) * 100, 0)
+                pg.display.set_caption(f'Creating cache... {i} of {len(self.keys)} ({percent}%)')
+            pg.event.get()
             is_hor, texture_name, size, part, next_part = key
             texture = self._textures_cache[texture_name]
             if is_hor:
