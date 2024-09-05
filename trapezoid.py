@@ -32,21 +32,32 @@ class TrapezoidDrawer:
     def set_print_cache_size(self, enabled: bool):
         self._print_cache_size = enabled
 
-    def create_cache(self):
+    def create_cache(self, scr):
         start = time.time()
         for i, key in enumerate(self.keys):
-            if not i % 1000:
-                percent = round(i/len(self.keys) * 100, 0)
-                pg.display.set_caption(f'Creating cache... {i} of {len(self.keys)} ({percent}%)')
-            pg.event.get()
             is_hor, texture_name, size, part, next_part = key
             texture = self._textures_cache[texture_name]
             if is_hor:
                 image = self.get_pixel_string_with_anisotropic(texture, size, part, next_part)
                 self._lines_cache[key] = image
+                y = i % SCREEN_SIZE[1] // 2
+                x = ((i // SCREEN_SIZE[1]) * BASE_LEVEL_SIZE * 4) % SCREEN_SIZE[0]
+                scr.blit(image, (x, y))
+
             else:
                 image = self.get_pixel_column_with_anisotropic(texture, size, part, next_part)
                 self._lines_cache[key] = image
+                x = i % SCREEN_SIZE[0]
+                y = ((i // SCREEN_SIZE[0]) * BASE_LEVEL_SIZE * 4) % (SCREEN_SIZE[1] // 2)
+                y += SCREEN_SIZE[1] // 2
+                scr.blit(image, (x, y))
+
+            if not i % 1000:
+                percent = round(i/len(self.keys) * 100, 0)
+                pg.display.set_caption(f'Creating cache... {i} of {len(self.keys)} ({percent}%)')
+                pg.display.update()
+                [exit() for event in pg.event.get() if event.type == pg.QUIT]
+
         if self._print_cache_size:
             t = time.time() - start
             print('cache created by keys from disk:', len(self._lines_cache.keys()), 'time consuming:', t)
