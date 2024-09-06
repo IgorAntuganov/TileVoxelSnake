@@ -3,13 +3,13 @@
 
 SCREEN_SIZE = 1536, 960  # 1344, 756; 1600, 900; 1536, 960;  800, 450
 BASE_LEVEL_SIZE = 32  # size in pixels of top side of block at z = 0
-LAYERS_OFFSET = 1  # only int > 0, difference in pixel between layers top side sprites sizes
-MIN_BASE_LEVEL_SIZE = 16
+LAYERS_OFFSET = 1  # difference in pixel between layers top side sprites sizes
+MIN_BASE_LEVEL_SIZE = 12
 MAX_BASE_LEVEL_SIZE = 64
 BASE_LEVEL_STEP = 4
 
 SHADOW_RADIUS = 0.7  # 0 <= x <= 1
-SHADOW_STRENGTH = 0.25  # 0 <= x <= 1
+SHADOW_STRENGTH = 0.35  # 0 <= x <= 1
 
 EXPOSED_EDGE_COLOR = (220, 210, 200)
 HIDDEN_EDGE_COLOR = (200, 191, 182)
@@ -33,7 +33,7 @@ COLUMN_FIGURES_IN_CACHE_DURATION = 8  # base value: 1
 # Cause artefacts if enabled and prefilling frames with black enabled
 TOP_FIGURES_DURATION_MULTIPLAYER = 160  # maybe it can be turned off altogether
 
-TRAPEZOID_KEYS_PRECISION = 2  # base value: 1, more -> more accurate trapezoids, more cache
+TRAPEZOID_KEYS_PRECISION = 3  # base value: 1, more -> more accurate trapezoids, more cache
 SAVE_TRAPEZOID_KEYS: bool = True  # if True save keys on disk and generate cache on next boot
 
 LOADED_PARTS_PER_FRAME = 32
@@ -66,7 +66,7 @@ HEIGHT_GENERATING_INFO = False
 NOT_ABSTRACT_BLOCKS_CLASSES_INFO = False
 FILLING_COLUMNS_INFO = False
 PREFILL_FRAME_WITH_BLACK = False
-PRINT_3D_MESH_CPROFILE = False
+PRINT_3D_MESH_CPROFILE = True
 DRAW_TILES = True
 
 # Constants

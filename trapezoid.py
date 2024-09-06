@@ -42,7 +42,7 @@ class TrapezoidDrawer:
                 self._lines_cache[key] = image
                 y = i % SCREEN_SIZE[1] // 2
                 x = ((i // SCREEN_SIZE[1]) * BASE_LEVEL_SIZE * 4) % SCREEN_SIZE[0]
-                scr.blit(image, (x, y))
+                scr.blit(image.copy(), (x, y))
 
             else:
                 image = self.get_pixel_column_with_anisotropic(texture, size, part, next_part)
@@ -50,12 +50,12 @@ class TrapezoidDrawer:
                 x = i % SCREEN_SIZE[0]
                 y = ((i // SCREEN_SIZE[0]) * BASE_LEVEL_SIZE * 4) % (SCREEN_SIZE[1] // 2)
                 y += SCREEN_SIZE[1] // 2
-                scr.blit(image, (x, y))
+                scr.blit(image.copy(), (x, y))
 
             if not i % 1000:
                 percent = round(i/len(self.keys) * 100, 0)
                 pg.display.set_caption(f'Creating cache... {i} of {len(self.keys)} ({percent}%)')
-                pg.display.update()
+                pg.display.flip()
                 [exit() for event in pg.event.get() if event.type == pg.QUIT]
 
         if self._print_cache_size:

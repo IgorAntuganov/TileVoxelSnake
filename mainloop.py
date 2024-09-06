@@ -8,7 +8,7 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame as pg
 pg.init()
 from constants import SCREEN_SIZE
-scr = pg.display.set_mode(SCREEN_SIZE)
+scr = pg.display.set_mode(SCREEN_SIZE, vsync=1)
 pg.display.set_caption('Voxels')
 
 from constants import *
@@ -93,5 +93,5 @@ while True:
 
     last_frame_end = time.time()
 
-    pg.display.update()
+    pg.display.flip()
     clock.tick(MAX_FPS)

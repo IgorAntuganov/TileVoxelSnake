@@ -53,6 +53,9 @@ class CreaseShadowSprites:
         self.shade_power = shade_strength
 
     def get_shade(self, nearby_block_side: str, size: tuple[int, int], is_side: bool = False) -> pg.Surface:
+        if nearby_block_side in ['west', 'east']:
+            size = size[::-1]
+
         if is_side:
             shade_radius = min(1, self.shade_radius * 2)
         else:
@@ -64,8 +67,9 @@ class CreaseShadowSprites:
             shade.fill((0, 0, 0, 0))
             start_power = 255 * self.shade_power
             max_size = max(size)
-            for i in range(int(max_size*shade_radius)):
-                part = i / int(max_size*shade_radius)
+            shade_size = int(max_size*shade_radius+1)
+            for i in range(shade_size):
+                part = (i / shade_size) ** .5
                 power = int(start_power*(1-part))
                 shade_string = pg.Surface((max_size, 1), pg.SRCALPHA)
                 shade_string.fill((0, 0, 0, power))
@@ -77,6 +81,9 @@ class CreaseShadowSprites:
         return self.cache[key]
 
     def get_corner_shade(self, side: str, size: tuple[int, int], is_side: bool = False) -> pg.Surface:
+        if side == DIAGONALS_NAMES[1] or side == DIAGONALS_NAMES[3]:
+            size = size[::-1]
+
         if is_side:
             shade_radius = min(1, self.shade_radius * 2)
         else:
@@ -94,6 +101,7 @@ class CreaseShadowSprites:
             for i in range(radius):
                 for j in range(radius):
                     part = ((i/radius)**2 + (j/radius)**2)**.5
+                    part = part ** .5
                     part = min(1.0, part)
                     power = int(start_power * (1 - part))
                     shade_string = pg.Surface((1, 1), pg.SRCALPHA)
@@ -203,14 +211,15 @@ class BlockSpritesDict:
                     image.blit(edge, (0, h - t))
 
             image = pg.transform.scale(image, size)
+            up_size = size[0] + 0, size[1] + 0  # idk, fix for gaps
             for i in range(4):
                 is_shaded = neighbors[i]
                 if is_shaded:
-                    shade = self.shade_maker.get_shade(SIDES_NAMES[i], size)
+                    shade = self.shade_maker.get_shade(SIDES_NAMES[i], up_size)
                     image.blit(shade, (0, 0))
                 next_is_shaded = neighbors[(i+1) % 4]
                 if not (is_shaded or next_is_shaded) and neighbors[i+4]:
-                    shade = self.shade_maker.get_corner_shade(DIAGONALS_NAMES[i], size)
+                    shade = self.shade_maker.get_corner_shade(DIAGONALS_NAMES[i], up_size)
                     image.blit(shade, (0, 0))
 
             self.scale_shaded_cache[key] = image.copy()

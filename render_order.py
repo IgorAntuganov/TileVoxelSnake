@@ -19,7 +19,7 @@ class RenderOrder:
         minus_offset = -offset[0], -offset[1]
         rect = rect.copy()
         rect.move(minus_offset)
-        i, j = width // 2, height // 2
+        i, j = (width-1) // 2, (height-1) // 2
         ordered.append((i, j))
         r = 0
         # Adding rhombuses sides
