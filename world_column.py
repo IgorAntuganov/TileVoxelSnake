@@ -51,7 +51,7 @@ class Column:
             return self.blocks[0]
         return blocks.DebugBlock(self.x, self.y, 0)
 
-    def get_block(self, z) -> blocks.Block | blocks.FullBlock:
+    def get_block(self, z) -> blocks.Block:
         if self.nt_height > 0:
             if self.nt_height > z:
                 return self.blocks[-z-1]
@@ -60,10 +60,9 @@ class Column:
                 return self.transparent_blocks[ind]
         return blocks.DebugBlock(self.x, self.y, z)
 
-    def get_first_non_transparent(self) -> blocks.Block:
-        if self.nt_height > 0:
-            return self.blocks[0]
-        return blocks.DebugBlock(self.x, self.y, 0)
+    def get_first_invisible_block(self) -> blocks.Block:
+        lowest_neighbor = self.full_height - self.height_difference.visible_blocks_amount
+        return self.get_block(lowest_neighbor-1)
 
     def get_blocks_with_visible_top_sprite(self) -> list[blocks.Block]:
         """return blocks from bottom to top"""

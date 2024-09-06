@@ -76,7 +76,9 @@ class Layers:
         top = (y0 + y * rect_size) // 1
         return left, top
 
-    def get_rect_for_side(self, origin_block: tuple[int, int, int], directed_block: tuple[int, int, int]) -> pg.Rect:
+    def get_rect_for_side(self, origin_block: tuple[int, int, int],
+                          directed_block: tuple[int, int, int],
+                          sizes: tuple[int, int]) -> pg.Rect:
         orig_rect = self.get_rect_for_block(*origin_block)
         x, y, z = directed_block
         z -= 1
@@ -101,7 +103,7 @@ class Layers:
             print(origin_block, directed_block)
             raise AssertionError('incorrect origin and directed blocks')
 
-        rect = pg.Rect(left, top, 1, 1)
+        rect = pg.Rect(left, top, *sizes)
         return rect
 
 
@@ -168,4 +170,4 @@ class CameraFrame:
         self.layers.set_center(self.center)
 
     def get_loading_chunk_distance(self) -> int:
-        return int(max(self.get_rect().size) / 2) + WORLD_CHUNK_SIZE // 3
+        return int(max(self.get_rect().size) / 2) + WORLD_CHUNK_SIZE

@@ -23,7 +23,7 @@ class ColumnFiguresCache:
         for k in range(len(figures_lst)):
             fig = figures_lst[k]
             start_rect = start_rects[k]
-            if fig.is_not_side():
+            if fig.is_not_side:
                 only_top_figures_lst.append(fig)
                 only_top_start_rects.append(start_rect)
 
@@ -38,12 +38,14 @@ class ColumnFiguresCache:
 
     def get(self, i: int, j: int, layers: Layers) -> list[Figure]:
         key = (i, j)
-        figures_lst, old_camera_xy, start_rects = self._cache.get(key)
-        for figure, start_rect in zip(figures_lst, start_rects):
-            if figure.is_side():
-                new_rect = layers.get_rect_for_side(figure.origin_block, figure.directed_block)
+        figures_lst, old_camera_xy, start_rects = self._cache[key]
+        for k, figure in enumerate(figures_lst):
+            if figure.is_side:
+                start_rect = start_rects[k]
+                sizes = start_rect.size
+                new_rect = layers.get_rect_for_side(figure.origin_block, figure.directed_block, sizes)
                 figure.reset_rect(new_rect)
-            elif figure.is_not_side():
+            elif figure.is_not_side:
                 x, y, z = figure.origin_block
                 top_left = layers.get_top_left_for_block(x, y, z)
                 figure.set_top_left(top_left)
@@ -54,7 +56,7 @@ class ColumnFiguresCache:
 
     def get_top_figures(self, i: int, j: int, layers: Layers) -> list[Figure]:
         key = (i, j)
-        figures_lst, old_camera_xy, start_rects = self._top_cache.get(key)
+        figures_lst, old_camera_xy, start_rects = self._top_cache[key]
         for figure, start_rect in zip(figures_lst, start_rects):
             x, y, z = figure.origin_block
             top_left = layers.get_top_left_for_block(x, y, z)
@@ -62,11 +64,11 @@ class ColumnFiguresCache:
         return figures_lst
 
     def pop(self, i: int, j: int):
-        if self.is_in_cache(i, j):
+        if (i, j) in self._cache:
             self._cache.pop((i, j))
 
     def pop_top(self, i: int, j: int):
-        if self.is_in_top_cache(i, j):
+        if (i, j) in self._top_cache:
             self._top_cache.pop((i, j))
 
     def clear(self):
@@ -105,7 +107,11 @@ class Mesh3D:
             self.column_figures_cache.pop(i, j)
             self.column_figures_cache.pop_top(i, j)
 
+        mouse_pos = pg.mouse.get_pos()
+        screen_rect = scr.get_rect()
         rend_order = self.render_order.get_order(self.camera.get_rect())
+        camera_xy = self.camera.get_center()
+
         counter = 0
 
         for i, j in rend_order:
@@ -122,7 +128,11 @@ class Mesh3D:
                     if counter % d != frame % d:
                         figures_from_cache = self.column_figures_cache.get(i, j, self.layers)
                         figures += figures_from_cache
-                        self.blit_column_figures(figures, scr)
+                        collide_screen = self.blit_column_figures(figures, scr, mouse_pos, screen_rect)
+                        if not collide_screen:
+                            self.column_figures_cache.pop(i, j)
+                            self.column_figures_cache.pop_top(i, j)
+                            self.column_figures_cache.add(i, j, [], camera_xy)
                         continue
                     else:
                         self.column_figures_cache.pop(i, j)
@@ -139,6 +149,13 @@ class Mesh3D:
             if column is None or not column.height_difference_are_set:
                 continue
 
+            invisible_block = column.get_first_invisible_block()
+            x, y, z = column.x, column.y, invisible_block.z
+            invisible_block_rect = self.layers.get_rect_for_block(x, y, z)
+
+            if not invisible_block_rect.colliderect(screen_rect):
+                continue
+
             # top sides of blocks
             if len(top_figures_from_cache) != 0:
                 figures += top_figures_from_cache
@@ -148,6 +165,7 @@ class Mesh3D:
                 for m, block in enumerate(visible_blocks):
                     x, y, z = block.x, block.y, block.z
                     block_rect = self.layers.get_rect_for_block(x, y, z)
+
                     rect_size = block_rect.size
                     if block.is_transparent:
                         if m == 0:
@@ -166,18 +184,18 @@ class Mesh3D:
                     figures.append(figure)
 
             # sides of blocks
-            top_block = column.get_top_block()
-            x, y, z = column.x, column.y, top_block.z
 
             full_hd = column.height_difference.full_full_height_diff
             nt_hd = column.height_difference.full_nt_height_diff
 
-            values = list(full_hd.values())+list(nt_hd.values())
+            top_block = column.get_top_block()
+            x, y, z = column.x, column.y, top_block.z
+            column_top_rect = self.layers.get_rect_for_block(x, y, z)
+            column_bottom_rect = self.layers.get_rect_for_block(x, y, 0)
 
+            values = list(full_hd.values())+list(nt_hd.values())
             max_value = max(values)
             if max_value > 0:
-                column_bottom_rect = self.layers.get_rect_for_block(x, y, 0)
-                column_top_rect = self.layers.get_rect_for_block(x, y, z)
 
                 keys = []
                 if column_top_rect.bottom < column_bottom_rect.bottom:
@@ -209,10 +227,10 @@ class Mesh3D:
                                 figures.append(figure)
                     last_bottom_rect = bottom_rect
 
-                if len(figures) > 0:
-                    self.column_figures_cache.add(i, j, figures, self.camera.get_center())
-
-            self.blit_column_figures(figures, scr)
+            if len(figures) > 0:
+                collide_screen = self.blit_column_figures(figures, scr, mouse_pos, screen_rect)
+                if collide_screen:
+                    self.column_figures_cache.add(i, j, figures, camera_xy)
 
         if frame == 2000 and PRINT_3D_MESH_CPROFILE:
             self.pr.create_stats()
@@ -220,13 +238,21 @@ class Mesh3D:
             self.pr.print_stats(sort='tottime')
             self.pr.print_stats(sort='ncalls')
 
-    def blit_column_figures(self, figures: list[Figure], scr: pg.Surface):
-        mouse_pos = pg.mouse.get_pos()
+    def blit_column_figures(self, figures: list[Figure],
+                            scr: pg.Surface,
+                            mouse_pos: tuple[int, int],
+                            screen_rect: pg.Rect) -> bool:
+        collide_screen = False
+
         for figure in figures:
             rect, sprite = figure.rect, figure.sprite
-            scr.blit(sprite, rect)
+            if screen_rect.colliderect(rect):
+                scr.blit(sprite, rect)
+                collide_screen = True
 
             if rect.collidepoint(mouse_pos):
                 self.mouse_rect = rect.copy()
                 self.hovered_block = figure.origin_block
                 self.directed_block = figure.directed_block
+
+        return collide_screen

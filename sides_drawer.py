@@ -12,20 +12,14 @@ class Figure:
         self.sprite = sprite
         self.origin_block = origin_block
         self.directed_block = directed_block
-        self._is_side = self.origin_block[0] != self.directed_block[0] or self.origin_block[1] != self.directed_block[1]
-        self._is_not_side = self.origin_block[0] == self.directed_block[0] and self.origin_block[1] == self.directed_block[1]
+        self.is_side = self.origin_block[0] != self.directed_block[0] or self.origin_block[1] != self.directed_block[1]
+        self.is_not_side = self.origin_block[0] == self.directed_block[0] and self.origin_block[1] == self.directed_block[1]
 
     def reset_rect(self, rect: pg.Rect):
         self.rect = rect
 
     def set_top_left(self, topleft: tuple[int, int]):
         self.rect.topleft = topleft
-
-    def is_side(self):
-        return self._is_side
-
-    def is_not_side(self):
-        return self._is_not_side
 
 
 class SidesDrawer:

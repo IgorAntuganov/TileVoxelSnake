@@ -84,6 +84,8 @@ class World:
         self.newly_set_height_columns = set()
         self.recently_deleted_columns = set()
 
+        self.hot_columns_cache: dict[tuple[int, int]: Column] = {}
+
         path_to_taken_tiles = self.folder + 'taken tiles/'
         self.taken_tiles = TakenTilesCatalog(path_to_taken_tiles)
         self.taken_tiles.load()
@@ -112,10 +114,18 @@ class World:
         del self.regions[key]
 
     def get_column(self, x, y) -> Column | None:
+        if (x, y) in self.hot_columns_cache:
+            return self.hot_columns_cache[(x, y)]
+
+        if len(self.hot_columns_cache) > HOT_COLUMNS_CACHE_CAPACITY:
+            self.hot_columns_cache.clear()
+
         if self.check_is_region(x, y):
             region = self.get_region(x, y)
             if region.is_ready():
                 column = region.get_column(x, y)
+                if column is not None and column.height_difference_are_set:
+                    self.hot_columns_cache[(x, y)] = column
                 return column
 
     def get_column_from_unfilled_regions(self, x, y) -> Column | None:
@@ -235,7 +245,7 @@ class WorldFiller:
                 if block.z > column.full_height:
                     column.add_block_on_top(type(block))
             self.blocks_to_add_stash.pop((i, j))
-        self.world.set_columns_h_diff_in_rect(pg.Rect(i-1, j-1, 3, 3))
+            self.world.set_columns_h_diff_in_rect(pg.Rect(i-1, j-1, 3, 3))
 
     def add_stash_blocks_to_rect_generator(self, rect: pg.Rect):
         for i in range(rect.left, rect.right):

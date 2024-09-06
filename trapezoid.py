@@ -124,7 +124,8 @@ class TrapezoidDrawer:
                 right_top = top_width + abs(offset)
                 right_bottom = bot_width
             rights_diffs = right_top - right_bottom
-            str_width = int(right_top - rights_diffs * part) - str_x
+            str_width = int(right_top - rights_diffs * part) - int(str_x)
+
             if str_width < 1:
                 continue
             if height > 0:
@@ -216,7 +217,7 @@ class TrapezoidDrawer:
                 bottom_left = left_height + abs(offset)
                 bottom_right = right_height
             bottom_diffs = bottom_left - bottom_right
-            col_height = int(bottom_left - bottom_diffs * part) - str_y
+            col_height = int(bottom_left - bottom_diffs * part) - int(str_y)
             if col_height < 1:
                 continue
 

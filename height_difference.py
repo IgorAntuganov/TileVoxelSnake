@@ -11,6 +11,14 @@ class HeightDiff9:
         self.full_full_edges = tuple(bool(self.full_full_height_diff[key] > 0) for key in SIDES_NAMES+DIAGONALS_NAMES)
         self.nt_full_edges = tuple(bool(self.nt_nt_height_diff[key] > 0) for key in SIDES_NAMES + DIAGONALS_NAMES)
 
+        self.visible_blocks_amount = 0
+        for side in SIDES_NAMES:
+            neighbor_height = self.full_nt_height_diff[side]
+            self.visible_blocks_amount = max(self.visible_blocks_amount, neighbor_height)
+
+    def get_visible_blocks_amount(self) -> int:
+        return self.visible_blocks_amount
+
     def get_top_block_neighbors(self) -> tuple[bool]:
         return self.top_block_neighbors
 

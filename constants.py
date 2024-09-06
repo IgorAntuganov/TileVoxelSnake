@@ -6,7 +6,7 @@ BASE_LEVEL_SIZE = 32  # size in pixels of top side of block at z = 0
 LAYERS_OFFSET = 1  # only int > 0, difference in pixel between layers top side sprites sizes
 MIN_BASE_LEVEL_SIZE = 16
 MAX_BASE_LEVEL_SIZE = 64
-BASE_LEVEL_STEP = 8
+BASE_LEVEL_STEP = 4
 
 SHADOW_RADIUS = 0.7  # 0 <= x <= 1
 SHADOW_STRENGTH = 0.25  # 0 <= x <= 1
@@ -36,11 +36,13 @@ TOP_FIGURES_DURATION_MULTIPLAYER = 160  # maybe it can be turned off altogether
 TRAPEZOID_KEYS_PRECISION = 2  # base value: 1, more -> more accurate trapezoids, more cache
 SAVE_TRAPEZOID_KEYS: bool = True  # if True save keys on disk and generate cache on next boot
 
-LOADED_PARTS_PER_FRAME = 4
+LOADED_PARTS_PER_FRAME = 32
 DRAW_SIDES_WITH_UNLOADED_REGIONS: bool = False
 
 REGIONS_DISTANCE_UPDATE_FREQ = 50
 GARBAGE_COLLECTION_FREQ = 500
+
+HOT_COLUMNS_CACHE_CAPACITY = 5000  # base value: 5000. Should be > n of columns on screen
 
 # gameplay settings
 
@@ -61,7 +63,6 @@ CAMERA_SPEED = 6  # in blocks per second
 
 TRAPEZOIDS_CACHE_INFO = False
 HEIGHT_GENERATING_INFO = False
-SET_FPS_CAPTION = False
 NOT_ABSTRACT_BLOCKS_CLASSES_INFO = False
 FILLING_COLUMNS_INFO = False
 PREFILL_FRAME_WITH_BLACK = False

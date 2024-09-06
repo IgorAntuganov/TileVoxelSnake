@@ -129,6 +129,7 @@ class BlockSpritesDict:
     scale_cache: dict[str: pg.Surface] = {}
     scale_shaded_cache: dict[str: pg.Surface] = {}
     shaded_sides_cache: dict[str: pg.Surface] = {}
+    top_recolored_cache: dict[str: pg.Surface] = {}
 
     def __init__(self, block_name: str,
                  top: str,
@@ -146,11 +147,18 @@ class BlockSpritesDict:
         self._south = BlockSprite(south, 0, SUN_SIDES_RECOLOR['south'], sun_sides_recolor)
         self._sides = [self._west, self._north, self._east, self._south]
 
+    def get_top_height_recolored(self, z: int) -> pg.Surface:
+        key = (self.block_name, 'recolored', z)
+        if key not in self.top_recolored_cache:
+            image = height_recolor(self._top.image.copy(), z)
+            self.top_recolored_cache[key] = image
+        return self.top_recolored_cache[key].copy()
+
     def get_top_resized(self, size: tuple[int, int], z: int):
         key = (self.block_name, 'not shaded', size, z)
         if key not in self.scale_shaded_cache:
-            image = pg.transform.scale(self._top.image, size)
-            image = height_recolor(image, z)
+            image = self.get_top_height_recolored(z)
+            image = pg.transform.scale(image, size)
             self.scale_shaded_cache[key] = image.copy()
         return self.scale_shaded_cache[key]
 
@@ -163,7 +171,7 @@ class BlockSpritesDict:
         nt_full_edges = height_diff.get_nt_full_edges()
         key = (self.block_name, *neighbors, *full_full_edges, *nt_full_edges, size, z)
         if key not in self.scale_shaded_cache:
-            image = self._top.image.copy()
+            image = self.get_top_height_recolored(z)
             w, h = image.get_size()
             t = EDGE_THICKNESS
 
@@ -195,7 +203,6 @@ class BlockSpritesDict:
                     image.blit(edge, (0, h - t))
 
             image = pg.transform.scale(image, size)
-            image = height_recolor(image, z)
             for i in range(4):
                 is_shaded = neighbors[i]
                 if is_shaded:
@@ -214,7 +221,7 @@ class BlockSpritesDict:
         key = (self.block_name, *nt_full_edges, 'fully shaded', size, z)
 
         if key not in self.scale_shaded_cache:
-            image = self._top.image.copy()
+            image = self.get_top_height_recolored(z)
             w, h = image.get_size()
             t = EDGE_THICKNESS
 
@@ -232,7 +239,6 @@ class BlockSpritesDict:
                 image.blit(edge, (0, h - t))
 
             image = pg.transform.scale(image, size)
-            image = height_recolor(image, z)
             shade = self.shade_maker.get_full_shade(size)
             image.blit(shade, (0, 0))
             self.scale_shaded_cache[key] = image.copy()
