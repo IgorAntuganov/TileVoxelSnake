@@ -29,10 +29,9 @@ HEIGHT_RECOLOR_BASE = 1  # base value 1
 HEIGHT_RECOLOR_STRENGTH = 0.35  # base value 0.3
 
 MAX_FPS = 165
-COLUMN_FIGURES_IN_CACHE_DURATION = 8  # base value: 1
+COLUMN_FIGURES_IN_CACHE_DURATION = 8  # base value: 1 (disabled), optimal: 8
 # if more -> block sides will be rendered every n frames
 # Cause artefacts if enabled and prefilling frames with black enabled
-TOP_FIGURES_DURATION_MULTIPLAYER = 10000000000000
 
 TRAPEZOID_KEYS_PRECISION = 3  # base value: 1, more -> more accurate trapezoids, more cache
 SAVE_TRAPEZOID_KEYS: bool = True  # if True save keys on disk and generate cache on next boot
@@ -58,7 +57,7 @@ BLOCK_INTERACTION_COOLDOWN = .5  # in seconds
 
 BLOCKS_PER_MOVE = 2
 
-CAMERA_SPEED = 15  # in blocks per second
+CAMERA_SPEED = 8  # in blocks per second at start base level size
 
 # Debug info
 

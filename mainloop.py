@@ -71,7 +71,7 @@ while True:
 
     camera_frame.update_layers()
     if CREATING_MESH:
-        terr_mesh.create_mesh(world, frame, scr)
+        terr_mesh.draw_terrain(world, frame, scr)
 
     ui_mesh.create_ui_mesh(world, player, snake, terr_mesh.mouse_rect)
     ui_mesh.draw_ui(scr)
