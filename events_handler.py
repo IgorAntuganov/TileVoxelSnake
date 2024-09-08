@@ -8,7 +8,7 @@ from trapezoid import TrapezoidDrawer
 from gui.objects import Player
 from mesh_3d import Mesh3D
 from gui.snake import Snake
-from constants import CAMERA_SPEED, BLOCKS_PER_MOVE, BLOCK_INTERACTION_COOLDOWN
+from constants import *
 
 
 class InfoScreen:
@@ -68,6 +68,8 @@ class EventHandler:
                     if event.key == pg.K_x:
                         self.camera.zoom_in()
                         self.mesh_3d.clear_cache()
+                    if event.key == pg.K_c:
+                        self.mesh_3d.clear_cache()
                     if event.key == pg.K_1:
                         self.world.DEFAULT_ADDED_BLOCK = blocks.Glass
                     if event.key == pg.K_2:
@@ -92,8 +94,10 @@ class EventHandler:
             camera_move[0] -= 1
         if pressed[pg.K_RIGHT]:
             camera_move[0] += 1
+
+        camera_speed = BASE_LEVEL_SIZE *  CAMERA_SPEED / self.layers.base_level_size
         if fps != 0:
-            camera_move = camera_move[0] / fps * CAMERA_SPEED, camera_move[1] / fps * CAMERA_SPEED
+            camera_move = camera_move[0] / fps * camera_speed, camera_move[1] / fps * camera_speed
         self.camera.move(camera_move)
         creating_mesh = not pressed[pg.K_0]
 

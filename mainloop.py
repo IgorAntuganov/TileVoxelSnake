@@ -63,13 +63,13 @@ while True:
 
     if PREFILL_FRAME_WITH_BLACK:
         scr.fill((0, 0, 0))
-    camera_frame.update_layers()
 
     info_screen, CREATING_MESH = events_handler.handle(player, snake, fps, terr_mesh.hovered_block,
                                                        terr_mesh.directed_block)
     if info_screen is not None:
         info_screens.append(info_screen)
 
+    camera_frame.update_layers()
     if CREATING_MESH:
         terr_mesh.create_mesh(world, frame, scr)
 
@@ -88,8 +88,7 @@ while True:
     caption += ' cooldown:' + str(round(player.stamina_cooldown, 2))
     caption += ' block size:' + str(camera_frame.get_base_level_size())
 
-    if not frame % 10:
-        pg.display.set_caption(caption)
+    pg.display.set_caption(caption)
 
     last_frame_end = time.time()
 

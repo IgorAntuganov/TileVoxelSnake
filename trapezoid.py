@@ -13,9 +13,10 @@ class TrapezoidDrawer:
             os.mkdir(folder)
 
         if not os.path.isfile(cache_file):
-            pickle.dump({}, open(cache_file, 'wb'))
+            pickle.dump(list({}.keys()), open(cache_file, 'wb'))
         with open(cache_file, 'rb') as file:
             self.keys = pickle.load(file)
+            self.keys.sort(key=lambda x: (x[:2]))  # sorting by orientation and texture name
 
         self._textures_cache = {}
         for filename in os.listdir(folder):
@@ -40,7 +41,7 @@ class TrapezoidDrawer:
             if is_hor:
                 image = self.get_pixel_string_with_anisotropic(texture, size, part, next_part)
                 self._lines_cache[key] = image
-                y = i % SCREEN_SIZE[1] // 2
+                y = i % SCREEN_SIZE[1]
                 x = ((i // SCREEN_SIZE[1]) * BASE_LEVEL_SIZE * 4) % SCREEN_SIZE[0]
                 scr.blit(image.copy(), (x, y))
 
@@ -48,12 +49,11 @@ class TrapezoidDrawer:
                 image = self.get_pixel_column_with_anisotropic(texture, size, part, next_part)
                 self._lines_cache[key] = image
                 x = i % SCREEN_SIZE[0]
-                y = ((i // SCREEN_SIZE[0]) * BASE_LEVEL_SIZE * 4) % (SCREEN_SIZE[1] // 2)
-                y += SCREEN_SIZE[1] // 2
+                y = ((i // SCREEN_SIZE[0]) * BASE_LEVEL_SIZE * 4) % (SCREEN_SIZE[1])
                 scr.blit(image.copy(), (x, y))
 
-            if not i % 1000:
-                percent = round(i/len(self.keys) * 100, 0)
+            if not i % 5000:
+                percent = round(i/len(self.keys) * 100, 1)
                 pg.display.set_caption(f'Creating cache... {i} of {len(self.keys)} ({percent}%)')
                 pg.display.flip()
                 [exit() for event in pg.event.get() if event.type == pg.QUIT]

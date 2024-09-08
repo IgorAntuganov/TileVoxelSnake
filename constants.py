@@ -4,9 +4,10 @@
 SCREEN_SIZE = 1536, 960  # 1344, 756; 1600, 900; 1536, 960;  800, 450
 BASE_LEVEL_SIZE = 32  # size in pixels of top side of block at z = 0
 LAYERS_OFFSET = 1  # difference in pixel between layers top side sprites sizes
-MIN_BASE_LEVEL_SIZE = 12
-MAX_BASE_LEVEL_SIZE = 64
+MIN_BASE_LEVEL_SIZE = 2
+MAX_BASE_LEVEL_SIZE = 128
 BASE_LEVEL_STEP = 4
+ONE_LEVEL_STEP_BEGINNING = 16
 
 SHADOW_RADIUS = 0.7  # 0 <= x <= 1
 SHADOW_STRENGTH = 0.35  # 0 <= x <= 1
@@ -27,11 +28,11 @@ HEIGHT_RECOLOR_OFFSET = 3
 HEIGHT_RECOLOR_BASE = 1  # base value 1
 HEIGHT_RECOLOR_STRENGTH = 0.35  # base value 0.3
 
-MAX_FPS = 200
+MAX_FPS = 165
 COLUMN_FIGURES_IN_CACHE_DURATION = 8  # base value: 1
 # if more -> block sides will be rendered every n frames
 # Cause artefacts if enabled and prefilling frames with black enabled
-TOP_FIGURES_DURATION_MULTIPLAYER = 160  # maybe it can be turned off altogether
+TOP_FIGURES_DURATION_MULTIPLAYER = 10000000000000
 
 TRAPEZOID_KEYS_PRECISION = 3  # base value: 1, more -> more accurate trapezoids, more cache
 SAVE_TRAPEZOID_KEYS: bool = True  # if True save keys on disk and generate cache on next boot
@@ -57,7 +58,7 @@ BLOCK_INTERACTION_COOLDOWN = .5  # in seconds
 
 BLOCKS_PER_MOVE = 2
 
-CAMERA_SPEED = 6  # in blocks per second
+CAMERA_SPEED = 15  # in blocks per second
 
 # Debug info
 
@@ -66,7 +67,7 @@ HEIGHT_GENERATING_INFO = False
 NOT_ABSTRACT_BLOCKS_CLASSES_INFO = False
 FILLING_COLUMNS_INFO = False
 PREFILL_FRAME_WITH_BLACK = False
-PRINT_3D_MESH_CPROFILE = True
+PRINT_3D_MESH_CPROFILE = False
 DRAW_TILES = True
 
 # Constants
@@ -91,7 +92,7 @@ MAX_HEIGHT = 20
 HEIGHT_NOISE_TILE_SIZE = 64
 HEIGHT_OCTAVES = [0, 2, 3]
 START_HEIGHT_AREA = (-2, -2, 4, 4)
-WORLD_CHUNK_SIZE = 8
+WORLD_CHUNK_SIZE = 24
 
 BIOME_NOISE_TILE_SIZE = 64
 BIOME_OCTAVES = [0, 1, 2, 3]

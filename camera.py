@@ -127,15 +127,25 @@ class CameraFrame:
         self.block_height = self.scr_size[1] // self.base_level_size
 
     def zoom_in(self) -> bool:
-        if self.base_level_size >= MIN_BASE_LEVEL_SIZE + BASE_LEVEL_STEP:
+        if self.base_level_size >= ONE_LEVEL_STEP_BEGINNING + BASE_LEVEL_STEP:
             self.base_level_size -= BASE_LEVEL_STEP
+            self.layers.set_base_level_size(self.base_level_size)
+            self.calculate_sizes_in_blocks()
+            return True
+        elif self.base_level_size >= MIN_BASE_LEVEL_SIZE + 1:
+            self.base_level_size -= 1
             self.layers.set_base_level_size(self.base_level_size)
             self.calculate_sizes_in_blocks()
             return True
         return False
 
     def zoom_out(self) -> bool:
-        if self.base_level_size <= MAX_BASE_LEVEL_SIZE - BASE_LEVEL_STEP:
+        if self.base_level_size <= ONE_LEVEL_STEP_BEGINNING - 1:
+            self.base_level_size += 1
+            self.layers.set_base_level_size(self.base_level_size)
+            self.calculate_sizes_in_blocks()
+            return True
+        elif self.base_level_size <= MAX_BASE_LEVEL_SIZE - BASE_LEVEL_STEP:
             self.base_level_size += BASE_LEVEL_STEP
             self.layers.set_base_level_size(self.base_level_size)
             self.calculate_sizes_in_blocks()
