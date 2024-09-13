@@ -19,7 +19,7 @@ class Layers:
 
     def get_n_level_size(self, n: float | int) -> float:
         """:return size of blocks with z=n in pixels of screen"""
-        layers_offset = (self.base_level_size / 32) ** 3
+        layers_offset = LAYERS_OFFSET * (self.base_level_size / BASE_LEVEL_SIZE) ** 3
         difference = n * layers_offset
         return self.base_level_size + difference
 

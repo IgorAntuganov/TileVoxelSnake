@@ -211,15 +211,14 @@ class BlockSpritesDict:
                     image.blit(edge, (0, h - t))
 
             image = pg.transform.scale(image, size)
-            up_size = size[0] + 0, size[1] + 0  # idk, fix for gaps
             for i in range(4):
                 is_shaded = neighbors[i]
                 if is_shaded:
-                    shade = self.shade_maker.get_shade(SIDES_NAMES[i], up_size)
+                    shade = self.shade_maker.get_shade(SIDES_NAMES[i], size)
                     image.blit(shade, (0, 0))
                 next_is_shaded = neighbors[(i+1) % 4]
                 if not (is_shaded or next_is_shaded) and neighbors[i+4]:
-                    shade = self.shade_maker.get_corner_shade(DIAGONALS_NAMES[i], up_size)
+                    shade = self.shade_maker.get_corner_shade(DIAGONALS_NAMES[i], size)
                     image.blit(shade, (0, 0))
 
             self.scale_shaded_cache[key] = image.copy()

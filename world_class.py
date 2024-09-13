@@ -97,12 +97,18 @@ class World:
         self.regions[(x2, y2)] = region
         self.loading_regions.append(region)
 
-    def get_region(self, x, y) -> Region:
+    def get_region_by_column(self, x, y) -> Region:
         x2 = x // WORLD_CHUNK_SIZE
         y2 = y // WORLD_CHUNK_SIZE
         return self.regions[(x2, y2)]
 
-    def check_is_region(self, x, y):
+    def get_region_by_ind(self, x, y) -> Region:
+        return self.regions[(x, y)]
+
+    def check_is_region_ready_by_ind(self, x, y) -> bool:
+        return (x, y) in self.regions and self.regions[(x, y)].is_ready()
+
+    def check_is_region_by_column(self, x, y) -> bool:
         x2 = x // WORLD_CHUNK_SIZE
         y2 = y // WORLD_CHUNK_SIZE
         return (x2, y2) in self.regions
@@ -120,8 +126,8 @@ class World:
         if len(self.hot_columns_cache) > HOT_COLUMNS_CACHE_CAPACITY:
             self.hot_columns_cache.clear()
 
-        if self.check_is_region(x, y):
-            region = self.get_region(x, y)
+        if self.check_is_region_by_column(x, y):
+            region = self.get_region_by_column(x, y)
             if region.is_ready():
                 column = region.get_column(x, y)
                 if column is not None and column.height_difference_are_set:
@@ -129,13 +135,13 @@ class World:
                 return column
 
     def get_column_from_unfilled_regions(self, x, y) -> Column | None:
-        if self.check_is_region(x, y):
-            region = self.get_region(x, y)
+        if self.check_is_region_by_column(x, y):
+            region = self.get_region_by_column(x, y)
             column = region.get_column(x, y)
             return column
 
     def directly_set_column(self, x, y, column: Column):
-        region = self.get_region(x, y)
+        region = self.get_region_by_column(x, y)
         region.set_column(x, y, column)
 
     def pop_newly_set_height_columns(self) -> set[tuple[int, int]]:
@@ -149,7 +155,7 @@ class World:
         return columns
 
     def add_tile(self, x, y, tile: Tile):
-        region = self.get_region(x, y)
+        region = self.get_region_by_column(x, y)
         region.set_tile(x, y, tile)
 
     def get_all_tiles(self) -> list[Tile]:
@@ -159,7 +165,7 @@ class World:
         return tiles
 
     def set_tile_as_taken(self, tile: Tile):
-        region = self.get_region(tile.x, tile.y)
+        region = self.get_region_by_column(tile.x, tile.y)
         region.set_tile_as_taken(tile)
         self.taken_tiles.add_tile(tile)
 
@@ -184,6 +190,7 @@ class World:
     def set_columns_h_diff_in_rect(self, rect: pg.Rect):
         if FILLING_COLUMNS_INFO:
             print('start setting h diffs -----------------------------------')
+        taken_columns: dict[tuple[int, int]] = {}
         for i in range(rect.left, rect.right):
             for j in range(rect.top, rect.bottom):
                 column = self.get_column_from_unfilled_regions(i, j)
@@ -198,8 +205,13 @@ class World:
                     for i1 in range(-1, 2):
                         if i1 == j1 == 0:
                             row.append(column)
+                        elif (i+i1, j+j1) in taken_columns:
+                            c = taken_columns[(i+i1, j+j1)]
+                            row.append(c)
                         else:
-                            row.append(self.get_column_from_unfilled_regions(i+i1, j+j1))
+                            c = self.get_column_from_unfilled_regions(i+i1, j+j1)
+                            taken_columns[(i+i1, j+j1)] = c
+                            row.append(c)
                     columns_3x3.append(row)
 
                 column.set_height_difference(columns_3x3)
@@ -293,7 +305,7 @@ class WorldFiller:
                             if not self.world.taken_tiles.check_if_already_taken(tile):
                                 self.world.add_tile(i, j, tile)
 
-                self.world.directly_set_column(i, j, new_column)  # broke 1 time
+                self.world.directly_set_column(i, j, new_column)  # broke 5+ times
             yield
 
         for _ in self.add_stash_blocks_to_rect_generator(rect):
@@ -364,7 +376,7 @@ class WorldFiller:
                 rect = self.loading_region.get_rect().copy()
                 self.current_loading_iterator = self.create_region_filling_iterator(rect)
         elif self.current_loading_iterator is not None:
-            if not self.world.check_is_region(self.loading_region.x, self.loading_region.y):
+            if not self.world.check_is_region_by_column(self.loading_region.x, self.loading_region.y):
                 self.loading_region = None
                 self.current_loading_iterator = None
             else:
@@ -379,11 +391,8 @@ class WorldFiller:
     def check_stash(self):
         if len(self.blocks_to_add_stash) > 0:
             for x, y in list(self.blocks_to_add_stash.keys()):
-                if self.world.check_is_region(x, y):
-                    region = self.world.get_region(x, y)
+                if self.world.check_is_region_by_column(x, y):
+                    region = self.world.get_region_by_column(x, y)
                     if region.is_ready():
                         column = self.world.get_column(x, y)
                         self.check_stash_for_column(column, x, y)
-
-    def preload_start_area(self, frame_x: int, frame_y: int, load_dist: int):
-        pass

@@ -71,10 +71,14 @@ while True:
 
     camera_frame.update_layers()
     if CREATING_MESH:
-        terr_mesh.draw_terrain(world, frame, scr)
+        if layers.base_level_size > REGION_DRAWING_LEVEL:
+            terr_mesh.draw_world_columns(world, frame, scr)
+        else:
+            terr_mesh.draw_regions(world, scr)
 
-    ui_mesh.create_ui_mesh(world, player, snake, terr_mesh.mouse_rect)
-    ui_mesh.draw_ui(scr)
+    if layers.base_level_size > REGION_DRAWING_LEVEL:
+        ui_mesh.create_ui_mesh(world, player, snake, terr_mesh.mouse_rect)
+        ui_mesh.draw_ui(scr)
 
     new_info_screens = []
     for info_screen in info_screens:

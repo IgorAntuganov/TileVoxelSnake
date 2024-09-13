@@ -2,6 +2,7 @@ import cProfile
 import pygame as pg
 from camera import CameraFrame, Layers
 from world_class import Column, World
+from world_region import Region
 from render_order import RenderOrder
 from sides_drawer import Figure, SidesDrawer
 from constants import *
@@ -12,9 +13,9 @@ class ColumnFiguresCache:
         self._cache: dict[tuple[int, int]: Figure] = {}
         self._infinite_top_cache: dict[tuple[int, int]: Figure] = {}
 
-    def add(self, i: int, j: int, figures_lst: list[Figure], camera_xy: tuple[float, float]):
+    def add(self, i: int, j: int, figures_lst: list[Figure]):
         start_rects = list([fig.rect.copy() for fig in figures_lst])
-        item = (figures_lst, camera_xy, start_rects)
+        item = (figures_lst, start_rects)
         key = (i, j)
         self._cache[key] = item
 
@@ -27,7 +28,7 @@ class ColumnFiguresCache:
                 only_top_figures_lst.append(fig)
                 only_top_start_rects.append(start_rect)
 
-        only_tops_item = (only_top_figures_lst, camera_xy, only_top_start_rects)
+        only_tops_item = (only_top_figures_lst, only_top_start_rects)
         self._infinite_top_cache[key] = only_tops_item
 
     def is_in_cache(self, i: int, j: int) -> bool:
@@ -38,30 +39,42 @@ class ColumnFiguresCache:
 
     def get(self, i: int, j: int, layers: Layers) -> list[Figure]:
         key = (i, j)
-        figures_lst, old_camera_xy, start_rects = self._cache[key]
+        figures = []
+        figures_lst, start_rects = self._cache[key]
         for k, figure in enumerate(figures_lst):
             if figure.is_side:
                 start_rect = start_rects[k]
                 sizes = start_rect.size
                 new_rect = layers.get_rect_for_side(figure.origin_block, figure.directed_block, sizes)
+                old_top_left = figure.rect.topleft
+                new_top_left = new_rect.topleft
+                # if new_top_left != old_top_left:
                 figure.reset_rect(new_rect)
+                figures.append(figure)
             elif figure.is_not_side:
                 x, y, z = figure.origin_block
                 top_left = layers.get_top_left_for_block(x, y, z)
+                old_top_left = figure.rect.topleft
+                # if top_left != old_top_left:
                 figure.set_top_left(top_left)
+                figures.append(figure)
             else:
                 raise AssertionError('figure must be side or not side (check directed and origin blocks)')
 
-        return figures_lst
+        return figures
 
     def get_top_figures(self, i: int, j: int, layers: Layers) -> list[Figure]:
         key = (i, j)
-        figures_lst, old_camera_xy, start_rects = self._infinite_top_cache[key]
+        figures_lst, start_rects = self._infinite_top_cache[key]
+        figures = []
         for figure, start_rect in zip(figures_lst, start_rects):
             x, y, z = figure.origin_block
             top_left = layers.get_top_left_for_block(x, y, z)
-            figure.set_top_left(top_left)
-        return figures_lst
+            old_top_left = figure.rect.topleft
+            if top_left != old_top_left:
+                figure.set_top_left(top_left)
+                figures.append(figure)
+        return figures
 
     def pop(self, i: int, j: int):
         if (i, j) in self._cache:
@@ -76,43 +89,30 @@ class ColumnFiguresCache:
         self._cache.clear()
 
 
-class Mesh3D:
-    def __init__(self, sides_drawer: SidesDrawer, camera: CameraFrame, scr_sizes):
+class RegionLODsCache:
+    def __init__(self):
+        self._cache: dict[tuple[int, int, int]] = {}
+
+    def add(self, lod: pg.Surface, ind: tuple[int, int], base_level_size):
+        key = (ind[0], ind[1], base_level_size)
+        size = WORLD_CHUNK_SIZE * base_level_size
+        resized = pg.transform.smoothscale(lod, (size, size))
+        self._cache[key] = resized
+
+    def is_in(self, ind, size):
+        return (ind[0], ind[1], size) in self._cache
+
+    def get(self, ind, size):
+        return self._cache[(ind[0], ind[1], size)]
+
+    def clear(self):
+        self._cache.clear()
+
+
+class FigureCreator:
+    def __init__(self, layers: Layers, sides_drawer: SidesDrawer):
+        self.layers = layers
         self.sides_drawer = sides_drawer
-        self.camera = camera
-        self.layers = camera.get_layers()
-        self.scr_rect = pg.Rect(0, 0, *scr_sizes)
-        self.render_order = RenderOrder()
-
-        self.mouse_rect = None
-        self.hovered_block = None
-        self.directed_block = None
-
-        self.column_figures_cache = ColumnFiguresCache()
-
-        self.pr = cProfile.Profile()
-
-    def turn_on_cprofile(self, frame: int):
-        if frame == 500 and PRINT_3D_MESH_CPROFILE:
-            self.pr.enable()
-
-    def check_cprofile_ends(self, frame: int):
-        if frame == 2001 and PRINT_3D_MESH_CPROFILE:
-            self.pr.create_stats()
-            self.pr.print_stats(sort='cumtime')
-            self.pr.print_stats(sort='tottime')
-            self.pr.print_stats(sort='ncalls')
-
-    def clear_cache(self):
-        self.column_figures_cache.clear()
-
-    def remove_edited_columns_from_cache(self, world: World):
-        newly_set_height_columns = world.pop_newly_set_height_columns()
-        recently_deleted_columns = world.pop_recently_deleted_columns()
-        edited_columns = newly_set_height_columns.union(recently_deleted_columns)
-        for i, j in edited_columns:
-            self.column_figures_cache.pop(i, j)
-            self.column_figures_cache.pop_top(i, j)
 
     def create_top_figures_for_column(self, column: Column) -> list[Figure]:
         figures = []
@@ -184,13 +184,67 @@ class Mesh3D:
             last_bottom_rect = bottom_rect
         return figures
 
+
+class Mesh3D:
+    def __init__(self, sides_drawer: SidesDrawer, camera: CameraFrame, scr_sizes):
+        self.figures_creator = FigureCreator(camera.get_layers(), sides_drawer)
+        self.camera = camera
+        self.layers = camera.get_layers()
+        self.scr_rect = pg.Rect(0, 0, *scr_sizes)
+        self.render_order = RenderOrder()
+
+        self.mouse_rect = None
+        self.hovered_block = None
+        self.directed_block = None
+
+        self.column_figures_cache = ColumnFiguresCache()
+        self.region_LODs_cache = RegionLODsCache()
+
+        self.pr = cProfile.Profile()
+
+    def turn_on_cprofile(self, frame: int):
+        if frame == 500 and PRINT_3D_MESH_CPROFILE:
+            self.pr.enable()
+
+    def check_cprofile_ends(self, frame: int):
+        if frame == 2001 and PRINT_3D_MESH_CPROFILE:
+            self.pr.create_stats()
+            self.pr.print_stats(sort='cumtime')
+            self.pr.print_stats(sort='tottime')
+            self.pr.print_stats(sort='ncalls')
+
+    def clear_cache(self):
+        self.column_figures_cache.clear()
+        self.region_LODs_cache.clear()
+
+    def remove_edited_columns_from_cache(self, world: World):
+        newly_set_height_columns = world.pop_newly_set_height_columns()
+        recently_deleted_columns = world.pop_recently_deleted_columns()
+        edited_columns = newly_set_height_columns.union(recently_deleted_columns)
+        for i, j in edited_columns:
+            self.column_figures_cache.pop(i, j)
+            self.column_figures_cache.pop_top(i, j)
+
     def is_column_in_screen(self, column: Column, screen_rect: pg.Rect) -> bool:
         invisible_block = column.get_first_invisible_block()
         x, y, z = column.x, column.y, invisible_block.z
         invisible_block_rect = self.layers.get_rect_for_block(x, y, z)
         return invisible_block_rect.colliderect(screen_rect)
 
-    def draw_terrain(self, world: World, frame: int, scr: pg.Surface):
+    def blit_column_figures(self, figures: list[Figure],
+                            scr: pg.Surface,
+                            mouse_pos: tuple[int, int]):
+
+        for figure in figures:
+            rect, sprite = figure.rect, figure.sprite
+            scr.blit(sprite, rect)
+
+            if rect.collidepoint(mouse_pos):
+                self.mouse_rect = rect.copy()
+                self.hovered_block = figure.origin_block
+                self.directed_block = figure.directed_block
+
+    def draw_world_columns(self, world: World, frame: int, scr: pg.Surface):
         self.turn_on_cprofile(frame)
         self.check_cprofile_ends(frame)
 
@@ -198,17 +252,17 @@ class Mesh3D:
 
         mouse_pos = pg.mouse.get_pos()
         screen_rect = scr.get_rect()
-        camera_xy = self.camera.get_center()
+
+        d = COLUMN_FIGURES_IN_CACHE_DURATION
 
         counter = 0
-        too_far_zoom = self.layers.base_level_size < ONE_LEVEL_STEP_BEGINNING
+        no_sides_drawing = self.layers.base_level_size < NO_SIDES_LEVEL
         rend_order = self.render_order.get_order(self.camera.get_rect())
         for i, j in rend_order:
             counter += 1
+            column_figures_need_update = counter % d == frame % d
 
-            d = COLUMN_FIGURES_IN_CACHE_DURATION
-            if d > 1 and self.column_figures_cache.is_in_cache(i, j) and not too_far_zoom:
-                column_figures_need_update = counter % d == frame % d
+            if d > 1 and self.column_figures_cache.is_in_cache(i, j) and not no_sides_drawing:
                 if not column_figures_need_update:
                     figures_from_cache = self.column_figures_cache.get(i, j, self.layers)
                     self.blit_column_figures(figures_from_cache, scr, mouse_pos)
@@ -230,23 +284,56 @@ class Mesh3D:
             if len(infinite_top_figures) != 0:
                 figures += infinite_top_figures
             else:
-                figures += self.create_top_figures_for_column(column)
-            if not too_far_zoom:
-                figures += self.create_side_figures_for_column(column)
+                figures += self.figures_creator.create_top_figures_for_column(column)
+
+            if not no_sides_drawing:
+                figures += self.figures_creator.create_side_figures_for_column(column)
 
             self.blit_column_figures(figures, scr, mouse_pos)
+
             if len(figures) > len(infinite_top_figures):
-                self.column_figures_cache.add(i, j, figures, camera_xy)
+                self.column_figures_cache.add(i, j, figures)
 
-    def blit_column_figures(self, figures: list[Figure],
-                            scr: pg.Surface,
-                            mouse_pos: tuple[int, int]):
+    def create_region_lod(self, region: Region) -> pg.Surface:
+        size = WORLD_CHUNK_SIZE * self.layers.base_level_size
+        lod = pg.Surface((size, size))
+        left, top = region.get_rect().topleft
+        for m in range(WORLD_CHUNK_SIZE):
+            for n in range(WORLD_CHUNK_SIZE):
+                i = left + m
+                j = top + n
+                if self.column_figures_cache.is_in_infinite_top_cache(i, j):
+                    top_figures = self.column_figures_cache.get_top_figures(i, j, self.layers)
+                else:
+                    column = region.get_column(i, j)
+                    top_figures = self.figures_creator.create_top_figures_for_column(column)
+                x = m * self.layers.base_level_size
+                y = n * self.layers.base_level_size
+                for figure in top_figures:
+                    lod.blit(figure.sprite, (x, y))
+        return lod
 
-        for figure in figures:
-            rect, sprite = figure.rect, figure.sprite
-            scr.blit(sprite, rect)
+    def draw_regions(self, world: World, scr: pg.Surface):
+        camera_rect = self.camera.get_rect()
+        left = camera_rect.left // WORLD_CHUNK_SIZE
+        top = camera_rect.top // WORLD_CHUNK_SIZE
+        width = camera_rect.width // WORLD_CHUNK_SIZE + 2
+        height = camera_rect.height // WORLD_CHUNK_SIZE + 2
 
-            if rect.collidepoint(mouse_pos):
-                self.mouse_rect = rect.copy()
-                self.hovered_block = figure.origin_block
-                self.directed_block = figure.directed_block
+        for i in range(width):
+            for j in range(height):
+                ind = left + i, top + j
+                if world.check_is_region_ready_by_ind(*ind):
+                    if not self.region_LODs_cache.is_in(ind, self.layers.base_level_size):
+                        region = world.get_region_by_ind(*ind)
+                        lod = self.create_region_lod(region)
+                        self.region_LODs_cache.add(lod, ind, self.layers.base_level_size)
+                    lod = self.region_LODs_cache.get(ind, self.layers.base_level_size)
+
+                    m = (left + i) * WORLD_CHUNK_SIZE
+                    n = (top + j) * WORLD_CHUNK_SIZE
+                    top_left_block = self.layers.get_top_left_for_block(m, n, 0)
+
+                    x = int(top_left_block[0])
+                    y = int(top_left_block[1])
+                    scr.blit(lod, (x, y))
