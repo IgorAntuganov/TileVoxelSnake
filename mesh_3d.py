@@ -10,32 +10,47 @@ from constants import *
 
 class ColumnFiguresCache:
     def __init__(self):
-        self._cache: dict[tuple[int, int]: Figure] = {}
-        self._infinite_top_cache: dict[tuple[int, int]: Figure] = {}
+        self._cache: dict[tuple[int, int]: tuple[list[Figure], list[pg.Rect]]] = {}
+        self._infinite_top_cache: dict[tuple[int, int]: tuple[list[Figure], list[pg.Rect]]] = {}
+        self._plains_cache: dict[tuple[int, int]: tuple[Figure, pg.Rect]] = {}
 
-    def add(self, i: int, j: int, figures_lst: list[Figure]):
+    def print_cache_sizes(self):
+        print('Cache Sizes: -------------------')
+        print('Cache:', len(self._cache))
+        print('Infinite top cache:', len(self._infinite_top_cache))
+        print('Plains cache:', len(self._plains_cache))
+
+    def add(self, i: int, j: int, figures_lst: list[Figure], is_column_at_plain: bool):
         start_rects = list([fig.rect.copy() for fig in figures_lst])
         item = (figures_lst, start_rects)
         key = (i, j)
-        self._cache[key] = item
 
-        only_top_figures_lst = []
-        only_top_start_rects = []
-        for k in range(len(figures_lst)):
-            fig = figures_lst[k]
-            start_rect = start_rects[k]
-            if fig.is_not_side:
-                only_top_figures_lst.append(fig)
-                only_top_start_rects.append(start_rect)
+        if is_column_at_plain:
+            plain_item = figures_lst[0], start_rects[0]
+            self._plains_cache[(i, j)] = plain_item
+        else:
+            self._cache[key] = item
 
-        only_tops_item = (only_top_figures_lst, only_top_start_rects)
-        self._infinite_top_cache[key] = only_tops_item
+            only_top_figures_lst = []
+            only_top_start_rects = []
+            for k in range(len(figures_lst)):
+                fig = figures_lst[k]
+                start_rect = start_rects[k]
+                if fig.is_not_side:
+                    only_top_figures_lst.append(fig)
+                    only_top_start_rects.append(start_rect)
+
+            only_tops_item = (only_top_figures_lst, only_top_start_rects)
+            self._infinite_top_cache[key] = only_tops_item
 
     def is_in_cache(self, i: int, j: int) -> bool:
         return (i, j) in self._cache
 
     def is_in_infinite_top_cache(self, i: int, j: int) -> bool:
         return (i, j) in self._infinite_top_cache
+
+    def is_in_plains_cache(self, i: int, j: int) -> bool:
+        return (i, j) in self._plains_cache
 
     def get(self, i: int, j: int, layers: Layers) -> list[Figure]:
         key = (i, j)
@@ -46,16 +61,11 @@ class ColumnFiguresCache:
                 start_rect = start_rects[k]
                 sizes = start_rect.size
                 new_rect = layers.get_rect_for_side(figure.origin_block, figure.directed_block, sizes)
-                old_top_left = figure.rect.topleft
-                new_top_left = new_rect.topleft
-                # if new_top_left != old_top_left:
                 figure.reset_rect(new_rect)
                 figures.append(figure)
             elif figure.is_not_side:
                 x, y, z = figure.origin_block
                 top_left = layers.get_top_left_for_block(x, y, z)
-                old_top_left = figure.rect.topleft
-                # if top_left != old_top_left:
                 figure.set_top_left(top_left)
                 figures.append(figure)
             else:
@@ -76,17 +86,28 @@ class ColumnFiguresCache:
                 figures.append(figure)
         return figures
 
+    def get_plain_figures(self, i: int, j: int, layers: Layers) -> list[Figure]:
+        key = (i, j)
+        figure, start_rect = self._plains_cache[key]
+        x, y, z = figure.origin_block
+        top_left = layers.get_top_left_for_block(x, y, z)
+        figure.set_top_left(top_left)
+        return [figure]
+
     def pop(self, i: int, j: int):
         if (i, j) in self._cache:
             self._cache.pop((i, j))
 
-    def pop_top(self, i: int, j: int):
+    def pop_edited(self, i: int, j: int):
         if (i, j) in self._infinite_top_cache:
             self._infinite_top_cache.pop((i, j))
+        if (i, j) in self._plains_cache:
+            self._plains_cache.pop((i, j))
 
     def clear(self):
         self._infinite_top_cache.clear()
         self._cache.clear()
+        self._plains_cache.clear()
 
 
 class RegionLODsCache:
@@ -196,6 +217,7 @@ class Mesh3D:
         self.mouse_rect = None
         self.hovered_block = None
         self.directed_block = None
+        self.mouse_hovering_sprite_expected: bool = False
 
         self.column_figures_cache = ColumnFiguresCache()
         self.region_LODs_cache = RegionLODsCache()
@@ -223,7 +245,7 @@ class Mesh3D:
         edited_columns = newly_set_height_columns.union(recently_deleted_columns)
         for i, j in edited_columns:
             self.column_figures_cache.pop(i, j)
-            self.column_figures_cache.pop_top(i, j)
+            self.column_figures_cache.pop_edited(i, j)
 
     def is_column_in_screen(self, column: Column, screen_rect: pg.Rect) -> bool:
         invisible_block = column.get_first_invisible_block()
@@ -248,6 +270,8 @@ class Mesh3D:
         self.turn_on_cprofile(frame)
         self.check_cprofile_ends(frame)
 
+        # self.column_figures_cache.print_cache_sizes()
+
         self.remove_edited_columns_from_cache(world)
 
         mouse_pos = pg.mouse.get_pos()
@@ -260,8 +284,13 @@ class Mesh3D:
         rend_order = self.render_order.get_order(self.camera.get_rect())
         for i, j in rend_order:
             counter += 1
-            column_figures_need_update = counter % d == frame % d
 
+            if self.column_figures_cache.is_in_plains_cache(i, j):
+                plain_figures = self.column_figures_cache.get_plain_figures(i, j, self.layers)
+                self.blit_column_figures(plain_figures, scr, mouse_pos)
+                continue
+
+            column_figures_need_update = counter % d == frame % d
             if d > 1 and self.column_figures_cache.is_in_cache(i, j) and not no_sides_drawing:
                 if not column_figures_need_update:
                     figures_from_cache = self.column_figures_cache.get(i, j, self.layers)
@@ -292,7 +321,7 @@ class Mesh3D:
             self.blit_column_figures(figures, scr, mouse_pos)
 
             if len(figures) > len(infinite_top_figures):
-                self.column_figures_cache.add(i, j, figures)
+                self.column_figures_cache.add(i, j, figures, column.is_at_plain())
 
     def create_region_lod(self, region: Region) -> pg.Surface:
         size = WORLD_CHUNK_SIZE * self.layers.base_level_size

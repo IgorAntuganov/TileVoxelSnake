@@ -44,6 +44,10 @@ class Column:
     def transparent_height(self):
         return len(self.transparent_blocks)
 
+    def is_at_plain(self) -> bool:
+        assert self.height_difference_are_set
+        return self.height_difference.is_at_plain
+
     def get_top_block(self) -> blocks.Block:
         if len(self.transparent_blocks) != 0:
             return self.transparent_blocks[0]

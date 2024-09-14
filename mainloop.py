@@ -24,7 +24,8 @@ from gui.snake import Snake
 
 trap_drawer = TrapezoidDrawer()
 trap_drawer.set_print_cache_size(TRAPEZOIDS_CACHE_INFO)
-trap_drawer.create_cache(scr)
+if USE_TRAPEZOID_CACHE_ON_DISK:
+    trap_drawer.create_cache(scr)
 sides_drawer = SidesDrawer(trap_drawer, scr.get_rect())
 
 clock = pg.time.Clock()

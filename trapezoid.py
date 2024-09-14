@@ -63,7 +63,7 @@ class TrapezoidDrawer:
             print('cache created by keys from disk:', len(self._lines_cache.keys()), 'time consuming:', t)
 
     def save_cache(self):
-        if SAVE_TRAPEZOID_KEYS:
+        if USE_TRAPEZOID_CACHE_ON_DISK:
             folder = PATH_TO_CACHE
             cache_file = folder + '/' + CACHE_KEYS_FILENAME
             with open(cache_file, 'wb') as file:
@@ -76,7 +76,7 @@ class TrapezoidDrawer:
                 pg.image.save(image, file_path)
 
     def add_texture_to_cache(self, texture: pg.Surface, texture_name: str):
-        if SAVE_TRAPEZOID_KEYS:
+        if USE_TRAPEZOID_CACHE_ON_DISK:
             if texture_name not in self._textures_cache:
                 pg.image.save(texture, f'{PATH_TO_CACHE}/{texture_name}.png')
                 self._textures_cache[texture_name] = texture

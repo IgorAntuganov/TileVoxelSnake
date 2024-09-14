@@ -2,7 +2,9 @@ from constants import *
 
 
 class HeightDiff9:
-    def __init__(self, full_height_diff, full_nt_height_diff, nt_nt_height_diff):
+    def __init__(self, full_height_diff: dict[str: int],
+                 full_nt_height_diff: dict[str: int],
+                 nt_nt_height_diff: dict[str: int]):
         self.full_full_height_diff = full_height_diff
         self.full_nt_height_diff = full_nt_height_diff
         self.nt_nt_height_diff = nt_nt_height_diff
@@ -15,6 +17,11 @@ class HeightDiff9:
         for side in SIDES_NAMES:
             neighbor_height = self.full_nt_height_diff[side]
             self.visible_blocks_amount = max(self.visible_blocks_amount, neighbor_height)
+
+        self.is_at_plain = True
+        for value in list(full_height_diff.values()) + list(full_nt_height_diff.values()) + list(nt_nt_height_diff.values()):
+            if value != 0:
+                self.is_at_plain = False
 
     def get_visible_blocks_amount(self) -> int:
         return self.visible_blocks_amount

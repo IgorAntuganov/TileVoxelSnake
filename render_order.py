@@ -15,10 +15,6 @@ class RenderOrder:
         if key in self._size_cache:
             return self._size_cache[key]
 
-        offset = rect.topleft
-        minus_offset = -offset[0], -offset[1]
-        rect = rect.copy()
-        rect.move(minus_offset)
         i, j = (width-1) // 2, (height-1) // 2
         ordered.append((i, j))
         r = 0

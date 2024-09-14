@@ -286,7 +286,7 @@ class WorldFiller:
                     if biome is Forest and len(_blocks) > WATER_LEVEL:
                         trees = self.tree_generator.get_points_by_point(i, j)
                         if (i, j) in trees:
-                            if i + j % 3 == 0:
+                            if (i + j) % 3 == 0:
                                 structures.append(Tree2(i, j, new_column.nt_height+1))
                             else:
                                 structures.append(Tree1(i, j, new_column.nt_height+1))

@@ -38,7 +38,6 @@ COLUMN_FIGURES_IN_CACHE_DURATION = 8  # base value: 1 (disabled), optimal: 8
 # Cause artefacts if enabled and prefilling frames with black enabled
 
 TRAPEZOID_KEYS_PRECISION = 3  # base value: 1, more -> more accurate trapezoids, more cache
-SAVE_TRAPEZOID_KEYS: bool = True  # if True save keys on disk and generate cache on next boot
 
 REGIONS_DISTANCE_UPDATE_FREQ = 50
 GARBAGE_COLLECTION_FREQ = 500
@@ -63,6 +62,7 @@ CAMERA_SPEED = 8  # in blocks per second at start base level size
 # Debug info
 
 TRAPEZOIDS_CACHE_INFO = False
+USE_TRAPEZOID_CACHE_ON_DISK = True
 HEIGHT_GENERATING_INFO = False
 NOT_ABSTRACT_BLOCKS_CLASSES_INFO = False
 FILLING_COLUMNS_INFO = False
