@@ -8,7 +8,7 @@ MIN_BASE_LEVEL_SIZE = 1
 MAX_BASE_LEVEL_SIZE = 64
 BASE_LEVEL_STEP = 4
 ONE_LEVEL_STEP_BEGINNING = 16
-NO_SIDES_LEVEL = 16
+NO_SIDES_LEVEL = 24
 REGION_DRAWING_LEVEL = 14
 
 
@@ -32,7 +32,7 @@ HEIGHT_RECOLOR_OFFSET = 3
 HEIGHT_RECOLOR_BASE = 1  # base value 1
 HEIGHT_RECOLOR_STRENGTH = 0.35  # base value 0.3
 
-MAX_FPS = 165
+MAX_FPS = 200
 COLUMN_FIGURES_IN_CACHE_DURATION = 8  # base value: 1 (disabled), optimal: 8
 # if more -> block sides will be rendered every n frames
 # Cause artefacts if enabled and prefilling frames with black enabled

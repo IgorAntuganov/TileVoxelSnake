@@ -5,6 +5,7 @@ from world_class import Column, World
 from world_region import Region
 from render_order import RenderOrder
 from sides_drawer import Figure, SidesDrawer
+import blocks
 from constants import *
 
 
@@ -140,6 +141,9 @@ class FigureCreator:
         non_transparent_already_rendered = False
         visible_blocks = column.get_blocks_with_visible_top_sprite()
         for m, block in enumerate(visible_blocks):
+            if type(block) == blocks.Shadow:
+                continue
+
             x, y, z = block.x, block.y, block.z
             block_rect = self.layers.get_rect_for_block(x, y, z)
 
@@ -187,9 +191,13 @@ class FigureCreator:
         last_bottom_rect = column_top_rect
         for k in range(max_value):
             side_z = z - k
-            block = column.get_block(side_z)
             top_rect = last_bottom_rect
             bottom_rect = self.layers.get_rect_for_block(x, y, side_z - 1)
+
+            block = column.get_block(side_z)
+            if type(block) == blocks.Shadow:
+                last_bottom_rect = bottom_rect
+                continue
 
             for key in keys:
                 non_transparent_side = not block.is_transparent and k < nt_hd[key]
@@ -278,9 +286,9 @@ class Mesh3D:
         screen_rect = scr.get_rect()
 
         d = COLUMN_FIGURES_IN_CACHE_DURATION
+        no_sides_drawing = self.layers.base_level_size < NO_SIDES_LEVEL
 
         counter = 0
-        no_sides_drawing = self.layers.base_level_size < NO_SIDES_LEVEL
         rend_order = self.render_order.get_order(self.camera.get_rect())
         for i, j in rend_order:
             counter += 1
@@ -302,6 +310,9 @@ class Mesh3D:
             infinite_top_figures: list[Figure] = []
             if self.column_figures_cache.is_in_infinite_top_cache(i, j):
                 infinite_top_figures = self.column_figures_cache.get_top_figures(i, j, self.layers)
+                if no_sides_drawing:
+                    self.blit_column_figures(infinite_top_figures, scr, mouse_pos)
+                    continue
 
             column = world.get_column(i, j)  # expensive
             if column is None or not column.height_difference_are_set:

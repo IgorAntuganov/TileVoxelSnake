@@ -118,21 +118,17 @@ class Leaves(SingleSpriteBlock):
         return True
 
 
-class Shadow(SingleSpriteBlock):
-    sprite = 'air.png'
+class Shadow(Block):
+    """Non-drawable in 3d mesh"""
+    sprite = ''
 
     @property
     def is_transparent(self) -> bool:
         return True
 
-    def get_side_sprite(self, side: str, height_diff: HeightDiff9, ind_from_top: int) -> tuple[pg.Surface, str]:
-        assert side in SIDES_NAMES
-        return self.sprites.get_side(side, height_diff, -10000000000)
-
-    def get_top_sprite_resized_shaded(self, size: tuple[int, int],
-                                      neighbors: tuple[bool, bool, bool, bool, bool, bool, bool, bool],
-                                      z: int) -> pg.Surface:
-        return self.sprites.get_top_resized(size, z)
+    @classmethod
+    def load_sprites(cls):
+        pass
 
 
 class Water(SingleSpriteBlock):
