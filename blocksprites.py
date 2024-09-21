@@ -4,9 +4,9 @@ from constants import *
 from height_difference import HeightDiff9
 
 EDGE = pg.Surface((1, 1), pg.SRCALPHA)
-EDGE.fill((*EXPOSED_EDGE_COLOR, EDGES_ALPHA))
+EDGE.fill(EXPOSED_EDGE_COLOR)
 EDGE2 = pg.Surface((1, 1), pg.SRCALPHA)
-EDGE2.fill((*HIDDEN_EDGE_COLOR, EDGES_ALPHA))
+EDGE2.fill(HIDDEN_EDGE_COLOR)
 
 
 def recolor(sprite: pg.Surface, coefficient: float) -> pg.Surface:
@@ -175,40 +175,33 @@ class BlockSpritesDict:
                                z: int,
                                is_transparent: bool) -> pg.Surface:
         neighbors = height_diff.get_top_block_neighbors()
-        full_full_edges = height_diff.get_full_full_edges()
-        nt_full_edges = height_diff.get_nt_full_edges()
-        key = (self.block_name, *neighbors, *full_full_edges, *nt_full_edges, size, z)
+
+        if is_transparent:
+            edges = height_diff.get_full_full_edges()
+        else:
+            edges = height_diff.get_nt_full_edges()
+
+        key = (self.block_name, *neighbors, *edges, size, z)
         if key not in self.scale_shaded_cache:
             image = self.get_top_height_recolored(z)
             w, h = image.get_size()
             t = EDGE_THICKNESS
 
-            if is_transparent:
-                if full_full_edges[0]:
-                    edge = pg.transform.scale(EDGE, (t, h))
-                    image.blit(edge, (0, 0))
-                if full_full_edges[1]:
-                    edge = pg.transform.scale(EDGE, (w, t))
-                    image.blit(edge, (0, 0))
-                if full_full_edges[2]:
-                    edge = pg.transform.scale(EDGE, (t, h))
-                    image.blit(edge, (w - t, 0))
-                if full_full_edges[3]:
-                    edge = pg.transform.scale(EDGE, (w, t))
-                    image.blit(edge, (0, h - t))
-            else:
-                if nt_full_edges[0]:
-                    edge = pg.transform.scale(EDGE, (t, h))
-                    image.blit(edge, (0, 0))
-                if nt_full_edges[1]:
-                    edge = pg.transform.scale(EDGE, (w, t))
-                    image.blit(edge, (0, 0))
-                if nt_full_edges[2]:
-                    edge = pg.transform.scale(EDGE, (t, h))
-                    image.blit(edge, (w - t, 0))
-                if nt_full_edges[3]:
-                    edge = pg.transform.scale(EDGE, (w, t))
-                    image.blit(edge, (0, h - t))
+            edges_image = pg.Surface((w, h), pg.SRCALPHA)
+            if edges[0]:
+                edge = pg.transform.scale(EDGE, (t, h))
+                edges_image.blit(edge, (0, 0))
+            if edges[1]:
+                edge = pg.transform.scale(EDGE, (w, t))
+                edges_image.blit(edge, (0, 0))
+            if edges[2]:
+                edge = pg.transform.scale(EDGE, (t, h))
+                edges_image.blit(edge, (w - t, 0))
+            if edges[3]:
+                edge = pg.transform.scale(EDGE, (w, t))
+                edges_image.blit(edge, (0, h - t))
+            edges_image.set_alpha(EDGES_ALPHA)
+            image.blit(edges_image, (0, 0))
 
             image = pg.transform.scale(image, size)
             for i in range(4):
@@ -233,18 +226,21 @@ class BlockSpritesDict:
             w, h = image.get_size()
             t = EDGE_THICKNESS
 
+            edges_image = pg.Surface((w, h), pg.SRCALPHA)
             if nt_full_edges[0]:
                 edge = pg.transform.scale(EDGE2, (t, h))
-                image.blit(edge, (0, 0))
+                edges_image.blit(edge, (0, 0))
             if nt_full_edges[1]:
                 edge = pg.transform.scale(EDGE2, (w, t))
-                image.blit(edge, (0, 0))
+                edges_image.blit(edge, (0, 0))
             if nt_full_edges[2]:
                 edge = pg.transform.scale(EDGE2, (t, h))
-                image.blit(edge, (w - t, 0))
+                edges_image.blit(edge, (w - t, 0))
             if nt_full_edges[3]:
                 edge = pg.transform.scale(EDGE2, (w, t))
-                image.blit(edge, (0, h - t))
+                edges_image.blit(edge, (0, h - t))
+            edges_image.set_alpha(EDGES_ALPHA)
+            image.blit(edges_image, (0, 0))
 
             image = pg.transform.scale(image, size)
             shade = self.shade_maker.get_full_shade(size)

@@ -79,20 +79,21 @@ class Layers:
     def get_rect_for_side(self, origin_block: tuple[int, int, int],
                           directed_block: tuple[int, int, int],
                           sizes: tuple[int, int]) -> pg.Rect:
+        w, h = sizes
         orig_rect = self.get_rect_for_block(*origin_block)
         x, y, z = directed_block
         z -= 1
         dir_rect = self.get_rect_for_block(x, y, z)
         if origin_block[0] == directed_block[0] and origin_block[1] > directed_block[1]:  # north side
             left = min(orig_rect.left, dir_rect.left)
-            top = dir_rect.bottom
+            top = orig_rect.top - h
 
         elif origin_block[0] == directed_block[0] and origin_block[1] < directed_block[1]:  # south side
             left = min(orig_rect.left, dir_rect.left) - 1  # -1: adjustment from sides_drawer
             top = orig_rect.bottom
 
         elif origin_block[0] > directed_block[0] and origin_block[1] == directed_block[1]:  # west side
-            left = dir_rect.right
+            left = orig_rect.left - w
             top = min(orig_rect.top, dir_rect.top) - 1  # -1: adjustment from sides_drawer
 
         elif origin_block[0] < directed_block[0] and origin_block[1] == directed_block[1]:  # east side
