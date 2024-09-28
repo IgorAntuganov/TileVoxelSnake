@@ -1,139 +1,20 @@
-import math
 import pygame as pg
 from constants import *
 from height_difference import HeightDiff9
-
-EDGE = pg.Surface((1, 1), pg.SRCALPHA)
-EDGE.fill(EXPOSED_EDGE_COLOR)
-EDGE2 = pg.Surface((1, 1), pg.SRCALPHA)
-EDGE2.fill(HIDDEN_EDGE_COLOR)
-
-
-def recolor(sprite: pg.Surface, coefficient: float) -> pg.Surface:
-    for i in range(sprite.get_width()):
-        for j in range(sprite.get_height()):
-            pixel = sprite.get_at((i, j))
-            pixel = [int(color_value*coefficient) for color_value in pixel]
-            pixel = [min(255, color_value) for color_value in pixel]
-            sprite.set_at((i, j), pixel)
-    return sprite
-
-
-def sun_sides_recolor(sprite: pg.Surface, coefficient: float) -> pg.Surface:
-    normalized_coef = coefficient - 1
-    for i in range(sprite.get_width()):
-        for j in range(sprite.get_height()):
-            pixel = sprite.get_at((i, j))
-            if coefficient > 1:
-                pixel[0] = min(255, int(pixel[0]*(1+normalized_coef)))
-                pixel[1] = min(255, int(pixel[1]*(1+normalized_coef/2)))
-                pixel[2] = min(255, int(pixel[2]*1))
-            else:
-                pixel[0] = min(255, int(pixel[0]*(1+normalized_coef)))
-                pixel[1] = min(255, int(pixel[1]*(1+normalized_coef)))
-                pixel[2] = min(255, int(pixel[2]*(1+normalized_coef)))
-            sprite.set_at((i, j), pixel)
-    return sprite
-
-
-def height_recolor(sprite: pg.Surface, z: int) -> pg.Surface:
-    z -= HEIGHT_RECOLOR_OFFSET
-    c = math.atan(z/(MAX_HEIGHT/2)) * 2 / math.pi
-    c = HEIGHT_RECOLOR_BASE + c * HEIGHT_RECOLOR_STRENGTH
-    return recolor(sprite, c)
-
-
-class CreaseShadowSprites:
-    def __init__(self, shade_radius=SHADOW_RADIUS, shade_strength=SHADOW_STRENGTH):
-        """:param shade_radius: between 0 and 1, which part will be covered with shade
-        :param shade_strength: between 0 and 1, shadow power at the darkest point (1 - full black)
-        """
-        self.cache = {}
-        self.shade_radius = shade_radius
-        self.shade_power = shade_strength
-
-    def get_shade(self, nearby_block_side: str, size: tuple[int, int], is_side: bool = False) -> pg.Surface:
-        if nearby_block_side in ['west', 'east']:
-            size = size[::-1]
-
-        if is_side:
-            shade_radius = min(1, self.shade_radius * 2)
-        else:
-            shade_radius = self.shade_radius
-
-        key = (*size, nearby_block_side, 'nearby')
-        if key not in self.cache:
-            shade = pg.Surface(size, pg.SRCALPHA)
-            shade.fill((0, 0, 0, 0))
-            start_power = 255 * self.shade_power
-            max_size = max(size)
-            shade_size = int(max_size*shade_radius+1)
-            for i in range(shade_size):
-                part = (i / shade_size) ** .5
-                power = int(start_power*(1-part))
-                shade_string = pg.Surface((max_size, 1), pg.SRCALPHA)
-                shade_string.fill((0, 0, 0, power))
-                shade.blit(shade_string, (0, i))
-
-            angle = (1 - SIDES_NAMES.index(nearby_block_side)) * 90
-            shade = pg.transform.rotate(shade, angle)
-            self.cache[key] = shade
-        return self.cache[key]
-
-    def get_corner_shade(self, side: str, size: tuple[int, int], is_side: bool = False) -> pg.Surface:
-        if side == DIAGONALS_NAMES[1] or side == DIAGONALS_NAMES[3]:
-            size = size[::-1]
-
-        if is_side:
-            shade_radius = min(1, self.shade_radius * 2)
-        else:
-            shade_radius = self.shade_radius
-
-        key = (size, side, is_side, 'corner')
-        if key not in self.cache:
-            shade = pg.Surface(size, pg.SRCALPHA)
-            shade.fill((0, 0, 0, 0))
-            start_power = 255 * self.shade_power
-            if is_side:
-                radius = int(max(size) * shade_radius)
-            else:
-                radius = int(max(size) * shade_radius)
-            for i in range(radius):
-                for j in range(radius):
-                    part = ((i/radius)**2 + (j/radius)**2)**.5
-                    part = part ** .5
-                    part = min(1.0, part)
-                    power = int(start_power * (1 - part))
-                    shade_string = pg.Surface((1, 1), pg.SRCALPHA)
-                    shade_string.fill((0, 0, 0, power))
-                    shade.blit(shade_string, (i, j))
-
-            angle = (-DIAGONALS_NAMES.index(side)) * 90
-            shade = pg.transform.rotate(shade, angle)
-            self.cache[key] = shade
-        return self.cache[key]
-
-    def get_full_shade(self, size: tuple[int, int]) -> pg.Surface:
-        key = (size, 'full')
-        if key not in self.cache:
-            shade = pg.Surface(size, pg.SRCALPHA)
-            power = 255 * self.shade_power
-            shade.fill((0, 0, 0, power))
-            self.cache[key] = shade
-        return self.cache[key]
+import blockspritestools as bst
 
 
 class BlockSprite:
-    def __init__(self, path, angle=0, recolor_value=1.0, recolor_func=recolor):
+    def __init__(self, path, angle=0, recolor_value=1.0, recolor_func=bst.recolor):
         image = pg.image.load(PATH_TO_BLOCKS+path).convert_alpha()
         assert image.get_height() == image.get_width()
         image = pg.transform.rotate(image, angle)
-        image = pg.transform.scale_by(image, 2)  # For more accurate trapezoids, doesn't reduce fps
+        image = pg.transform.scale_by(image, SPRITES_SCALE_FACTOR)
         self.image = recolor_func(image, recolor_value)
 
 
-class BlockSpritesDict:
-    shade_maker = CreaseShadowSprites()
+class BlockSpritesFabric:
+    shade_maker = bst.CreaseShadowDrawer()
     scale_cache: dict[str: pg.Surface] = {}
     scale_shaded_cache: dict[str: pg.Surface] = {}
     shaded_sides_cache: dict[str: pg.Surface] = {}
@@ -149,20 +30,20 @@ class BlockSpritesDict:
         self.block_name = block_name
         self._top = BlockSprite(top)
         self._bottom = BlockSprite(bottom)
-        self._west = BlockSprite(west, 90, SUN_SIDES_RECOLOR['west'], sun_sides_recolor)
-        self._north = BlockSprite(north, 0, SUN_SIDES_RECOLOR['north'], sun_sides_recolor)
-        self._east = BlockSprite(east, 90, SUN_SIDES_RECOLOR['east'], sun_sides_recolor)
-        self._south = BlockSprite(south, 0, SUN_SIDES_RECOLOR['south'], sun_sides_recolor)
+        self._west = BlockSprite(west, 90, SUN_SIDES_RECOLOR['west'], bst.sun_sides_recolor)
+        self._north = BlockSprite(north, 0, SUN_SIDES_RECOLOR['north'], bst.sun_sides_recolor)
+        self._east = BlockSprite(east, 90, SUN_SIDES_RECOLOR['east'], bst.sun_sides_recolor)
+        self._south = BlockSprite(south, 0, SUN_SIDES_RECOLOR['south'], bst.sun_sides_recolor)
         self._sides = [self._west, self._north, self._east, self._south]
 
     def get_top_height_recolored(self, z: int) -> pg.Surface:
         key = (self.block_name, 'recolored', z)
         if key not in self.top_recolored_cache:
-            image = height_recolor(self._top.image.copy(), z)
+            image = bst.height_recolor(self._top.image.copy(), z)
             self.top_recolored_cache[key] = image
         return self.top_recolored_cache[key].copy()
 
-    def get_top_resized(self, size: tuple[int, int], z: int):
+    def get_top_resized(self, size: tuple[int, int], z: int) -> pg.Surface:
         key = (self.block_name, 'not shaded', size, z)
         if key not in self.scale_shaded_cache:
             image = self.get_top_height_recolored(z)
@@ -175,32 +56,17 @@ class BlockSpritesDict:
                                z: int,
                                is_transparent: bool) -> pg.Surface:
         neighbors = height_diff.get_top_block_neighbors()
-
         if is_transparent:
-            edges = height_diff.get_full_full_edges()
+            hd = height_diff.full_full_height_diff
         else:
-            edges = height_diff.get_nt_full_edges()
+            hd = height_diff.nt_nt_height_diff
 
-        key = (self.block_name, *neighbors, *edges, size, z)
+        key = (self.block_name, *neighbors, *hd.values(), size, z)
         if key not in self.scale_shaded_cache:
             image = self.get_top_height_recolored(z)
             w, h = image.get_size()
-            t = EDGE_THICKNESS
 
-            edges_image = pg.Surface((w, h), pg.SRCALPHA)
-            if edges[0]:
-                edge = pg.transform.scale(EDGE, (t, h))
-                edges_image.blit(edge, (0, 0))
-            if edges[1]:
-                edge = pg.transform.scale(EDGE, (w, t))
-                edges_image.blit(edge, (0, 0))
-            if edges[2]:
-                edge = pg.transform.scale(EDGE, (t, h))
-                edges_image.blit(edge, (w - t, 0))
-            if edges[3]:
-                edge = pg.transform.scale(EDGE, (w, t))
-                edges_image.blit(edge, (0, h - t))
-            edges_image.set_alpha(EDGES_ALPHA)
+            edges_image = bst.EdgesDrawer.get_edges_images(w, h, hd)
             image.blit(edges_image, (0, 0))
 
             image = pg.transform.scale(image, size)
@@ -217,29 +83,22 @@ class BlockSpritesDict:
             self.scale_shaded_cache[key] = image.copy()
         return self.scale_shaded_cache[key]
 
-    def get_top_resized_fully_shaded(self, size: tuple[int, int], height_diff: HeightDiff9, z: int):
-        nt_full_edges = height_diff.get_nt_full_edges()
-        key = (self.block_name, *nt_full_edges, 'fully shaded', size, z)
+    def get_top_resized_fully_shaded(self, size: tuple[int, int],
+                                     height_diff: HeightDiff9,
+                                     z: int,
+                                     is_transparent: bool) -> pg.Surface:
+        if is_transparent:
+            hd = height_diff.full_full_height_diff
+        else:
+            hd = height_diff.nt_nt_height_diff
+
+        key = (self.block_name, *hd.values(), 'fully shaded', size, z)
 
         if key not in self.scale_shaded_cache:
             image = self.get_top_height_recolored(z)
-            w, h = image.get_size()
-            t = EDGE_THICKNESS
 
-            edges_image = pg.Surface((w, h), pg.SRCALPHA)
-            if nt_full_edges[0]:
-                edge = pg.transform.scale(EDGE2, (t, h))
-                edges_image.blit(edge, (0, 0))
-            if nt_full_edges[1]:
-                edge = pg.transform.scale(EDGE2, (w, t))
-                edges_image.blit(edge, (0, 0))
-            if nt_full_edges[2]:
-                edge = pg.transform.scale(EDGE2, (t, h))
-                edges_image.blit(edge, (w - t, 0))
-            if nt_full_edges[3]:
-                edge = pg.transform.scale(EDGE2, (w, t))
-                edges_image.blit(edge, (0, h - t))
-            edges_image.set_alpha(EDGES_ALPHA)
+            w, h = image.get_size()
+            edges_image = bst.EdgesDrawer.get_edges_images(w, h, hd)
             image.blit(edges_image, (0, 0))
 
             image = pg.transform.scale(image, size)

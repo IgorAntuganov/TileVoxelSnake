@@ -1,6 +1,6 @@
 # Settings
 # visual setting
-
+MAX_FPS = 200
 SCREEN_SIZE = 1536, 960  # 1344, 756; 1600, 900; 1536, 960;  800, 450
 BASE_LEVEL_SIZE: int = 32  # size in pixels of top side of block at z = 0
 LAYERS_OFFSET: float = 1  # difference in pixel between layers top side sprites sizes
@@ -20,29 +20,29 @@ SUN_SIDES_RECOLOR = {
 }
 
 # Ambient Occlusion shadows
-SHADOW_RADIUS = 0.7  # 0 <= x <= 1
-SHADOW_STRENGTH = 0.35  # 0 <= x <= 1
+SHADOW_RADIUS = 0.8  # 0 <= x <= 1
+SHADOW_STRENGTH = 0.4  # 0 <= x <= 1
+SHADOW_POWER_FACTOR = 2.4  # > 1, strength ** n
 
-EXPOSED_EDGE_COLOR = (3, 3, 3)  # (220, 210, 200)
-HIDDEN_EDGE_COLOR = (0, 0, 0)  # (200, 191, 182)
-EDGES_ALPHA = 160
-EDGE_THICKNESS = 2
+EDGE_COLOR = (220, 210, 200)
+EDGES_ALPHA = 110
+EDGE_THICKNESS = 2  # in pixels at sprites
+SPRITES_SCALE_FACTOR = 3  # For more accurate trapezoids, doesn't reduce fps
 
 HEIGHT_RECOLOR_OFFSET = 3
 HEIGHT_RECOLOR_BASE = 1  # base value 1
 HEIGHT_RECOLOR_STRENGTH = 0.35  # base value 0.3
 
-MAX_FPS = 200
+TRAPEZOID_KEYS_PRECISION = 3  # base value: 1, more -> more accurate trapezoids, more cache
+
+
+# Optimization
+REGIONS_DISTANCE_UPDATE_FREQ = 50
+GARBAGE_COLLECTION_FREQ = 500
+HOT_COLUMNS_CACHE_CAPACITY = 15000  # base value: 15000. Should be > n of columns on screen
 COLUMN_FIGURES_IN_CACHE_DURATION = 8  # base value: 1 (disabled), optimal: 8
 # if more -> block sides will be rendered every n frames
 # Cause artefacts if enabled and prefilling frames with black enabled
-
-TRAPEZOID_KEYS_PRECISION = 3  # base value: 1, more -> more accurate trapezoids, more cache
-
-REGIONS_DISTANCE_UPDATE_FREQ = 50
-GARBAGE_COLLECTION_FREQ = 500
-
-HOT_COLUMNS_CACHE_CAPACITY = 5000  # base value: 5000. Should be > n of columns on screen
 
 # gameplay settings
 
@@ -53,7 +53,7 @@ START_PLAYER_COOLDOWN = 0.6  # in seconds
 END_PLAYER_COOLDOWN = 0.2  # in seconds
 COOLDOWN_LEVEL_UP_STEP = 0.05
 
-BLOCK_INTERACTION_COOLDOWN = .5  # in seconds
+BLOCK_INTERACTION_COOLDOWN = .0001  # in seconds (disabled for development)
 
 BLOCKS_PER_MOVE = 2
 
@@ -62,13 +62,13 @@ CAMERA_SPEED = 8  # in blocks per second at start base level size
 # Debug info
 
 TRAPEZOIDS_CACHE_INFO = False
-USE_TRAPEZOID_CACHE_ON_DISK = True
+USE_TRAPEZOID_CACHE_ON_DISK = False
 HEIGHT_GENERATING_INFO = False
 NOT_ABSTRACT_BLOCKS_CLASSES_INFO = False
 FILLING_COLUMNS_INFO = False
 PREFILL_FRAME_WITH_BLACK = False
 PRINT_3D_MESH_CPROFILE = False
-DRAW_TILES = True
+DRAW_TILES = False
 
 # Constants
 

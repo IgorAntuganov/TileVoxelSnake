@@ -157,7 +157,7 @@ class FigureCreator:
                 assert not non_transparent_already_rendered
                 non_transparent_already_rendered = True
                 if len(visible_blocks) > 1:
-                    sprite = block.get_top_sprite_fully_shaded(rect_size, column.height_difference, z)
+                    sprite = block.get_top_sprite_fully_shaded(rect_size, column.height_difference, z, False)
                 else:
                     sprite = block.get_top_sprite_resized_shaded(rect_size, column.height_difference, z)
 

@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 import pygame as pg
 
 from constants import SIDES_NAMES, NOT_ABSTRACT_BLOCKS_CLASSES_INFO
-from blocksprites import BlockSpritesDict
+from blocksprites import BlockSpritesFabric
 from height_difference import HeightDiff9
 
 # Abstract classes: -----------------------------------
@@ -35,15 +35,15 @@ class Block(ABC):
     @classmethod
     @abstractmethod
     def load_sprites(cls):
-        cls.sprites = BlockSpritesDict(cls.__name__, *[cls.debug_sprite] * 6)
+        cls.sprites = BlockSpritesFabric(cls.__name__, *[cls.debug_sprite] * 6)
 
     def get_top_sprite_resized_shaded(self, size: tuple[int, int],
                                       height_diff: HeightDiff9,
                                       z: int) -> pg.Surface:
         return self.sprites.get_top_resized_shaded(size, height_diff, z, self.is_transparent)
 
-    def get_top_sprite_fully_shaded(self, size: tuple[int, int], height_diff: HeightDiff9, z: int):
-        return self.sprites.get_top_resized_fully_shaded(size, height_diff, z)
+    def get_top_sprite_fully_shaded(self, size: tuple[int, int], height_diff: HeightDiff9, z: int, is_transparent: bool):
+        return self.sprites.get_top_resized_fully_shaded(size, height_diff, z, is_transparent)
 
     def get_side_sprite(self, side: str, height_diff: HeightDiff9, ind_from_top: int) -> tuple[pg.Surface, str]:
         """:param ind_from_top: 0 if side of first/top block of column, 1 if second, etc."""
@@ -67,7 +67,7 @@ class SingleSpriteBlock(FullBlock, ABC):
 
     @classmethod
     def load_sprites(cls):
-        cls.sprites = BlockSpritesDict(cls.__name__, *[cls.sprite] * 6)
+        cls.sprites = BlockSpritesFabric(cls.__name__, *[cls.sprite] * 6)
 
 
 class SingleSideSpriteBlock(FullBlock, ABC):
@@ -88,7 +88,7 @@ class SingleSideSpriteBlock(FullBlock, ABC):
 
     @classmethod
     def load_sprites(cls):
-        cls.sprites = BlockSpritesDict(cls.__name__, cls.top_sprite, cls.bottom_sprite, *[cls.side_sprite] * 4)
+        cls.sprites = BlockSpritesFabric(cls.__name__, cls.top_sprite, cls.bottom_sprite, *[cls.side_sprite] * 4)
 
 
 # Block classes: -----------------------------------

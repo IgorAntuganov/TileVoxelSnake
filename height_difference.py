@@ -2,6 +2,10 @@ from constants import *
 
 
 class HeightDiff9:
+    """Hold information about height difference between parent column and 8 nearby columns.
+    nearby columns called 'west' 'north' 'east' 'south' 'north_west' 'north_east' 'south_west' 'south_east'
+    height = parent_column height - nearby_column height
+    """
     def __init__(self, full_height_diff: dict[str: int],
                  full_nt_height_diff: dict[str: int],
                  nt_nt_height_diff: dict[str: int]):
