@@ -5,7 +5,7 @@ SCREEN_SIZE = 1536, 960  # 1344, 756; 1600, 900; 1536, 960;  800, 450
 BASE_LEVEL_SIZE: int = 32  # size in pixels of top side of block at z = 0
 LAYERS_OFFSET: float = 1  # difference in pixel between layers top side sprites sizes
 MIN_BASE_LEVEL_SIZE = 1
-MAX_BASE_LEVEL_SIZE = 64
+MAX_BASE_LEVEL_SIZE = 128
 BASE_LEVEL_STEP = 4
 ONE_LEVEL_STEP_BEGINNING = 16
 NO_SIDES_LEVEL = 24
@@ -34,6 +34,8 @@ HEIGHT_RECOLOR_BASE = 1  # base value 1
 HEIGHT_RECOLOR_STRENGTH = 0.35  # base value 0.3
 
 TRAPEZOID_KEYS_PRECISION = 3  # base value: 1, more -> more accurate trapezoids, more cache
+
+ANIMATION_TICKS_AMOUNT = 4
 
 
 # Optimization

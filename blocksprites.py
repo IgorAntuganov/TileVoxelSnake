@@ -10,6 +10,13 @@ class BlockSprite:
         assert image.get_height() == image.get_width()
         image = pg.transform.rotate(image, angle)
         image = pg.transform.scale_by(image, SPRITES_SCALE_FACTOR)
+        # w, h = image.get_size()
+        # big_image = pg.Surface((w * 2, h * 2), pg.SRCALPHA)
+        # big_image.blit(image, (0, 0))
+        # big_image.blit(image, (w, 0))
+        # big_image.blit(image, (0, h))
+        # big_image.blit(image, (w, h))
+        # image = big_image
         self.image = recolor_func(image, recolor_value)
 
 

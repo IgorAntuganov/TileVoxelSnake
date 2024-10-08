@@ -16,7 +16,7 @@ import world_class
 import camera
 import mesh_3d
 from trapezoid import TrapezoidDrawer
-from sides_drawer import SidesDrawer
+from mesh_3d_sides_drawer import SidesDrawer
 from gui.mesh_2d import Mesh2D
 from events_handler import EventHandler, InfoScreen
 from gui.objects import Player

@@ -1,25 +1,7 @@
 import pygame as pg
 from trapezoid import TrapezoidDrawer
+from mesh_3d_figures import SimpleFigure
 from constants import *
-
-
-class Figure:
-    def __init__(self, rect: pg.Rect,
-                 sprite: pg.Surface,
-                 origin_block: tuple[int, int, int],
-                 directed_block: tuple[int, int, int]):
-        self.rect: pg.Rect = rect
-        self.sprite = sprite
-        self.origin_block = origin_block
-        self.directed_block = directed_block
-        self.is_side = self.origin_block[0] != self.directed_block[0] or self.origin_block[1] != self.directed_block[1]
-        self.is_not_side = self.origin_block[0] == self.directed_block[0] and self.origin_block[1] == self.directed_block[1]
-
-    def reset_rect(self, rect: pg.Rect):
-        self.rect = rect
-
-    def set_top_left(self, topleft: tuple[int, int]):
-        self.rect.topleft = topleft
 
 
 class SidesDrawer:
@@ -33,12 +15,13 @@ class SidesDrawer:
             'east': self.create_east_figure,
         }
 
-    def create_figure(self, x, y, z, key, sprite: pg.Surface, sprite_name, top_rect, bottom_rect) -> Figure | None:
+    def create_figure(self, x, y, z, key, sprite: pg.Surface, sprite_name, top_rect, bottom_rect) -> SimpleFigure | None:
         assert key in SIDES_NAMES
         func = self.functions[key]
         return func(x, y, z, sprite, sprite_name, top_rect, bottom_rect)
 
-    def create_south_figure(self, x, y, z, sprite: pg.Surface, sprite_name, top_rect, bottom_rect) -> Figure | None:
+    def create_south_figure(self, x, y, z,
+                            sprite: pg.Surface, sprite_name, top_rect, bottom_rect) -> SimpleFigure | None:
         top = top_rect.right - top_rect.left
         bottom = bottom_rect.right - bottom_rect.left
         offset = bottom_rect.left - top_rect.left
@@ -50,9 +33,10 @@ class SidesDrawer:
 
         if rect.colliderect(self.scr_rect):
             trapezoid = self.trap_drawer.get_hor_trapezoid(sprite, sprite_name, top + 3, bottom + 3, height, offset)
-            return Figure(rect, trapezoid, (x, y, z), (x, y + 1, z))
+            return SimpleFigure(rect, trapezoid, (x, y, z), (x, y + 1, z))
 
-    def create_north_figure(self, x, y, z, sprite: pg.Surface, sprite_name, top_rect, bottom_rect) -> Figure | None:
+    def create_north_figure(self, x, y, z,
+                            sprite: pg.Surface, sprite_name, top_rect, bottom_rect) -> SimpleFigure | None:
         top = top_rect.right - top_rect.left
         bottom = bottom_rect.right - bottom_rect.left
         offset = bottom_rect.left - top_rect.left
@@ -64,9 +48,10 @@ class SidesDrawer:
 
         if rect.colliderect(self.scr_rect):
             trapezoid = self.trap_drawer.get_hor_trapezoid(sprite, sprite_name, top + 1, bottom + 1, height, offset)
-            return Figure(rect, trapezoid, (x, y, z), (x, y - 1, z))
+            return SimpleFigure(rect, trapezoid, (x, y, z), (x, y - 1, z))
 
-    def create_east_figure(self, x, y, z, sprite: pg.Surface, sprite_name, top_rect, bottom_rect) -> Figure | None:
+    def create_east_figure(self, x, y, z,
+                           sprite: pg.Surface, sprite_name, top_rect, bottom_rect) -> SimpleFigure | None:
         left = top_rect.bottom - top_rect.top
         right = bottom_rect.bottom - bottom_rect.top
         width = bottom_rect.right - top_rect.right
@@ -78,9 +63,10 @@ class SidesDrawer:
 
         if rect.colliderect(self.scr_rect):
             trapezoid = self.trap_drawer.get_vert_trapezoid(sprite, sprite_name, left + 3, right + 3, width, offset)
-            return Figure(rect, trapezoid, (x, y, z), (x + 1, y, z))
+            return SimpleFigure(rect, trapezoid, (x, y, z), (x + 1, y, z))
 
-    def create_west_figure(self, x, y, z, sprite: pg.Surface, sprite_name, top_rect, bottom_rect) -> Figure | None:
+    def create_west_figure(self, x, y, z,
+                           sprite: pg.Surface, sprite_name, top_rect, bottom_rect) -> SimpleFigure | None:
         left = top_rect.bottom - top_rect.top
         right = bottom_rect.bottom - bottom_rect.top
         width = bottom_rect.left - top_rect.left
@@ -92,4 +78,4 @@ class SidesDrawer:
 
         if rect.colliderect(self.scr_rect):
             trapezoid = self.trap_drawer.get_vert_trapezoid(sprite, sprite_name, left + 3, right + 3, width, offset)
-            return Figure(rect, trapezoid, (x, y, z), (x - 1, y, z))
+            return SimpleFigure(rect, trapezoid, (x, y, z), (x - 1, y, z))
