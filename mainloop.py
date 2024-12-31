@@ -1,3 +1,5 @@
+import pygame
+
 CREATING_MESH = True
 import gc
 gc.disable()
@@ -8,7 +10,8 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame as pg
 pg.init()
 from constants import SCREEN_SIZE
-scr = pg.display.set_mode(SCREEN_SIZE, vsync=1)
+flags = pygame.DOUBLEBUF | pygame.HWSURFACE
+scr = pg.display.set_mode(SCREEN_SIZE, vsync=1, flags=flags)
 pg.display.set_caption('Voxels')
 
 from constants import *

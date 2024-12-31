@@ -74,6 +74,9 @@ class World:
         self.regions: dict[tuple[int, int]: Region] = {}
         self.loading_regions: list[Region] = []
 
+        if not os.path.isdir(PATH_TO_SAVES):
+            os.mkdir(PATH_TO_SAVES)
+
         self.folder = PATH_TO_SAVES + f'{name}/'
         if not os.path.isdir(self.folder):
             os.mkdir(self.folder)
